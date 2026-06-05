@@ -1,0 +1,340 @@
+---
+title: "Dashboard & Wireframe Plan"
+description: "4 màn hình wireframe cần tạo — mục tiêu, user chính, key components, actions và annotation plan cho MedBook"
+icon: "layout-panel-left"
+---
+
+<Note>
+  **Practice Case Study** — Tài liệu này mô tả **wireframe plan** cho portfolio BA — phác thảo mục tiêu, user, components và annotation cho mỗi màn hình. Wireframe thật sẽ được tạo bằng Figma (mid-fidelity) ở phase sau.
+</Note>
+
+## Tổng quan Wireframe Plan
+
+4 màn hình cần tạo để hoàn thiện portfolio case study này:
+
+| # | Màn hình | User chính | Platform | Priority |
+|---|---|---|---|---|
+| 1 | Patient Appointment Booking | Patient | Mobile App | High |
+| 2 | Appointment Detail & QR Check-in | Patient | Mobile App | High |
+| 3 | Reception Daily Dashboard | Receptionist, Hospital Admin | Web Portal | High |
+| 4 | Exception Queue | Receptionist, Hospital Admin | Web Portal | High |
+
+---
+
+## Screen 1: Patient Appointment Booking
+
+### Mục tiêu màn hình
+Hướng dẫn bệnh nhân đặt lịch khám ngoại trú từng bước một — từ chọn chuyên khoa đến confirm booking — với UX đơn giản để cả trader pro lẫn người cao tuổi đều dùng được.
+
+### User chính
+Bệnh nhân (Patient), Caregiver đặt thay
+
+### Key Components
+
+**Step 1 — Specialty Selection:**
+- Grid 3 cột với icon + tên chuyên khoa
+- Badge "Cần xét duyệt" cho manual confirm specialties
+- Search bar phía trên để filter nhanh
+
+**Step 2 — Doctor & Slot Selection:**
+- Doctor card với: ảnh đại diện, tên, học hàm, specialty, rating
+- Calendar date picker (disable ngày quá 30 ngày tới và ngày không có lịch)
+- Timeslot grid với color coding: Trống (xanh), Đang giữ chỗ (vàng), Hết lịch (xám/disabled)
+- Countdown timer nhỏ khi slot đang được hold bởi chính user hiện tại
+
+**Step 3 — Patient Information Form:**
+- Pre-fill nếu patient đã có hồ sơ
+- Fields: Họ tên, CCCD/Passport, Ngày sinh, Số điện thoại, Số BHYT (optional), Lý do khám (textarea)
+- Progress bar showing "Bước 3/3"
+- Countdown timer "Giữ chỗ còn: 8:34"
+
+**Step 4 — Confirmation Screen:**
+- Summary card: Bác sĩ, Chuyên khoa, Ngày giờ, Địa điểm (Tầng/Phòng nếu biết)
+- Patient info summary (masked)
+- CTA: "Xác nhận đặt lịch" (blue, full-width)
+- Disclaimer text nhỏ về chính sách hủy lịch
+
+### Actions
+- "Xác nhận đặt lịch" → submit booking
+- "Quay lại" → go to previous step
+- "Hủy" → abandon form (confirm popup)
+- "Đặt cho người thân" toggle → switch sang caregiver flow
+
+### Validation / Permission Notes
+- Slot hold timer đếm ngược trên UI (không refresh page)
+- Tất cả validation inline (không popup) — UX smooth
+- "Xác nhận" button disabled cho đến khi tất cả required fields filled
+- Patient chưa KYC: grey out "Tiếp tục" sau step chọn slot + tooltip "Cần xác thực danh tính để đặt lịch"
+
+### Empty / Loading / Error States
+- **Loading slots:** Skeleton animation thay vì blank
+- **No slots available:** "Bác sĩ chưa có lịch trống trong ngày này. Vui lòng chọn ngày khác." + suggest date alternatives
+- **Slot expired during form fill:** Toast "Slot vừa bị người khác đặt. Chuyển về màn hình chọn lịch." + redirect với data pre-filled
+- **Submit error:** Banner đỏ phía trên form với error message
+
+### Artifact Note
+```
+[Cần tạo: Figma wireframe — 4 screens sequential step flow]
+Annotation cần có:
+- (1) Countdown timer behavior khi slot hold gần hết
+- (2) Color coding cho slot availability states
+- (3) Pre-fill logic khi patient có hồ sơ
+- (4) "Đặt cho người thân" toggle với authorization check
+- (5) Validation behavior inline vs banner
+- (6) Auto-confirm vs manual-confirm badge trên specialty card
+```
+
+---
+
+## Screen 2: Appointment Detail & QR Check-in
+
+### Mục tiêu màn hình
+Cho phép bệnh nhân xem đầy đủ thông tin lịch hẹn, truy cập QR code để check-in, và thực hiện cancel/reschedule nếu còn trong window cho phép.
+
+### User chính
+Patient, Caregiver (nếu có authorization)
+
+### Key Components
+
+**Header:**
+- Status badge lớn: CONFIRMED (xanh) / PENDING (vàng) / CANCELLED (đỏ) / NO_SHOW (xám) / COMPLETED (tím)
+- Appointment ID nhỏ phía dưới badge
+
+**Appointment Summary Card:**
+- Bác sĩ: ảnh + tên + học hàm
+- Chuyên khoa + Ngày giờ + Địa điểm
+- Lý do khám (text)
+- Queue number (nếu đã check-in): số lớn, bold, màu primary
+
+**QR Check-in Section** (chỉ hiển thị khi CONFIRMED hoặc REMINDER_SENT):
+- QR code lớn (toàn chiều rộng) với logo bệnh viện ở center
+- "Check-in bằng mã QR này tại kiosk hoặc quầy lễ tân"
+- Countdown timer nếu QR sắp vào window (hoặc đang trong window)
+- Timer màu xanh khi còn trong window, đỏ khi gần hết
+
+**Action Buttons:**
+- "Hủy lịch" (outline button) — hiển thị nếu còn cho phép cancel
+- "Đổi lịch" (outline button) — hiển thị nếu còn cho phép reschedule
+- Cả 2 button được ẩn sau khi CHECKED_IN
+
+**Timeline Section (expand accordion):**
+- Lịch sử trạng thái theo timeline: Đặt lịch → Xác nhận → Nhắc lịch → Check-in → Khám xong
+
+### Actions
+- "Hủy lịch" → confirm popup + reason selection (nếu sau cut-off)
+- "Đổi lịch" → redirect sang booking flow với pre-filled specialty/doctor
+- Tap QR → fullscreen QR view với brightness tăng
+- "Chia sẻ biên lai" (sau COMPLETED) → native share sheet
+
+### Validation / Permission Notes
+- "Hủy lịch" và "Đổi lịch": ẩn sau khi CHECKED_IN
+- "Hủy lịch" sau cut-off: hiển thị nhưng khi tap → explain cut-off rule và option gọi hotline
+- QR code: chỉ hiển thị khi status CONFIRMED hoặc REMINDER_SENT
+- QR section ẩn hoàn toàn sau khi đã CHECKED_IN, thay bằng queue number và room info
+
+### Empty / Loading / Error States
+- **QR loading:** Skeleton animation trong QR area
+- **QR expired:** "Mã QR đã hết hạn. Vui lòng đến quầy lễ tân." + button "Liên hệ CSKH"
+- **Appointment not found:** 404 screen với button "Về trang chủ"
+- **HIS_SYNC_FAILED visible:** Small banner "Đang xử lý, vui lòng đến quầy lễ tân" (không show raw error)
+
+### Artifact Note
+```
+[Cần tạo: Figma wireframe — 3 states: CONFIRMED (with QR), CHECKED_IN (with queue), COMPLETED]
+Annotation cần có:
+- (1) QR code behavior: valid window, expired state, one-time-use indicator
+- (2) Status badge color system
+- (3) Countdown timer for check-in window opening
+- (4) Action button visibility rules (cancel/reschedule ẩn sau CHECKED_IN)
+- (5) HIS sync failure UI (không expose technical error)
+- (6) Queue number display prominence (large, bold) sau check-in
+```
+
+---
+
+## Screen 3: Reception Daily Appointment Dashboard
+
+### Mục tiêu màn hình
+Receptionist và Hospital Admin cần một view tổng thể về toàn bộ lịch hẹn trong ngày — biết appointment nào cần xử lý gấp (HIS fail, late check-in, pending confirm), và thực hiện action mà không phải chuyển màn hình.
+
+### User chính
+Receptionist (primary), Doctor (read-only), Hospital Admin
+
+### Key Components
+
+**Header Bar (sticky):**
+- Date picker (default: today)
+- Specialty filter dropdown (multi-select)
+- Doctor filter dropdown
+- Status filter (multi-checkbox): CONFIRMED / PENDING / CHECKED_IN / NO_SHOW / COMPLETED / EXCEPTION
+- HIS Sync filter: ALL / SYNCED / FAILED / PENDING
+- Search bar theo patient name hoặc appointment_id
+
+**Summary KPI Row (4 cards):**
+- Total Today · Checked-in · Waiting/In Consultation · Exception Count
+- Exception Count: màu đỏ nếu > 0, nhấp nháy nếu CRITICAL
+
+**Appointment Table:**
+Columns:
+| # | Patient Name | Specialty | Doctor | Scheduled Time | Appointment Status | Check-in Status | HIS Sync | Queue No. | Actions |
+- Row color coding: EXCEPTION (đỏ nhạt), HIS_SYNC_FAILED (cam nhạt), NO_SHOW (xám nhạt), COMPLETED (xanh lá nhạt)
+- Sortable: Scheduled Time, Status, HIS Sync Status
+- Pagination: 20 rows/page hoặc infinite scroll
+
+**Action Buttons per Row:**
+- "Manual Check-in" (nếu CONFIRMED, chưa check-in)
+- "Retry HIS Sync" (nếu HIS_SYNC_FAILED)
+- "View Detail" (luôn hiển thị)
+- "Override No-show" (nếu NO_SHOW, trong 24h)
+- "..." dropdown với: Assign Room, Cancel Appointment, View Audit
+
+### Actions
+- "Manual Check-in" → modal xác nhận + reason nếu cần override
+- "Retry HIS Sync" → immediate action, loading state trên row
+- "Assign Room" → dropdown chọn room + save
+- "Cancel Appointment" → reason code + confirmation modal
+- "Export CSV" → download report
+- Bulk action: select multiple rows → bulk cancel hoặc bulk mark no-show
+
+### Validation / Permission Notes
+- Receptionist chỉ xem facility của mình
+- Doctor chỉ xem appointment của mình (no action buttons except "View Detail")
+- Hospital Admin xem tất cả, có tất cả action buttons
+- "Retry HIS Sync" chỉ hiển thị khi `his_sync_status = FAILED`
+
+### Empty / Loading / Error States
+- **No appointments today:** "Không có lịch hẹn nào hôm nay. 🎉" (nếu thật sự không có) hoặc "Không có kết quả với bộ lọc hiện tại." (nếu có filter)
+- **Loading:** Skeleton table rows
+- **HIS connection error:** Banner "Không thể kết nối HIS — HIS Sync status có thể không chính xác" + last sync timestamp
+
+### Artifact Note
+```
+[Cần tạo: Figma wireframe — full dashboard với table và sidebar filter]
+Annotation cần có:
+- (1) Row color coding rules theo status + his_sync_status
+- (2) "Retry HIS Sync" loading state + success/failure feedback
+- (3) KPI cards với threshold color change (Exception Count red khi > 0)
+- (4) Filter behavior (multi-select, active filter tags)
+- (5) Action button visibility rules theo role và appointment status
+- (6) Bulk action bar khi có row selection
+```
+
+---
+
+## Screen 4: Exception Queue
+
+### Mục tiêu màn hình
+Receptionist và Hospital Admin cần xử lý exception nhanh nhất có thể — biết exception nào sắp hết SLA, ai đang xử lý, và action tiếp theo là gì. Không cần rời màn hình sang appointment detail cho các action phổ biến.
+
+### User chính
+Receptionist, Hospital Admin
+
+### Key Components
+
+**Filter Bar (sticky):**
+- Exception Type (multi-select: 15 loại)
+- Severity (Critical / High / Medium / Low)
+- Status (OPEN / IN_PROGRESS / ESCALATED / RESOLVED)
+- Assigned To
+- Created Date range
+
+**Exception Table:**
+Columns:
+| Exception Type | Appointment ID | Patient Name | Current Status | Owner | SLA Remaining | Actions |
+- SLA Remaining: progress bar + countdown timer
+  - 🟢 > 50% SLA remaining
+  - 🟡 20–50% remaining
+  - 🔴 < 20% remaining
+  - 💀 SLA breached
+- Row color: Critical (đỏ đậm border-left), High (cam), Medium (vàng), Low (xám)
+
+**Action Buttons per Row:**
+- "Retry HIS Sync" (cho EXC-MED-10)
+- "Manual Check-in" (cho EXC-MED-07)
+- "Override No-show" (cho EXC-MED-14)
+- "View Detail" (luôn có)
+- "Assign To Me" (nếu unassigned)
+- "Escalate" (luôn có)
+- "Resolve" (khi đã có action và đủ evidence)
+
+**Side Panel (slide in khi click "View Detail"):**
+- Full exception detail không cần rời trang
+- Appointment timeline
+- Exception history
+- Resolution form (reason + action log)
+
+### Actions
+- "Retry HIS Sync" → immediate loading, kết quả hiển thị ngay trên row
+- "Override No-show" → modal với reason code dropdown
+- "Resolve" → form ghi resolution note + confirm button
+- "Escalate" → assign sang Hospital Admin / System Admin
+- "Add Note" → add audit log entry
+- Bulk action: select multiple → bulk assign / bulk escalate
+
+### Validation / Permission Notes
+- Receptionist: xem exceptions của facility mình, có quyền resolve EXC-MED-07, EXC-MED-10, EXC-MED-14
+- Hospital Admin: xem tất cả exceptions, có thể resolve tất cả
+- "Resolve" button chỉ active khi exception có ít nhất 1 action đã được ghi
+- Receptionist không thể resolve EXC-MED-15 (Hospital Cancellation) — chỉ view và escalate
+
+### Empty / Loading / Error States
+- **No exceptions:** "Không có exception nào. Tất cả appointment đang xử lý bình thường. ✅"
+- **Loading:** Skeleton rows
+- **SLA breached exceptions:** Separate "SLA Breached" section at top of table, always visible
+
+### Artifact Note
+```
+[Cần tạo: Figma wireframe — exception table + side panel detail view]
+Annotation cần có:
+- (1) SLA progress bar color change rules (green → yellow → red → breached)
+- (2) Exception type badge với severity color system (matching badge legend)
+- (3) Side panel slide-in behavior (không rời trang)
+- (4) Action button visibility rules per exception type per role
+- (5) "Retry HIS Sync" inline loading state + success/error feedback
+- (6) Unassigned exception highlight (owner column màu đỏ)
+```
+
+---
+
+## Phương pháp tạo Wireframe
+
+### Tool đề xuất: Figma (Mid-fidelity)
+
+**Không cần:**
+- Full design system completion
+- Pixel-perfect spacing
+- Real images/icons (dùng placeholder rectangles)
+- Responsive breakpoints
+
+**Cần có:**
+- Layout structure rõ ràng (grid, spacing sơ bộ)
+- Component states: default / hover / active / loading / error
+- Annotation text boxes màu vàng/cam mô tả business rules
+- Flow arrows kết nối screens (user journey)
+- Status badge mockups với color coding
+
+### Annotation Template cho mỗi Component
+
+```
+[A] Component Name
+Rule: BR-XX-XX
+Condition: [khi nào hiển thị / ẩn]
+Behavior: [user action → system response]
+Edge case: [trường hợp đặc biệt cần xử lý]
+```
+
+### Thứ tự ưu tiên tạo Wireframe
+
+1. **Screen 3 (Reception Dashboard)** — showcase nhiều BA artifact nhất (RBAC, status, HIS sync, exception)
+2. **Screen 2 (Appointment Detail + QR)** — showcase state machine và QR business rules
+3. **Screen 4 (Exception Queue)** — showcase exception handling design
+4. **Screen 1 (Booking Flow)** — thường hiểu qua flow diagram là đủ, wireframe là bonus
+
+### Checklist trước khi publish wireframe
+
+- [ ] Tất cả annotation đã reference đúng Rule ID (BR-xx-xx)
+- [ ] Status badge có đầy đủ các states (không chỉ happy path)
+- [ ] Loading và error states được wireframe (không chỉ success)
+- [ ] Permission-gated elements được annotate rõ ai thấy gì
+- [ ] Mobile responsiveness được ghi chú nếu cần (Screen 1 & 2 là mobile-first)
+- [ ] Color coding consistent across all screens (green = success, red = error/critical, orange = warning)
