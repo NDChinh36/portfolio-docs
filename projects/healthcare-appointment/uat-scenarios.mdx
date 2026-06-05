@@ -1,0 +1,424 @@
+---
+title: "UAT Scenarios"
+description: "38+ UAT test scenarios cho toàn bộ luồng đặt lịch, check-in, HIS sync, no-show và exception handling"
+icon: "clipboard-check"
+---
+
+<Note>
+  **Practice Case Study** — MedBook tại CityHealth General Hospital (fictional). UAT Test ID format: `UAT-MED-[GROUP]-[NUMBER]`
+</Note>
+
+## UAT Overview
+
+| | |
+|---|---|
+| **Environment** | UAT (tách biệt khỏi Production) |
+| **MedBook URL** | `https://medbook-uat.cityhealth.vn` |
+| **HIS Connection** | HIS Sandbox (không ảnh hưởng dữ liệu bệnh viện thật) |
+| **Notification** | Mock mode (log thay vì gửi thật) |
+| **Sprint UAT** | 5 ngày làm việc |
+
+**Roles cần có:** Patient (test account), Caregiver (authorized), Receptionist, Doctor, Hospital Admin, System Admin
+
+---
+
+## Test Scenarios
+
+### Group 1: Happy Path Booking (`UAT-MED-HAPPY-xx`)
+
+**[UAT-MED-HAPPY-01] Bệnh nhân đặt lịch thành công — auto-confirm specialty**
+
+| | |
+|---|---|
+| **Preconditions** | Patient account active, KYC verified. Specialty "Nội tổng quát" thuộc `auto_confirm_specialties`. Doctor có slot trống ngày mai. |
+| **Steps** | 1. Patient login MedBook app. / 2. Chọn "Nội tổng quát" → chọn bác sĩ. / 3. Chọn slot ngày mai 09:00–09:30. / 4. Điền đầy đủ form (họ tên, CCCD, DOB, lý do khám). / 5. Nhấn "Xác nhận đặt lịch". / 6. Verify: appointment_status = CONFIRMED trong vòng 30 giây. / 7. Verify: Patient nhận push notification + SMS với QR code. / 8. Verify: slot không còn hiển thị trong danh sách available. |
+| **Expected Result** | Appointment CONFIRMED. QR code được gửi. Slot bị lock. Push notification và SMS delivered. `appointment_id` có format `APT-YYYYMMDD-XXXXXX`. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-HAPPY-02] Bệnh nhân đặt lịch — manual-confirm specialty, Receptionist confirm**
+
+| | |
+|---|---|
+| **Preconditions** | Specialty "Tim mạch" thuộc `manual_confirm_specialties`. Receptionist account active. |
+| **Steps** | 1. Patient chọn "Tim mạch" → chọn slot → submit form. / 2. Verify: appointment_status = PENDING_CONFIRMATION. / 3. Verify: Patient nhận message "Đang được xác nhận". / 4. Receptionist login → thấy appointment pending trong dashboard với SLA countdown 30 phút. / 5. Receptionist click "Confirm". / 6. Verify: appointment_status = CONFIRMED. / 7. Verify: Patient nhận QR code. |
+| **Expected Result** | Appointment đi qua PENDING → CONFIRMED. Receptionist action được audit log. QR được gửi sau confirmation. |
+| **Priority** | High |
+
+---
+
+### Group 2: Slot Handling (`UAT-MED-SLOT-xx`)
+
+**[UAT-MED-SLOT-01] Slot không còn trống khi submit**
+
+| | |
+|---|---|
+| **Preconditions** | Slot 10:00 chỉ còn 1 chỗ. Patient A và Patient B cùng chọn slot này đồng thời. |
+| **Steps** | 1. Patient A mở form booking slot 10:00, soft lock kích hoạt. / 2. Patient B cố chọn slot 10:00 trong thời gian Patient A đang điền form. / 3. Verify: Patient B thấy slot "Đang giữ chỗ" — không thể chọn. / 4. Patient A submit thành công. / 5. Verify: slot hoàn toàn bị locked. / 6. Patient B thấy slot "Hết lịch". |
+| **Expected Result** | Race condition được handle. Patient A giữ slot. Patient B không thể đặt. Không có overbooking. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-SLOT-02] Slot hold timeout sau 10 phút**
+
+| | |
+|---|---|
+| **Preconditions** | Patient mở form booking. Soft lock được kích hoạt. |
+| **Steps** | 1. Patient mở form, soft lock kích hoạt lúc T=0. / 2. Patient không submit form. / 3. Advance mock clock đến T+10 phút 01 giây. / 4. Verify: appointment chuyển EXPIRED. / 5. Verify: slot hiển thị lại trong danh sách available. / 6. Verify: Patient nhận message "Phiên đặt lịch đã hết hạn". |
+| **Expected Result** | Slot được release. Appointment EXPIRED. Bệnh nhân khác có thể đặt ngay sau đó. |
+| **Priority** | High |
+
+---
+
+### Group 3: Duplicate Booking (`UAT-MED-DUP-xx`)
+
+**[UAT-MED-DUP-01] Duplicate booking prevention — cùng specialty/ngày**
+
+| | |
+|---|---|
+| **Preconditions** | Patient đã có appointment CONFIRMED: "Nội tổng quát" ngày mai 09:00. |
+| **Steps** | 1. Patient cố đặt lịch khám "Nội tổng quát" ngày mai lần 2. / 2. Verify: hệ thống block submit với message "Bạn đã có lịch hẹn Nội tổng quát vào ngày [X] lúc 09:00." / 3. Verify: link đến appointment hiện có được cung cấp. / 4. Verify: không có appointment mới nào được tạo. |
+| **Expected Result** | Duplicate bị block. Appointment cũ vẫn tồn tại. Không có appointment duplicate trong DB. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-DUP-02] Cho phép đặt khác specialty trong cùng ngày**
+
+| | |
+|---|---|
+| **Preconditions** | Patient đã có appointment "Nội tổng quát" sáng ngày X. |
+| **Steps** | 1. Patient đặt lịch "Nha khoa" chiều cùng ngày X. / 2. Verify: không bị block. / 3. Verify: appointment mới được tạo thành công với specialty "Nha khoa". |
+| **Expected Result** | Khác specialty → không bị duplicate check. Cả 2 appointments tồn tại. |
+| **Priority** | Medium |
+
+---
+
+### Group 4: Cancel Before Cut-off (`UAT-MED-CANCEL-xx`)
+
+**[UAT-MED-CANCEL-01] Patient tự cancel trước cut-off (> 2h trước giờ khám)**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED với giờ khám 10:00. Current time = 07:30 (2.5h trước → trước cut-off). |
+| **Steps** | 1. Patient mở appointment detail. / 2. Nhấn "Hủy lịch". / 3. Verify: không cần nhập lý do. / 4. Nhấn "Xác nhận hủy". / 5. Verify: appointment_status = CANCELLED_BY_PATIENT. / 6. Verify: Trong vòng 30 phút, slot xuất hiện lại trong danh sách available. / 7. Verify: Patient nhận confirmation notification. |
+| **Expected Result** | Cancel thành công. Không cần lý do. Slot được release sau 30 phút. Patient notify. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-CANCEL-02] Patient cancel sau cut-off (< 2h trước giờ khám) — cần lý do**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED với giờ khám 10:00. Current time = 09:00 (< 2h → sau cut-off). |
+| **Steps** | 1. Patient nhấn "Hủy lịch". / 2. Verify: hệ thống yêu cầu nhập lý do bắt buộc. / 3. Patient không nhập lý do → Verify: "Hủy" button bị disabled. / 4. Patient chọn lý do từ dropdown. / 5. Nhấn "Xác nhận hủy". / 6. Verify: appointment CANCELLED_BY_PATIENT. / 7. Verify: warning hiển thị "Hủy muộn ảnh hưởng đến bệnh nhân khác." |
+| **Expected Result** | Cancel sau cut-off yêu cầu lý do. Cancel thành công sau khi có lý do. Warning hiển thị. |
+| **Priority** | High |
+
+---
+
+### Group 5: Reschedule (`UAT-MED-RESCHEDULE-xx`)
+
+**[UAT-MED-RESCHEDULE-01] Reschedule thành công trước cut-off**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED sáng mai 09:00. Current time = 15:00 hôm nay (> 2h trước). |
+| **Steps** | 1. Patient nhấn "Đổi lịch". / 2. Chọn slot mới: ngày kia 14:00. / 3. Verify: tạo appointment mới (new appointment_id), status PENDING_CONFIRMATION hoặc CONFIRMED (tùy specialty). / 4. Verify: appointment gốc chuyển RESCHEDULED với `rescheduled_to: new_appointment_id`. / 5. Verify: slot cũ released sau 30 phút. |
+| **Expected Result** | Appointment mới tạo. Appointment gốc RESCHEDULED. Slot cũ released. Patient nhận thông tin appointment mới. |
+| **Priority** | High |
+
+---
+
+### Group 6: QR Check-in (`UAT-MED-QR-xx`)
+
+**[UAT-MED-QR-01] QR check-in thành công trong time window**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED, giờ khám 10:00. Current time = 09:30 (trong window T-60min đến T+30min). |
+| **Steps** | 1. Patient mở app, tab "Lịch hẹn hôm nay". / 2. Nhấn "Check-in" → hiển thị QR code. / 3. Kiosk scan QR. / 4. Verify: `checkin_status = CHECKED_IN`. / 5. Verify: HIS registration được gọi ngay. / 6. Verify (HIS sandbox): `his_sync_status = SYNCED`. / 7. Verify: queue_number được hiển thị trên màn hình kiosk và app. |
+| **Expected Result** | Check-in thành công. HIS synced. Queue number hiển thị. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-QR-02] QR expired — ngoài time window**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED, giờ khám 10:00. Current time = 11:00 (sau window T+30min). |
+| **Steps** | 1. Patient scan QR. / 2. Verify: error message "Mã QR đã hết hạn. Vui lòng đến quầy lễ tân." / 3. Verify: không có check-in được thực hiện. / 4. Verify: appointment_status vẫn = CONFIRMED. |
+| **Expected Result** | QR scan bị từ chối. Patient được hướng dẫn đến quầy. Appointment không thay đổi trạng thái. |
+| **Priority** | High |
+
+---
+
+### Group 7: Early Check-in (`UAT-MED-EARLY-xx`)
+
+**[UAT-MED-EARLY-01] Bệnh nhân đến sớm hơn 60 phút**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment giờ khám 10:00. Current time = 08:30 (T-90min). |
+| **Steps** | 1. Patient scan QR. / 2. Verify: message "Bạn đến sớm quá! Check-in sẽ mở lúc 09:00." với countdown timer. / 3. Verify: patient được cung cấp link bản đồ bệnh viện và checklist hồ sơ. / 4. Verify: không có check-in được thực hiện. |
+| **Expected Result** | Check-in bị từ chối với message thân thiện. Countdown hiển thị. UX không gây confused. |
+| **Priority** | Medium |
+
+---
+
+### Group 8: Late Check-in & Override (`UAT-MED-LATE-xx`)
+
+**[UAT-MED-LATE-01] Bệnh nhân đến trễ — Receptionist override**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment giờ khám 10:00. Current time = 10:40 (T+40min). Patient có lý do hợp lệ (kẹt xe). |
+| **Steps** | 1. Patient scan QR → Verify: "Bạn đến trễ hơn khung giờ check-in. Vui lòng đến quầy lễ tân." / 2. Patient đến quầy lễ tân. / 3. Receptionist mở reception portal, tìm appointment. / 4. Receptionist nhấn "Manual Check-in Override". / 5. Chọn reason code "PATIENT_DELAYED_TRAFFIC". / 6. Verify: checkin_status = CHECKED_IN. / 7. Verify: HIS sync được trigger. / 8. Verify: audit log ghi nhận override với receptionist_id và reason_code. |
+| **Expected Result** | Override thành công. Check-in completed. Audit trail đầy đủ. |
+| **Priority** | High |
+
+---
+
+### Group 9: Duplicate Check-in Prevention (`UAT-MED-DUPCI-xx`)
+
+**[UAT-MED-DUPCI-01] Bệnh nhân scan QR lần 2 sau khi đã check-in**
+
+| | |
+|---|---|
+| **Preconditions** | Patient đã check-in thành công, queue number = TM-023. |
+| **Steps** | 1. Patient scan QR lần 2. / 2. Verify: message "Lịch hẹn này đã được check-in lúc [time]. Số thứ tự của bạn: TM-023." / 3. Verify: không có check-in mới được thực hiện. / 4. Verify: DB chỉ có 1 checkin record. |
+| **Expected Result** | Duplicate check-in bị block. Current status và queue number hiển thị. |
+| **Priority** | High |
+
+---
+
+### Group 10: HIS Sync Success (`UAT-MED-HIS-OK-xx`)
+
+**[UAT-MED-HIS-OK-01] Bệnh nhân đã có hồ sơ trong HIS — matched by identity_number**
+
+| | |
+|---|---|
+| **Preconditions** | Patient có `identity_number = 012345678901` đã tồn tại trong HIS Sandbox. |
+| **Steps** | 1. Patient check-in → trigger HIS registration. / 2. HIS Sandbox nhận request, tìm thấy patient bằng `identity_number`. / 3. Verify: `his_patient_code` được lấy từ HIS (không tạo mới). / 4. Verify: `his_sync_status = SYNCED`. / 5. Verify: `his_visit_id` được ghi vào appointment record. / 6. Verify: `queue_number` được hiển thị. |
+| **Expected Result** | Existing patient được match. `his_patient_code` từ HIS. Visit tạo mới với đúng patient record. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-HIS-OK-02] Bệnh nhân mới — tạo mới trong HIS**
+
+| | |
+|---|---|
+| **Preconditions** | Patient có `identity_number` KHÔNG tồn tại trong HIS Sandbox. |
+| **Steps** | 1. Patient check-in → trigger HIS registration. / 2. HIS Sandbox không tìm thấy patient → tạo mới. / 3. Verify: `his_patient_code` mới được tạo trong HIS. / 4. Verify: `his_sync_status = SYNCED`. / 5. Verify: mapping `identity_number ↔ his_patient_code` được lưu trong Patient Profile. |
+| **Expected Result** | New patient được tạo trong HIS. `his_patient_code` mới ghi vào appointment. |
+| **Priority** | High |
+
+---
+
+### Group 11: HIS Sync Failure (`UAT-MED-HIS-FAIL-xx`)
+
+**[UAT-MED-HIS-FAIL-01] HIS sync fail sau 3 retry — exception tạo ra**
+
+| | |
+|---|---|
+| **Preconditions** | HIS Sandbox được configure để timeout tất cả request (simulate HIS down). |
+| **Steps** | 1. Patient check-in. / 2. MedBook gọi HIS → timeout. / 3. Verify: Auto-retry lần 1 sau 2 phút → timeout. / 4. Verify: Auto-retry lần 2 sau 2 phút → timeout. / 5. Verify: `his_sync_status = FAILED`. / 6. Verify: Exception EXC-MED-10 xuất hiện trong exception queue của Receptionist với priority CRITICAL. / 7. Verify: Patient nhận message "Vui lòng đến quầy lễ tân". / 8. Advance time 16 phút (vượt 15 phút SLA). / 9. Verify: appointment chuyển sang EXCEPTION state. System Admin nhận alert. |
+| **Expected Result** | HIS fail được detect. 3 retries. EXC-MED-10 tạo. SLA breach → EXCEPTION state. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-HIS-FAIL-02] Receptionist resolve HIS sync failure thủ công**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment ở HIS_SYNC_FAILED sau EXC-MED-10. HIS Sandbox được restore (healthy again). |
+| **Steps** | 1. Receptionist thấy EXC-MED-10 trong exception queue. / 2. Receptionist nhấn "Retry HIS Sync". / 3. Verify: HIS Sandbox nhận request → success. / 4. Verify: `his_sync_status = SYNCED`. / 5. Verify: queue_number được gán. / 6. Verify: Exception EXC-MED-10 được đóng. / 7. Verify: Audit log ghi nhận `receptionist_id`, `retry_at`, `resolution_method = MANUAL_RETRY`. |
+| **Expected Result** | Manual retry thành công. Appointment tiếp tục flow. Exception closed. Audit trail complete. |
+| **Priority** | High |
+
+---
+
+### Group 12: Queue Number (`UAT-MED-QUEUE-xx`)
+
+**[UAT-MED-QUEUE-01] Queue number được tạo đúng format sau HIS sync**
+
+| | |
+|---|---|
+| **Preconditions** | HIS sync thành công cho appointment specialty "Tim mạch" (code: TM). |
+| **Steps** | 1. Patient check-in thành công. HIS sync thành công. / 2. Verify: queue_number format = `TM-XXX` (3 digits). / 3. Verify: queue_number hiển thị trên Patient App. / 4. Verify: queue_number hiển thị trên kiosk màn hình. / 5. Nếu đây là patient thứ 1 trong ngày cho Tim mạch: queue_number = TM-001. |
+| **Expected Result** | Queue number đúng format. Hiển thị trên cả app và kiosk. Sequential tăng dần trong ngày. |
+| **Priority** | High |
+
+---
+
+### Group 13: No-show Handling (`UAT-MED-NOSHOW-xx`)
+
+**[UAT-MED-NOSHOW-01] Auto no-show sau grace period**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment REMINDER_SENT, giờ khám 10:00. Không có check-in. |
+| **Steps** | 1. Advance mock clock đến 10:16 (T+16min > T+15min grace period). / 2. Verify: scheduled job chạy và phát hiện appointment quá hạn. / 3. Verify: appointment_status = NO_SHOW. / 4. Verify: Patient nhận SMS "Chúng tôi ghi nhận bạn không đến khám." / 5. Verify: slot chuyển sang `pending_release` (chưa release ngay). / 6. Advance clock thêm 15 phút. / 7. Verify: slot released và hiển thị lại trong danh sách available. |
+| **Expected Result** | No-show auto-set. Patient notify. Slot buffer 15 phút trước khi release. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-NOSHOW-02] Receptionist override no-show trong 24h**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment NO_SHOW được set 30 phút trước. Patient đến với lý do kẹt xe. |
+| **Steps** | 1. Receptionist mở appointment trong dashboard. / 2. Nhấn "Override No-show". / 3. Chọn reason "PATIENT_ARRIVED_LATE". / 4. Verify: appointment_status → CHECKED_IN. / 5. Verify: HIS sync được trigger. / 6. Verify: queue_number được cấp. / 7. Verify: Slot không được release (đã được override). / 8. Verify: audit log ghi nhận override. |
+| **Expected Result** | Override thành công. Check-in completed. HIS synced. Audit trail complete. |
+| **Priority** | High |
+
+---
+
+### Group 14: Hospital Cancel (`UAT-MED-HOSPCANCEL-xx`)
+
+**[UAT-MED-HOSPCANCEL-01] Hospital Admin cancel appointment với sufficient notice**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED, giờ khám ngày mai 10:00. Hospital Admin cần cancel do bác sĩ nghỉ đột xuất. |
+| **Steps** | 1. Hospital Admin login → tìm appointment trong daily list. / 2. Nhấn "Hospital Cancel". / 3. Chọn reason_code = DOCTOR_UNAVAILABLE. / 4. Nhấn "Confirm Cancel". / 5. Verify: appointment_status = CANCELLED_BY_HOSPITAL. / 6. Verify: Patient nhận SMS + push notification với reason. / 7. Verify: slot released ngay lập tức. / 8. Verify: audit log ghi nhận `admin_user_id`, `reason_code`, `notification_sent_at`. |
+| **Expected Result** | Cancel thành công. Patient notified ngay. Slot available cho patient khác. Audit trail complete. |
+| **Priority** | High |
+
+---
+
+### Group 15: Permission Denied (`UAT-MED-PERM-xx`)
+
+**[UAT-MED-PERM-01] Patient cố gắng xem appointment của patient khác**
+
+| | |
+|---|---|
+| **Preconditions** | Patient A đã login. Appointment của Patient B có `appointment_id = APT-20240115-000099`. |
+| **Steps** | 1. Patient A navigate trực tiếp đến URL `/appointments/APT-20240115-000099`. / 2. Verify: 403 Forbidden hoặc 404 Not Found. / 3. Patient A gọi API `GET /appointments/APT-20240115-000099` với token của Patient A. / 4. Verify: API trả 403 Forbidden. |
+| **Expected Result** | Data isolation hoàn toàn. Patient A không thể xem appointment của Patient B. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-PERM-02] Nurse không thể retry HIS sync**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment ở HIS_SYNC_FAILED. User có role NURSE. |
+| **Steps** | 1. Nurse login reception portal. / 2. Verify: "Retry HIS Sync" button không hiển thị (hidden based on role). / 3. Nurse gọi API `POST /his/retry-sync/{id}` với token của Nurse. / 4. Verify: API trả 403 Forbidden. |
+| **Expected Result** | Nurse không thể retry HIS sync. 403 tại cả UI và API. |
+| **Priority** | High |
+
+---
+
+### Group 16: Notification (`UAT-MED-NOTIF-xx`)
+
+**[UAT-MED-NOTIF-01] Reminder notification gửi đúng giờ**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment CONFIRMED với giờ khám ngày mai 10:00. |
+| **Steps** | 1. Advance mock clock đến T-24h (hôm nay 10:00). / 2. Verify: notification T-24h được trigger. / 3. Verify: Notification log ghi nhận `event_type = REMINDER_24H`, `channels_attempted = [SMS, PUSH]`. / 4. Advance clock đến T-2h (hôm nay 08:00). / 5. Verify: notification T-2h được trigger với QR code. / 6. Verify: appointment_status = REMINDER_SENT. |
+| **Expected Result** | 2 reminders gửi đúng giờ. appointment_status cập nhật REMINDER_SENT. QR code kèm trong reminder T-2h. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-NOTIF-02] Notification failed — appointment vẫn valid**
+
+| | |
+|---|---|
+| **Preconditions** | Patient phone là số không hợp lệ (SIM không tồn tại). Push notification cũng fail (device token expired). |
+| **Steps** | 1. Trigger reminder notification. / 2. Verify: SMS delivery failed, push failed. / 3. Verify: appointment_status vẫn = REMINDER_SENT (không bị revert). / 4. Verify: notification failure được log vào exception queue với priority LOW. / 5. Verify: appointment không bị cancel hay ảnh hưởng. |
+| **Expected Result** | Notification failed không block appointment flow. Failure logged. Priority LOW — no immediate action needed. |
+| **Priority** | Medium |
+
+---
+
+### Group 17: Caregiver Flow (`UAT-MED-CAREGIVER-xx`)
+
+**[UAT-MED-CAREGIVER-01] Caregiver đặt lịch cho người thân**
+
+| | |
+|---|---|
+| **Preconditions** | Caregiver account có authorization link ACTIVE với Patient B (scope = FULL). |
+| **Steps** | 1. Caregiver login MedBook. / 2. Chọn "Đặt lịch cho người thân" → chọn Patient B từ danh sách. / 3. Điền thông tin khám của Patient B (không phải caregiver). / 4. Submit booking. / 5. Verify: `patient_id = Patient B`, `booker_id = Caregiver`. / 6. Verify: notification gửi đến cả SĐT caregiver và SĐT Patient B. / 7. Verify: Caregiver thấy appointment của Patient B trong dashboard. |
+| **Expected Result** | Appointment tạo đúng với patient_id của Patient B. Dual notification. Caregiver có access phù hợp scope FULL. |
+| **Priority** | High |
+
+---
+
+**[UAT-MED-CAREGIVER-02] Caregiver check-in thay cho người thân**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment của Patient B CONFIRMED. Caregiver có authorization scope = FULL hoặc CHECKIN. |
+| **Steps** | 1. Caregiver dùng app của mình, mở appointment của Patient B. / 2. Nhấn "Check-in" → QR hiển thị. / 3. Scan QR tại kiosk. / 4. Verify: checkin_status = CHECKED_IN, `checked_in_by = Caregiver user_id`. / 5. Verify: HIS registration sử dụng thông tin của Patient B (không phải caregiver). |
+| **Expected Result** | Caregiver check-in thành công. Appointment ghi nhận `checked_in_by = caregiver`. HIS nhận thông tin bệnh nhân đúng. |
+| **Priority** | High |
+
+---
+
+### Group 18: Status Transition Validation (`UAT-MED-STATUS-xx`)
+
+**[UAT-MED-STATUS-01] Invalid state transition bị từ chối**
+
+| | |
+|---|---|
+| **Preconditions** | Appointment ở trạng thái COMPLETED (terminal state). |
+| **Steps** | 1. Gọi API `PATCH /appointments/{id}/status` với `new_status = CONFIRMED`. / 2. Verify: API trả 409 INVALID_STATUS_TRANSITION. / 3. Verify: appointment vẫn ở COMPLETED. / 4. Verify: DB không có thay đổi. |
+| **Expected Result** | Invalid transition bị block. Terminal state không thể revert. |
+| **Priority** | High |
+
+---
+
+### Group 19: Export Report (`UAT-MED-REPORT-xx`)
+
+**[UAT-MED-REPORT-01] Hospital Admin export daily appointment report**
+
+| | |
+|---|---|
+| **Preconditions** | Hospital Admin account. Có appointment data cho ngày hôm nay. |
+| **Steps** | 1. Hospital Admin login → vào Daily Report section. / 2. Chọn date = today, filter specialty = all. / 3. Nhấn "Export CSV". / 4. Verify: file được download với đầy đủ columns: appointment_id, patient_name, specialty, doctor, scheduled_time, appointment_status, checkin_status, his_sync_status, queue_number. / 5. Verify: audit log ghi nhận export action với `record_count`. |
+| **Expected Result** | Report exported thành công. Đúng format. Audit log ghi nhận. |
+| **Priority** | Medium |
+
+---
+
+## Test Data Requirements
+
+| Loại Data | Giá trị / Mô tả | Người chuẩn bị |
+|---|---|---|
+| **Patient accounts** | Patient A (có HIS record), Patient B (không có HIS record), Patient C (caregiver authorization) | QA Lead + Dev |
+| **Caregiver account** | Linked với Patient B, scope = FULL | QA Lead |
+| **Receptionist account** | Role RECEPTIONIST, assigned facility CGH-F01 | QA Lead |
+| **Hospital Admin account** | Role HOSPITAL_ADMIN | QA Lead |
+| **Doctor schedule** | Bác sĩ Nguyễn Văn A — Nội tổng quát, daily slots 08:00–12:00 (30-min each) | Dev |
+| **Doctor schedule (manual confirm)** | Bác sĩ Trần Thị B — Tim mạch | Dev |
+| **HIS Sandbox** | Healthy state (default), Timeout state (configurable via feature flag) | Dev |
+| **Mock clock** | Cơ chế advance clock cho no-show và reminder testing | Dev |
+| **Mock notification** | Log mode (không gửi thật) với assertion API | Dev |
+
+---
+
+## Go/No-Go Criteria
+
+| Nhóm | Pass Threshold | Auto No-Go Condition |
+|---|---|---|
+| Happy Path Booking | 2/2 | Bất kỳ happy path nào fail → No-Go |
+| Slot Handling | 2/2 | UAT-MED-SLOT-01 (race condition) fail → No-Go |
+| Cancel | 2/2 | UAT-MED-CANCEL-01 fail → No-Go |
+| QR Check-in | 2/2 | Bất kỳ QR test nào fail → No-Go |
+| HIS Sync | 2/2 | HIS sync critical tests fail → No-Go |
+| No-show | 2/2 | Auto no-show fail → No-Go |
+| Permission | 2/2 | Bất kỳ permission test nào fail → No-Go (security-critical) |
+| **Tổng** | **≥ 85% (≥ 33/38)** | Xem điều kiện từng nhóm |
+
+**Defect thresholds:** 0 Critical defect · ≤ 3 Major (có workaround) · ≤ 10 Minor
