@@ -1,0 +1,258 @@
+---
+title: "OMS/WMS Fulfillment Platform"
+description: "Practice case study — Hệ thống quản lý đơn hàng và kho vận cho 3PL tại Việt Nam (VietFulfill)"
+icon: "box"
+---
+
+<Warning>
+**Practice Case Study — Không phải dự án thật**
+
+Tất cả dữ liệu, tên công ty, tên nhân vật và số liệu trong tài liệu này đều là giả định, được tạo ra cho mục đích luyện tập phân tích nghiệp vụ (BA practice). Không sử dụng làm tài liệu tham khảo cho dự án thực tế.
+</Warning>
+
+---
+
+## Project Overview
+
+**VietFulfill** là công ty 3PL (Third-Party Logistics) hoạt động tại Việt Nam, cung cấp dịch vụ fulfillment cho các seller kinh doanh trên Shopee, TikTok Shop, Lazada và website riêng. Với tốc độ tăng trưởng của thương mại điện tử nội địa, VietFulfill xử lý trung bình 8.000–12.000 đơn hàng/ngày từ hàng trăm seller khác nhau, vận hành 2 kho tại Hà Nội và TP.HCM.
+
+Hiện tại, VietFulfill đang vận hành với một tổ hợp hệ thống rời rạc: order được nhận thủ công qua API của từng sàn, nhân viên kho ghi nhận tiến độ trên file Excel, và việc bàn giao đơn cho carrier được thực hiện qua Zalo. Cách vận hành này có thể chịu tải ở mức 3.000–4.000 đơn/ngày, nhưng đã gãy hoàn toàn khi volume tăng gấp 3 trong vòng 6 tháng gần đây sau khi VietFulfill onboard thêm 120 seller mới từ TikTok Shop.
+
+Project này thiết kế một **OMS/WMS Fulfillment Platform** tích hợp — bao gồm Order Management System (OMS) quản lý toàn bộ vòng đời đơn hàng, và Warehouse Management System (WMS) điều phối hoạt động kho từ tiếp nhận hàng đến xuất kho. Mục tiêu là tạo ra một nền tảng đủ linh hoạt để hỗ trợ multi-channel, multi-carrier, và multi-warehouse trong cùng một hệ thống thống nhất.
+
+---
+
+## Business Context & Problem
+
+### Hiện trạng (As-Is Pain Points)
+
+<AccordionGroup>
+  <Accordion title="Order trùng / bỏ sót do thiếu deduplication">
+    Mỗi sàn có API riêng, VietFulfill dùng 4 script Python khác nhau để pull order về. Không có cơ chế deduplication trung tâm — khi Shopee retry webhook, order bị insert 2 lần. Tháng 3/2026, có 47 đơn bị pick và pack 2 lần trước khi ai đó phát hiện ra.
+  </Accordion>
+
+  <Accordion title="Status order không nhất quán giữa các team">
+    Kho nhìn thấy một status, CS nhìn thấy status khác, seller lại nhìn thấy status khác nữa trên portal. Nguyên nhân: không có single source of truth — kho cập nhật Excel, CS cập nhật Google Sheet, OMS cũ pull từ cả hai nơi theo cron job 15 phút một lần.
+  </Accordion>
+
+  <Accordion title="Cancel order sau khi đã pick gây lãng phí lớn">
+    Seller cancel order trực tiếp trên Shopee mà không thông báo kho. Kho vẫn pick và pack xong rồi mới biết order đã cancel khi scan handover. Mỗi tháng ước tính ~200 đơn bị cancel sau khi đã hoàn tất picking, gây lãng phí nhân lực và chi phí hoàn hàng.
+  </Accordion>
+
+  <Accordion title="Exception handling qua Zalo / Excel">
+    Khi có sự cố (hàng thiếu, địa chỉ sai, carrier từ chối nhận), nhân viên kho nhắn Zalo cho Supervisor, Supervisor nhắn CS, CS nhắn seller. Không có audit trail. Một số exception bị bỏ sót trong Zalo do tin nhắn trôi. SLA resolution trung bình cho exception là 6.2 giờ.
+  </Accordion>
+
+  <Accordion title="Không có visibility về carrier performance">
+    VietFulfill dùng 4 carrier (GHN, GHTK, J&T Express, Viettel Post) nhưng không có dashboard theo dõi tỉ lệ giao thành công, thời gian transit trung bình theo tuyến, hay tỉ lệ hoàn hàng theo carrier. Quyết định chọn carrier cho từng đơn phần lớn dựa vào kinh nghiệm cá nhân của Supervisor.
+  </Accordion>
+</AccordionGroup>
+
+### Mục tiêu dự án
+
+| Mục tiêu | Chỉ số đo lường | Target |
+|---|---|---|
+| Chuẩn hóa order lifecycle từ intake đến delivered | Order status accuracy | ≥ 99.5% |
+| Giảm pick error rate | Pick error / tổng đơn | < 0.3% |
+| Tập trung exception handling | Thời gian phát hiện exception | < 30 phút |
+| Automation cancel check | Cancel sau picking | < 10 đơn/tháng |
+| Carrier performance tracking | Dashboard live | 100% coverage |
+
+---
+
+## Actors
+
+<Info>
+Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống nội bộ và đối tác bên ngoài. Mỗi actor có quyền hạn và thông tin cần truy cập khác nhau.
+</Info>
+
+| Actor | Mục tiêu | Hành động chính | Thông tin cần xem / cập nhật | Quyền hạn chính |
+|---|---|---|---|---|
+| **Seller / Merchant** | Đảm bảo đơn hàng được xử lý đúng, đúng hạn, có thể theo dõi real-time | Xem danh sách đơn hàng; request cancel; upload inventory; xem báo cáo | order_status, fulfillment_status, shipment tracking, tồn kho, báo cáo SLA | Xem đơn của mình; request cancel (trước PICKING); không chỉnh sửa trực tiếp WMS data |
+| **Customer** | Nhận đơn hàng đúng, đúng hẹn; có thể theo dõi vận chuyển | Xem tracking; yêu cầu hỗ trợ qua CS | shipment_id, tracking URL, estimated delivery | Chỉ xem tracking public; không truy cập hệ thống nội bộ |
+| **Sales Channel** *(Shopee, TikTok Shop, Lazada, Website)* | Đẩy order mới về VietFulfill; nhận cập nhật trạng thái và tracking code | Push order webhook; pull shipment status; cancel order | order payload (SKU, qty, địa chỉ, COD amount); tracking code để update lên sàn | Gửi order qua API; nhận callback trạng thái; không can thiệp vào WMS |
+| **OMS** *(Order Management System)* | Là source of truth cho toàn bộ vòng đời đơn hàng | Nhận order từ channel; dedup; validate; route sang WMS; update status; giao tiếp với carrier API | oms_order_id (VF-2026-XXXXXX), order_status, fulfillment_id, shipment_id, cancel flag | Core system — đọc/ghi toàn bộ order data; điều phối các hệ thống khác |
+| **WMS** *(Warehouse Management System)* | Điều phối hoạt động kho từ inbound đến handover carrier | Nhận fulfillment task từ OMS; tạo pick list; track picking/packing; xác nhận handover | fulfillment_id (FUL-XXXXXX), bin location, SKU, pick list, packing slip, barcode | Đọc/ghi toàn bộ warehouse operation data; cập nhật fulfillment_status về OMS |
+| **Warehouse Staff** *(Picker, Packer)* | Hoàn thành pick & pack chính xác, đúng tốc độ | Nhận pick task; scan barcode SKU; xác nhận picked qty; scan verify khi packing; in label | Pick list (fulfillment_id, SKU, bin, qty); packing instruction; label in | Cập nhật fulfillment_status trong phạm vi task được assign; không thể tự assign lại task |
+| **Warehouse Supervisor** | Đảm bảo throughput kho và xử lý exception | Assign task; monitor picking progress; approve cancel sau PICKING; xử lý exception queue | Toàn bộ fulfillment trong ca; exception queue; năng suất theo nhân viên; tồn kho thực tế | Override fulfillment_status; approve/reject cancel request; escalate exception |
+| **Carrier** *(GHN, GHTK, J&T Express, Viettel Post)* | Nhận bàn giao hàng đúng và cập nhật trạng thái vận chuyển | Scan nhận hàng tại kho; cập nhật tracking milestones; xác nhận delivered / failed delivery | shipment_id (carrier tracking code); handover manifest; COD amount | Cập nhật shipment_status qua webhook/API; không truy cập OMS/WMS trực tiếp |
+| **CS** *(Customer Service)* | Giải quyết khiếu nại và exception liên quan đến đơn hàng | Tra cứu đơn theo mọi ID; liên lạc seller/carrier; cập nhật exception; escalate nếu cần | Toàn bộ order timeline (OMS + WMS + shipment); exception log; lịch sử liên lạc | Read-only toàn bộ order data; ghi note và cập nhật exception status; không chỉnh fulfillment |
+| **Operation Manager** | Đảm bảo KPI vận hành và ra quyết định phân bổ nguồn lực | Xem dashboard tổng quan; phân tích SLA breach; review carrier performance; approve policy thay đổi | Báo cáo tổng hợp: throughput, error rate, exception SLA, carrier performance, seller SLA | Read-only toàn bộ hệ thống; approve config thay đổi (không tự deploy) |
+| **System Admin** | Vận hành và cấu hình hệ thống ổn định | Quản lý seller account; cấu hình carrier integration; thiết lập routing rule; monitor system health | System config, API key, user permission, integration log, error log | Full system access; CRUD mọi config; không xử lý business exception |
+
+---
+
+## Scope
+
+<CardGroup cols={2}>
+  <Card title="In Scope" icon="circle-check">
+    - Order intake từ Shopee, TikTok Shop, Lazada, Website qua webhook/API
+    - Order deduplication và validation tại OMS
+    - Order lifecycle management: từ RECEIVED đến DELIVERED / RETURNED
+    - Fulfillment task management trong WMS (pick list, packing, label print)
+    - Barcode scan verification cho Picking và Packing
+    - Cancel flow với cutoff tại trạng thái PICKING
+    - Exception queue tập trung với SLA tracking
+    - Carrier integration: GHN, GHTK, J&T Express, Viettel Post (label generation + tracking webhook)
+    - Shipment status update từ carrier về OMS và sàn
+    - Seller portal: xem đơn, theo dõi fulfillment, báo cáo cơ bản
+    - CS dashboard: tra cứu đơn theo mọi ID, xem full timeline
+    - Operation dashboard: KPI, SLA, carrier performance
+    - Multi-warehouse support (Hà Nội, TP.HCM) — routing rule cơ bản
+    - Inventory visibility (stock on hand, reserved, available)
+  </Card>
+  <Card title="Out of Scope" icon="circle-xmark">
+    - Quản lý kế toán / hóa đơn / thanh toán COD đối soát
+    - Inbound / Receiving flow (nhập kho từ seller) — Phase 2
+    - Returns management / reverse logistics — Phase 2
+    - Carrier last-mile routing optimization
+    - Dự báo tồn kho (demand forecasting)
+    - Quản lý hợp đồng seller (CRM)
+    - Mobile app cho Warehouse Staff (Phase 1 dùng web-based)
+    - Integration với hệ thống ERP / kế toán nội bộ
+    - Tự động phân bổ bin location (slotting optimization)
+    - SLA tính phí / billing tự động cho seller
+  </Card>
+</CardGroup>
+
+---
+
+## Key BA Decisions
+
+<Info>
+4 quyết định dưới đây là các điểm BA phải đưa ra lập trường rõ ràng — không phải chỉ ghi lại yêu cầu mà phải chủ động recommend giải pháp sau khi phân tích trade-off.
+</Info>
+
+### Decision 1 — Tách ba status field riêng biệt
+
+| | |
+|---|---|
+| **Context** | Trong hệ thống cũ, một field `status` duy nhất cố gắng mô tả cả trạng thái đơn hàng (business), trạng thái fulfillment (kho), và trạng thái vận chuyển (carrier). |
+| **Problem / Risk** | Một status chung buộc phải dùng các giá trị mơ hồ như `IN_PROGRESS` hoặc `WITH_CARRIER` — không đủ thông tin cho bất kỳ bên nào. Khi carrier trả hàng về, hệ thống không biết phân biệt "hàng đang trên đường về kho" với "hàng đã về kho nhưng chưa xử lý". |
+| **BA recommendation** | Tách thành 3 field độc lập: `order_status` (business state), `fulfillment_status` (warehouse state — WMS-owned), `shipment_status` (carrier state — Carrier-owned). Mỗi field có lifecycle và owner riêng. |
+| **Trade-off** | Tăng độ phức tạp của data model. Cần thêm 1-2 ngày engineering để build status aggregation view cho seller portal. |
+| **Expected impact** | CS có thể debug chính xác đơn đang bị stuck ở layer nào. Seller portal hiển thị status phù hợp. Engineering không cần workaround khi thêm exception state mới. Giảm ít nhất 60% số ticket CS "đơn đang ở đâu". |
+
+---
+
+### Decision 2 — Exception queue tập trung thay vì xử lý phân tán qua Zalo/Excel
+
+| | |
+|---|---|
+| **Context** | Hiện tại khi có exception, nhân viên kho báo qua Zalo group. Không có cấu trúc, không có SLA, không có audit trail. Một exception có thể nằm im 4-8 giờ trước khi ai đó xử lý. |
+| **Problem / Risk** | Exception bị bỏ sót trong Zalo do tin nhắn trôi, đặc biệt trong giờ cao điểm. Không có dữ liệu để phân tích root cause. SLA resolution trung bình hiện tại là 6.2 giờ — quá cao cho đơn COD hoặc đơn có deadline giao trong ngày. |
+| **BA recommendation** | Xây Exception Queue trong hệ thống: mỗi exception được log với `exception_type`, `fulfillment_id`, `assigned_to`, `created_at`, `sla_deadline`, `status` (OPEN / IN_PROGRESS / RESOLVED / ESCALATED). Warehouse Staff tạo exception trong WMS thay vì nhắn Zalo. |
+| **Trade-off** | Cần onboard Warehouse Staff vào thói quen mới. Change management quan trọng hơn technical implementation. Nếu UX tạo exception không đủ nhanh (< 30 giây), nhân viên sẽ quay lại Zalo. |
+| **Expected impact** | Giảm SLA resolution xuống mục tiêu < 2 giờ. 100% exception có audit trail. Root cause analysis có dữ liệu thực để phân loại và ưu tiên fix. |
+
+---
+
+### Decision 3 — Cancel tự động chỉ được phép trước trạng thái PICKING; sau đó phải qua Supervisor review
+
+| | |
+|---|---|
+| **Context** | Seller có quyền cancel đơn trên sàn bất cứ lúc nào — kể cả khi kho đã pick xong. OMS nhận cancel webhook từ sàn nhưng không có logic kiểm tra fulfillment_status trước khi tự động cancel. |
+| **Problem / Risk** | Cancel sau khi đã PICKING gây lãng phí nhân công và vật tư đóng gói. Nếu cancel sau HANDED_OVER, VietFulfill phải gọi carrier để rút hàng — phí tốn và không phải lúc nào cũng được. |
+| **BA recommendation** | Định nghĩa cancel cutoff rõ ràng theo fulfillment_status: trước `PICKING` → auto-cancel; từ `PICKING` trở đi → tạo `cancel_request` với status PENDING, gửi notification cho Supervisor review. Supervisor có 30 phút để approve (kho dừng, hoàn hàng về shelf) hoặc reject. |
+| **Trade-off** | Seller sẽ không hài lòng khi cancel request bị delay 30 phút. Cần rõ ràng trong SLA agreement với seller về điều này. Supervisor phải có notification real-time. |
+| **Expected impact** | Giảm cancel sau PICKING từ ~200 đơn/tháng xuống mục tiêu < 10 đơn/tháng. Tiết kiệm ước tính 40–60 giờ nhân công/tháng. Tạo ra audit trail rõ ràng cho tranh chấp giữa seller và VietFulfill về cancel liability. |
+
+---
+
+### Decision 4 — Bắt buộc barcode scan trong Picking & Packing
+
+| | |
+|---|---|
+| **Context** | Hiện tại Picker đọc pick list bằng mắt và lấy hàng theo phán đoán. Không có bước verify. Tỉ lệ pick sai SKU ước tính 1.2% — với 10.000 đơn/ngày là 120 đơn bị sai mỗi ngày. |
+| **Problem / Risk** | Pick nhầm SKU là lỗi phổ biến nhất, đặc biệt trong kho có nhiều seller với hàng hóa đa dạng. Lỗi phát hiện muộn (khi customer khiếu nại) tốn chi phí hoàn hàng + giao lại + mất uy tín. |
+| **BA recommendation** | Bắt buộc scan barcode SKU tại bước PICKING: Picker scan bin barcode (xác nhận đúng vị trí) → scan SKU barcode (xác nhận đúng sản phẩm) → confirm qty. Tại bước PACKING: Packer scan từng item trước khi đóng hộp. Hệ thống WMS alert ngay nếu SKU scan không khớp với pick list. |
+| **Trade-off** | Tăng thời gian xử lý mỗi đơn thêm ước tính 20–40 giây. Cần đầu tư barcode scanner và gắn barcode lên toàn bộ bin location — effort setup ban đầu đáng kể. |
+| **Expected impact** | Giảm pick error rate từ 1.2% xuống mục tiêu < 0.3%. Tiết kiệm chi phí xử lý lỗi ước tính lớn hơn chi phí nhân công tăng thêm từ tháng thứ 2 trở đi. Có dữ liệu để phân tích lỗi theo nhân viên, theo shift, theo bin zone. |
+
+---
+
+## Case Study Summary
+
+<CardGroup cols={2}>
+  <Card title="Project" icon="building">
+    **VietFulfill OMS/WMS Fulfillment Platform**
+
+    Thiết kế hệ thống quản lý đơn hàng và kho vận tích hợp cho 3PL xử lý 8.000–12.000 đơn/ngày từ nhiều kênh bán hàng và nhiều carrier.
+  </Card>
+  <Card title="Industry" icon="truck">
+    3PL / E-commerce Logistics / Vietnam Market
+
+    Multi-channel: Shopee, TikTok Shop, Lazada, Website riêng
+  </Card>
+</CardGroup>
+
+### Business Problem
+
+VietFulfill tăng trưởng nhanh (3x volume trong 6 tháng) nhưng hệ thống vận hành vẫn dựa trên Excel, Google Sheet và Zalo. Hệ quả: order trùng, status không nhất quán, cancel gây lãng phí, exception xử lý chậm và không có visibility về carrier performance. Không thể scale tiếp mà không có platform tích hợp.
+
+### My Role as BA
+
+Phân tích hiện trạng (as-is process mapping), xác định pain points có data, thiết kế to-be flow cho toàn bộ order lifecycle và warehouse operation, định nghĩa data model cốt lõi (3 status field, naming convention), viết business rules cho cancel flow và exception handling, và ra quyết định trade-off có lập trường rõ ràng cho 4 vấn đề phức tạp nhất.
+
+### Why This Case Is Challenging
+
+<Steps>
+  <Step title="Multi-system, multi-actor complexity">
+    Hệ thống có 11 actors với quyền hạn và thông tin cần truy cập khác nhau, 4 kênh bán hàng với API không đồng nhất, 4 carrier với webhook format khác nhau. Không có actor nào có full picture — BA phải là người duy nhất giữ toàn bộ context.
+  </Step>
+  <Step title="Status consistency là bài toán khó">
+    Khi OMS, WMS và carrier đều có status riêng, việc định nghĩa khi nào một đơn được coi là "hoàn thành" hay "thất bại" không phải câu hỏi kỹ thuật mà là câu hỏi business. Sai ở đây dẫn đến tranh chấp tài chính với seller.
+  </Step>
+  <Step title="Cancel flow động đến quyền lợi nhiều bên">
+    Seller muốn cancel được mọi lúc. Kho muốn không bị gián đoạn. VietFulfill cần bảo vệ chi phí vận hành. Carrier không nhận lại hàng dễ dàng. BA phải design policy vừa fair, vừa có thể enforce bằng hệ thống.
+  </Step>
+  <Step title="Change management song song với system design">
+    Barcode scan và exception queue chỉ có giá trị nếu Warehouse Staff thực sự dùng. Hai tính năng này đều đòi hỏi thay đổi hành vi — BA phải thiết kế UX đủ đơn giản để người dùng không quay lại Zalo và Excel.
+  </Step>
+</Steps>
+
+### Main Artifacts
+
+| Artifact | Mô tả |
+|---|---|
+| `overview.mdx` | Context, actors, scope, key BA decisions (tài liệu này) |
+| `fulfillment-flow.mdx` | End-to-end business flow: bullet, swimlane flowchart, sequence diagram |
+| `state-machine.mdx` | Order status state machine — 20 states, transition rules, cancellation rules |
+| `business-rules.mdx` | 36 business rules trong 6 nhóm: validation, inventory, picking, cancel, delivery, SLA |
+| `data-mapping.mdx` | Data mapping giữa 4 hệ thống: Sales Channel → OMS → WMS → Carrier |
+| `rbac.mdx` | Role & Permission Matrix (RBAC) cho 6 roles × 25 permissions |
+| `api-integration.mdx` | API thinking cho 12 APIs cốt lõi, webhook design, error handling |
+| `exception-queue.mdx` | Exception Queue design, UI requirements, dashboard wireframes |
+| `uat.mdx` | 37 UAT test scenarios trong 11 nhóm |
+
+### What This Demonstrates (BA Capabilities)
+
+- **Domain analysis:** Hiểu logistics domain đủ sâu để phát hiện vấn đề mà stakeholder không tự articulate được
+- **Decision-making under ambiguity:** 4 Key BA Decisions đều không có câu trả lời đúng duy nhất — demonstrate khả năng frame vấn đề, evaluate trade-off và recommend có lập trường
+- **Data modeling instinct:** Tách 3 status field không phải yêu cầu từ stakeholder — đây là BA chủ động nhận ra risk và đề xuất giải pháp
+- **Cross-functional thinking:** Mỗi decision đều xem xét impact đến tất cả actors liên quan, không chỉ người yêu cầu
+- **Scope management:** Out of scope list cụ thể và có lý do — không phải "chúng tôi sẽ làm sau" chung chung
+
+### Lessons Learned
+
+<AccordionGroup>
+  <Accordion title="Status design phải làm đầu tiên, không phải sau">
+    Nếu không lock down status model trước khi viết bất kỳ flow nào, mọi diagram và spec sẽ phải viết lại. Trong case này, quyết định tách 3 status field là foundation của toàn bộ hệ thống. BA nên yêu cầu workshop riêng về data model trước khi đi vào chi tiết flow.
+  </Accordion>
+  <Accordion title="Exception là feature, không phải edge case">
+    Xu hướng tự nhiên của mọi người là focus vào happy path. Trong logistics, exception không phải "hiếm khi xảy ra" — với 10.000 đơn/ngày, dù chỉ 2% gặp vấn đề là 200 exception mỗi ngày cần xử lý. Exception queue không phải nice-to-have — đó là core feature.
+  </Accordion>
+  <Accordion title="Policy change cần BA làm trọng tài, không phải kỹ thuật">
+    Câu hỏi "cancel được phép đến bao giờ?" là câu hỏi business policy, không phải kỹ thuật. Nếu BA không đưa ra recommendation rõ ràng, Engineering sẽ implement một logic tùy tiện và seller/kho sẽ tranh chấp mãi mãi. BA phải dám ra quyết định và defend nó bằng data.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Note>
+**Naming Conventions trong toàn bộ case study:**
+- `oms_order_id`: format `VF-2026-XXXXXX` (6 chữ số, sequential per year)
+- `fulfillment_id`: format `FUL-XXXXXX` (6 chữ số)
+- `shipment_id`: tracking code của carrier (format khác nhau theo GHN / GHTK / J&T Express / Viettel Post)
+- Carrier names: **GHN**, **GHTK**, **J&T Express**, **Viettel Post** — viết nhất quán, không viết tắt khác
+</Note>
