@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exception Queue — CityHealth</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f4f8;
+    color: #1a2b3c;
+    min-height: 100vh;
+  }
+
+  /* Portfolio label */
+  .portfolio-label {
+    background: #1a2b3c;
+    color: #a8c4d8;
+    text-align: center;
+    padding: 7px 16px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .portfolio-label strong { color: #e0edf5; }
+
+  /* App header */
+  .app-header {
+    background: #fff;
+    border-bottom: 2px solid #dde8f0;
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .app-header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #c62828, #e53935);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+  }
+  .app-title { font-size: 16px; font-weight: 700; color: #c62828; }
+  .app-subtitle { font-size: 12px; color: #6b7f8e; margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .header-time {
+    font-size: 13px; color: #4a5e6e;
+    background: #eef4f8; padding: 5px 14px; border-radius: 20px;
+    font-weight: 500;
+  }
+  .header-alert {
+    background: #fce4ec; color: #c62828;
+    font-size: 12px; font-weight: 700;
+    padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid #ef9a9a;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .alert-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #c62828;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.2; }
+  }
+
+  /* Main container */
+  .main-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+  }
+
+  /* Page title */
+  .page-title-row {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title { font-size: 20px; font-weight: 700; color: #1a2b3c; }
+  .page-subtitle { font-size: 13px; color: #5c6f7e; margin-top: 2px; }
+
+  /* Stat cards */
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 22px;
+  }
+  .stat-card {
+    background: #fff; border-radius: 12px;
+    padding: 16px 18px; border: 1.5px solid #e4ecf2;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .stat-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .si-open { background: #fce4ec; }
+  .si-inprog { background: #fff3e0; }
+  .si-resolved { background: #e8f5e9; }
+  .si-critical { background: #fce4ec; }
+
+  .stat-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .sv-open { color: #c62828; }
+  .sv-inprog { color: #e65100; }
+  .sv-resolved { color: #2e7d32; }
+  .sv-critical { color: #b71c1c; }
+
+  .stat-label { font-size: 11.5px; font-weight: 600; color: #5c6f7e; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* Table wrapper */
+  .table-wrapper {
+    background: #fff; border-radius: 12px;
+    border: 1.5px solid #e4ecf2; overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .table-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid #eef2f6;
+  }
+  .table-title { font-size: 14px; font-weight: 700; color: #1a2b3c; }
+  .table-meta { display: flex; align-items: center; gap: 10px; }
+  .filter-pill {
+    font-size: 11.5px; font-weight: 600; color: #5c6f7e;
+    background: #f0f4f8; padding: 4px 12px; border-radius: 20px;
+    cursor: pointer; border: 1px solid #dde8f0;
+  }
+  .filter-pill.active { background: #fce4ec; color: #c62828; border-color: #ef9a9a; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f5f8fa; }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: #5c6f7e; border-bottom: 1.5px solid #e4ecf2;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #eef2f6;
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafbfc; }
+  tbody td {
+    padding: 12px 14px;
+    font-size: 13px; color: #1a2b3c;
+    vertical-align: middle;
+  }
+
+  /* Row highlights */
+  tr.row-critical { background: #fff5f5; }
+  tr.row-critical:hover { background: #ffecec; }
+  tr.row-resolved { opacity: 0.7; }
+
+  .exc-id {
+    font-family: 'Courier New', monospace;
+    font-size: 11.5px; color: #5c6f7e; font-weight: 600;
+  }
+  .appt-ref {
+    font-family: 'Courier New', monospace;
+    font-size: 12px; color: #1565c0;
+    background: #e3f2fd; padding: 2px 7px; border-radius: 5px;
+  }
+  .patient-name { font-weight: 600; }
+
+  /* Exception type badges */
+  .exc-type {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11.5px; font-weight: 600; white-space: nowrap;
+  }
+  .exc-his { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+  .exc-qr { background: #e8eaf6; color: #3949ab; }
+  .exc-late { background: #fce4ec; color: #ad1457; }
+  .exc-sched { background: #e0f2f1; color: #00695c; }
+  .exc-dup { background: #ede7f6; color: #512da8; }
+  .exc-notif { background: #f5f5f5; color: #616161; }
+
+  /* Status badges */
+  .status-open { background: #fce4ec; color: #c62828; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; border: 1px solid #ef9a9a; }
+  .status-inprog { background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; border: 1px solid #ffcc80; }
+  .status-resolved { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+  /* Owner */
+  .owner-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: #3d5166;
+  }
+  .owner-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .oa-rec { background: #1565c0; }
+  .oa-sys { background: #546e7a; }
+  .oa-admin { background: #6a1b9a; }
+  .oa-cs { background: #00695c; }
+
+  /* Priority */
+  .priority-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .p-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* SLA column */
+  .sla-cell { font-weight: 700; font-size: 12.5px; }
+  .sla-critical { color: #c62828; }
+  .sla-high { color: #e65100; }
+  .sla-medium { color: #f9a825; }
+  .sla-low { color: #5c6f7e; }
+  .sla-done { color: #2e7d32; }
+
+  .sla-bar-wrap {
+    width: 70px; height: 5px;
+    background: #f0f4f8; border-radius: 3px;
+    margin-top: 4px; overflow: hidden;
+  }
+  .sla-bar { height: 100%; border-radius: 3px; }
+  .sla-bar-critical { background: #c62828; width: 12%; }
+  .sla-bar-high { background: #e65100; width: 38%; }
+  .sla-bar-medium1 { background: #f9a825; width: 55%; }
+  .sla-bar-medium2 { background: #f9a825; width: 75%; }
+  .sla-bar-low { background: #9baab5; width: 85%; }
+  .sla-bar-done { background: #43a047; width: 100%; }
+
+  /* Action buttons */
+  .btn { display: inline-block; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; white-space: nowrap; margin-right: 4px; }
+  .btn:hover { opacity: 0.8; }
+  .btn:last-child { margin-right: 0; }
+  .btn-retry { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+  .btn-manual { background: #e3f2fd; color: #1565c0; }
+  .btn-view { background: #f5f5f5; color: #3d5166; }
+  .btn-checkin { background: #e8f5e9; color: #2e7d32; }
+  .btn-contact { background: #e0f2f1; color: #00695c; }
+  .btn-cancel { background: #fce4ec; color: #c62828; }
+  .btn-audit { background: #ede7f6; color: #512da8; }
+
+  /* Quick action bar */
+  .action-bar {
+    background: #fff; border: 1.5px solid #e4ecf2;
+    border-radius: 10px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .action-bar-label { font-size: 12px; font-weight: 600; color: #5c6f7e; }
+  .btn-global {
+    padding: 7px 16px; border-radius: 7px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid transparent; transition: all 0.15s;
+  }
+  .btn-global:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+  .bg-retry { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+  .bg-assign { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+  .bg-resolve { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+  .bg-escalate { background: #fce4ec; color: #c62828; border-color: #f48fb1; }
+  .bg-note { background: #f5f5f5; color: #3d5166; border-color: #e0e0e0; }
+
+  /* Annotations */
+  .annotations {
+    background: #fff; border: 1.5px solid #e4ecf2;
+    border-radius: 12px; padding: 20px 22px;
+  }
+  .annotations-title {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #c62828; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .annotations-title::before {
+    content: ''; display: block;
+    width: 3px; height: 14px; border-radius: 2px; background: #c62828;
+  }
+  .annotation-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .annotation-item {
+    display: flex; gap: 10px;
+    font-size: 12.5px; line-height: 1.5; color: #3d5166;
+    background: #fafbfc; border-radius: 8px; padding: 11px 13px;
+    border: 1px solid #eef2f6;
+  }
+  .annotation-num {
+    min-width: 22px; height: 22px;
+    background: #fce4ec; color: #c62828;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; <strong>Business Analyst</strong> &mdash; CityHealth Exception Queue</div>
+
+<div class="app-header">
+  <div class="app-header-left">
+    <div class="logo-mark">⚠</div>
+    <div>
+      <div class="app-title">Exception Queue</div>
+      <div class="app-subtitle">CityHealth HMS · Operations Center</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-alert"><span class="alert-dot"></span>2 Critical</div>
+    <div class="header-time">Thứ Hai, 15/01/2024 &nbsp;|&nbsp; 09:14 AM</div>
+  </div>
+</div>
+
+<div class="main-container">
+
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon si-open">🔴</div>
+      <div>
+        <div class="stat-value sv-open">5</div>
+        <div class="stat-label">Open</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-inprog">🟠</div>
+      <div>
+        <div class="stat-value sv-inprog">3</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-resolved">✅</div>
+      <div>
+        <div class="stat-value sv-resolved">12</div>
+        <div class="stat-label">Resolved Today</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-critical">🚨</div>
+      <div>
+        <div class="stat-value sv-critical">2</div>
+        <div class="stat-label">Critical</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <div class="table-header-row">
+      <div class="table-title">Active Exceptions</div>
+      <div class="table-meta">
+        <span class="filter-pill active">All</span>
+        <span class="filter-pill">Open</span>
+        <span class="filter-pill">In Progress</span>
+        <span class="filter-pill">Critical</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Exception ID</th>
+          <th>Appt ID</th>
+          <th>Patient Name</th>
+          <th>Exception Type</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Priority</th>
+          <th>SLA</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Row 1: Critical -->
+        <tr class="row-critical">
+          <td><span class="exc-id">EXC-001</span></td>
+          <td><span class="appt-ref">APT-0093</span></td>
+          <td><span class="patient-name">Trần Đức Minh</span></td>
+          <td><span class="exc-type exc-his">⚠️ HIS Sync Failed</span></td>
+          <td><span class="status-open">Open</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-rec">RA</div>
+              Receptionist A
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#c62828;"></span>
+              <span style="color:#c62828;">Critical</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-critical">3m left</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-critical"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-retry">Retry HIS</button>
+            <button class="btn btn-manual">Manual</button>
+          </td>
+        </tr>
+
+        <!-- Row 2 -->
+        <tr>
+          <td><span class="exc-id">EXC-002</span></td>
+          <td><span class="appt-ref">APT-0097</span></td>
+          <td><span class="patient-name">Lê Thị Bảo</span></td>
+          <td><span class="exc-type exc-qr">🔲 QR Invalid/Expired</span></td>
+          <td><span class="status-open">Open</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-sys">SY</div>
+              System
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#f9a825;"></span>
+              <span style="color:#e6a800;">Medium</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-medium">15m</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-medium1"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-view">View</button>
+          </td>
+        </tr>
+
+        <!-- Row 3 -->
+        <tr>
+          <td><span class="exc-id">EXC-003</span></td>
+          <td><span class="appt-ref">APT-0089</span></td>
+          <td><span class="patient-name">Phạm Thị Lan</span></td>
+          <td><span class="exc-type exc-late">⏰ Patient Too Late</span></td>
+          <td><span class="status-inprog">In Progress</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-rec">RB</div>
+              Receptionist B
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#e65100;"></span>
+              <span style="color:#e65100;">High</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-high">8m</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-high"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-checkin">Manual Check-in</button>
+          </td>
+        </tr>
+
+        <!-- Row 4 -->
+        <tr>
+          <td><span class="exc-id">EXC-004</span></td>
+          <td><span class="appt-ref">APT-0101</span></td>
+          <td><span class="patient-name">Nguyễn Minh Khoa</span></td>
+          <td><span class="exc-type exc-sched">📆 Doctor Schedule Changed</span></td>
+          <td><span class="status-open">Open</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-admin">HA</div>
+              Hospital Admin
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#e65100;"></span>
+              <span style="color:#e65100;">High</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-high">22m</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-medium2"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-contact">Contact Patient</button>
+          </td>
+        </tr>
+
+        <!-- Row 5 -->
+        <tr>
+          <td><span class="exc-id">EXC-005</span></td>
+          <td><span class="appt-ref">APT-0078</span></td>
+          <td><span class="patient-name">Hoàng Văn Đức</span></td>
+          <td><span class="exc-type exc-dup">⚡ Duplicate Appointment</span></td>
+          <td><span class="status-open">Open</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-cs">CS</div>
+              CS Team
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#f9a825;"></span>
+              <span style="color:#e6a800;">Medium</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-medium">45m</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-low"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-view">View</button>
+            <button class="btn btn-cancel">Cancel Dup</button>
+          </td>
+        </tr>
+
+        <!-- Row 6: Resolved -->
+        <tr class="row-resolved">
+          <td><span class="exc-id">EXC-006</span></td>
+          <td><span class="appt-ref">APT-0065</span></td>
+          <td><span class="patient-name">Vũ Thị Mai</span></td>
+          <td><span class="exc-type exc-notif">🔔 Notification Failed</span></td>
+          <td><span class="status-resolved">Resolved</span></td>
+          <td>
+            <div class="owner-tag">
+              <div class="owner-avatar oa-sys">SY</div>
+              System
+            </div>
+          </td>
+          <td>
+            <div class="priority-badge">
+              <span class="p-dot" style="background:#90a4ae;"></span>
+              <span style="color:#78909c;">Low</span>
+            </div>
+          </td>
+          <td>
+            <div class="sla-cell sla-done">✅ Done</div>
+            <div class="sla-bar-wrap"><div class="sla-bar sla-bar-done"></div></div>
+          </td>
+          <td>
+            <button class="btn btn-audit">Audit Log</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <span class="action-bar-label">Quick Actions:</span>
+    <button class="btn-global bg-retry">🔄 Retry HIS Sync</button>
+    <button class="btn-global bg-assign">👤 Assign Owner</button>
+    <button class="btn-global bg-resolve">✅ Resolve</button>
+    <button class="btn-global bg-escalate">🚨 Escalate</button>
+    <button class="btn-global bg-note">📝 Add Note</button>
+  </div>
+
+  <!-- Annotations -->
+  <div class="annotations">
+    <div class="annotations-title">BA Design Notes</div>
+    <div class="annotation-grid">
+      <div class="annotation-item">
+        <span class="annotation-num">1</span>
+        <span><strong>HIS Sync Failed is CRITICAL</strong> — patient cannot receive a queue number until resolved. SLA = 5 minutes. Exceeding SLA requires mandatory escalation to supervisor with a reason code.</span>
+      </div>
+      <div class="annotation-item">
+        <span class="annotation-num">2</span>
+        <span><strong>Exception queue prevents staff from managing issues through Zalo or phone</strong> — all actions, notes, and state transitions are logged in the system for audit and performance review.</span>
+      </div>
+      <div class="annotation-item">
+        <span class="annotation-num">3</span>
+        <span><strong>Resolution requires a reason code</strong> — ensures audit trail for compliance. Staff cannot close an exception without selecting a resolution category (e.g., "Retried successfully", "Manual override applied").</span>
+      </div>
+      <div class="annotation-item">
+        <span class="annotation-num">4</span>
+        <span><strong>SLA countdown drives visual priority</strong>: red bar = breach imminent, orange = urgent, yellow = normal, blue = low priority. SLA timer starts when exception is first created, not when assigned.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
