@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Payment Reconciliation Dashboard — BA Portfolio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    color: #0f172a;
+  }
+
+  /* Top banner */
+  .top-banner {
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 7px;
+    border-bottom: 2px solid #3b82f6;
+  }
+  .top-banner span { color: #e2e8f0; }
+
+  /* Dashboard wrapper */
+  .dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+  }
+
+  /* Page header */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-title h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .page-title p {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn-secondary {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  /* KPI grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+  }
+  .kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+  }
+  /* KPI color variants */
+  .kpi-blue .kpi-icon { background: #dbeafe; }
+  .kpi-blue .kpi-value { color: #2563eb; }
+  .kpi-green .kpi-icon { background: #dcfce7; }
+  .kpi-green .kpi-value { color: #16a34a; }
+  .kpi-red .kpi-icon { background: #fee2e2; }
+  .kpi-red .kpi-value { color: #dc2626; }
+  .kpi-yellow .kpi-icon { background: #fef9c3; }
+  .kpi-yellow .kpi-value { color: #ca8a04; }
+  .kpi-orange .kpi-icon { background: #ffedd5; }
+  .kpi-orange .kpi-value { color: #ea580c; }
+  .kpi-purple .kpi-icon { background: #ede9fe; }
+  .kpi-purple .kpi-value { color: #7c3aed; }
+
+  /* Filter bar */
+  .filter-bar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-right: 4px;
+  }
+  .filter-select {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-select .filter-name { font-size: 11px; color: #94a3b8; }
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: #e2e8f0;
+  }
+  .filter-bar .spacer { flex: 1; }
+  .search-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #64748b;
+    width: 180px;
+  }
+
+  /* Main content grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Table card */
+  .table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .table-card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .table-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .table-card-sub {
+    font-size: 12px;
+    color: #64748b;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr {
+    background: #1e293b;
+    color: #94a3b8;
+  }
+  thead th {
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td {
+    padding: 12px 12px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .txn-id {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 12px;
+  }
+  .user-id {
+    font-size: 12px;
+    color: #64748b;
+    font-family: "Courier New", Courier, monospace;
+  }
+  .amount-cell {
+    font-weight: 700;
+    color: #0f172a;
+    text-align: right;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-success { background: #dcfce7; color: #15803d; }
+  .badge-failed { background: #fee2e2; color: #dc2626; }
+  .badge-processing { background: #fef9c3; color: #92400e; }
+  .badge-timeout { background: #ffedd5; color: #c2410c; }
+  .badge-missing { background: #fee2e2; color: #b91c1c; }
+  .badge-matched { background: #dcfce7; color: #15803d; }
+  .badge-mismatched { background: #ffedd5; color: #c2410c; }
+  .badge-unknown { background: #fef9c3; color: #92400e; }
+  .badge-refund { background: #fee2e2; color: #be123c; }
+  .badge-none { color: #cbd5e1; font-size: 16px; }
+
+  /* Exception cell */
+  .exception-cell {
+    font-size: 11px;
+    color: #dc2626;
+    font-weight: 600;
+  }
+  .exception-none { color: #cbd5e1; }
+
+  /* Owner badge */
+  .owner-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .owner-finance { background: #dbeafe; color: #1d4ed8; }
+  .owner-ops { background: #fef9c3; color: #92400e; }
+
+  /* Updated time */
+  .time-cell {
+    font-size: 12px;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Action buttons cell */
+  .action-cell {
+    display: flex;
+    gap: 5px;
+  }
+  .act-btn {
+    padding: 4px 9px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .act-view { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+  .act-retry { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; }
+  .act-refund { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+  .act-resolve { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+
+  /* Right side panel */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Queue card */
+  .queue-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .queue-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .queue-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .queue-count {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .queue-count-orange { background: #ffedd5; color: #c2410c; }
+  .queue-count-yellow { background: #fef9c3; color: #92400e; }
+  .queue-count-red { background: #fee2e2; color: #dc2626; }
+  .queue-body {
+    padding: 8px 0;
+  }
+  .queue-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 12px;
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-item-id {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: 700;
+    color: #374151;
+  }
+  .queue-item-detail {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .queue-item-time {
+    font-size: 11px;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Annotation section */
+  .annotation-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .annotation-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .annotation-section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 2px;
+  }
+  .annotation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .ann-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .ann-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(59,130,246,0.3);
+  }
+  .ann-body {}
+  .ann-heading {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+  .ann-text {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.55;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+    .annotation-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top banner -->
+<div class="top-banner">
+  Portfolio Artifact &nbsp;&middot;&nbsp; Business Analyst &nbsp;&mdash;&nbsp;
+  <span>QR Payment Reconciliation Dashboard</span>
+</div>
+
+<div class="dashboard">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Reconciliation Dashboard</h1>
+      <p>Last synced: Today 15:28 &nbsp;&middot;&nbsp; Cutoff: T+1 EOD &nbsp;&middot;&nbsp; Source: Wallet Ledger &amp; Payment Gateway</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary">&#8635; Refresh</button>
+      <button class="btn-secondary">&#8681; Export CSV</button>
+      <button class="btn-primary">+ Manual Entry</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">Total</span>
+        <div class="kpi-icon">&#128202;</div>
+      </div>
+      <div class="kpi-value">1,247</div>
+      <div class="kpi-sub">Transactions today</div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+      <div class="kpi-header">
+        <span class="kpi-label">Success</span>
+        <div class="kpi-icon">&#10003;</div>
+      </div>
+      <div class="kpi-value">1,198</div>
+      <div class="kpi-sub">96.07% match rate</div>
+    </div>
+
+    <div class="kpi-card kpi-red">
+      <div class="kpi-header">
+        <span class="kpi-label">Failed</span>
+        <div class="kpi-icon">&#10007;</div>
+      </div>
+      <div class="kpi-value">31</div>
+      <div class="kpi-sub">Confirmed failures</div>
+    </div>
+
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-header">
+        <span class="kpi-label">Unknown</span>
+        <div class="kpi-icon">?</div>
+      </div>
+      <div class="kpi-value">9</div>
+      <div class="kpi-sub">Pending inquiry</div>
+    </div>
+
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-header">
+        <span class="kpi-label">Mismatched</span>
+        <div class="kpi-icon">!</div>
+      </div>
+      <div class="kpi-value">6</div>
+      <div class="kpi-sub">Status discrepancy</div>
+    </div>
+
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-header">
+        <span class="kpi-label">Refund Req.</span>
+        <div class="kpi-icon">&#8617;</div>
+      </div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-sub">Awaiting Finance</div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filters:</span>
+
+    <div class="filter-select">
+      <span class="filter-name">Date:</span> Today &#9660;
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-select">
+      <span class="filter-name">Gateway:</span> All &#9660;
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-select">
+      <span class="filter-name">Status:</span> All &#9660;
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-select">
+      <span class="filter-name">Recon:</span> All &#9660;
+    </div>
+
+    <div class="spacer"></div>
+    <input class="search-box" type="text" placeholder="&#128269; Search TXN ID / User...">
+  </div>
+
+  <!-- Main grid: table + right panel -->
+  <div class="main-grid">
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <div>
+          <div class="table-card-title">Transaction Reconciliation Log</div>
+          <div class="table-card-sub">Showing 5 of 1,247 records &nbsp;&middot;&nbsp; Sorted by: Last Updated &#9660;</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-secondary" style="font-size:12px;padding:5px 10px;">&#127968; Batch Resolve</button>
+          <button class="btn-secondary" style="font-size:12px;padding:5px 10px;">&#8617; Batch Refund</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>User ID</th>
+              <th style="text-align:right;">Amount</th>
+              <th>Wallet Status</th>
+              <th>Gateway Status</th>
+              <th>Recon Status</th>
+              <th>Exception</th>
+              <th>Owner</th>
+              <th>Last Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Row 1: Matched -->
+            <tr>
+              <td><span class="txn-id">TXN-2401</span></td>
+              <td><span class="user-id">USR-88291</span></td>
+              <td class="amount-cell">75,000</td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-matched">&#10003; Matched</span></td>
+              <td><span class="exception-none">&mdash;</span></td>
+              <td><span class="exception-none">&mdash;</span></td>
+              <td class="time-cell">14:32</td>
+              <td>
+                <div class="action-cell">
+                  <button class="act-btn act-view">View</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 2: Mismatched -->
+            <tr>
+              <td><span class="txn-id">TXN-2402</span></td>
+              <td><span class="user-id">USR-44109</span></td>
+              <td class="amount-cell">150,000</td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-timeout">&#9201; Timeout</span></td>
+              <td><span class="badge badge-mismatched">&#9888; Mismatched</span></td>
+              <td><span class="exception-cell">Status Mismatch</span></td>
+              <td><span class="owner-badge owner-finance">Finance</span></td>
+              <td class="time-cell">14:45</td>
+              <td>
+                <div class="action-cell">
+                  <button class="act-btn act-view">View</button>
+                  <button class="act-btn act-retry">Retry</button>
+                  <button class="act-btn act-resolve">Resolve</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 3: Unknown -->
+            <tr>
+              <td><span class="txn-id">TXN-2403</span></td>
+              <td><span class="user-id">USR-22841</span></td>
+              <td class="amount-cell">220,000</td>
+              <td><span class="badge badge-processing">&#8987; Processing</span></td>
+              <td><span class="badge badge-missing">&#10007; Missing CB</span></td>
+              <td><span class="badge badge-unknown">&#8635; Unknown</span></td>
+              <td><span class="exception-cell">Missing Callback</span></td>
+              <td><span class="owner-badge owner-ops">Ops</span></td>
+              <td class="time-cell">15:01</td>
+              <td>
+                <div class="action-cell">
+                  <button class="act-btn act-view">View</button>
+                  <button class="act-btn act-retry">Retry</button>
+                  <button class="act-btn act-resolve">Resolve</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 4: Refund Required -->
+            <tr>
+              <td><span class="txn-id">TXN-2404</span></td>
+              <td><span class="user-id">USR-55019</span></td>
+              <td class="amount-cell">89,000</td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-failed">&#10007; Failed</span></td>
+              <td><span class="badge badge-refund">&#128308; Refund Req.</span></td>
+              <td><span class="exception-cell">Wallet Debited</span></td>
+              <td><span class="owner-badge owner-finance">Finance</span></td>
+              <td class="time-cell">15:12</td>
+              <td>
+                <div class="action-cell">
+                  <button class="act-btn act-view">View</button>
+                  <button class="act-btn act-refund">Refund</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 5: Matched -->
+            <tr>
+              <td><span class="txn-id">TXN-2405</span></td>
+              <td><span class="user-id">USR-77320</span></td>
+              <td class="amount-cell">45,000</td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-success">&#10003; Success</span></td>
+              <td><span class="badge badge-matched">&#10003; Matched</span></td>
+              <td><span class="exception-none">&mdash;</span></td>
+              <td><span class="exception-none">&mdash;</span></td>
+              <td class="time-cell">15:20</td>
+              <td>
+                <div class="action-cell">
+                  <button class="act-btn act-view">View</button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f1f5f9;">
+        <span style="font-size:12px;color:#94a3b8;">Showing 1–5 of 1,247</span>
+        <div style="display:flex;gap:4px;">
+          <button class="act-btn act-resolve" style="padding:4px 10px;">&#8249; Prev</button>
+          <button class="act-btn act-view" style="padding:4px 10px;">1</button>
+          <button class="act-btn act-resolve" style="padding:4px 10px;">2</button>
+          <button class="act-btn act-resolve" style="padding:4px 10px;">3</button>
+          <button class="act-btn act-resolve" style="padding:4px 10px;">Next &#8250;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: Queues -->
+    <div class="right-panel">
+
+      <!-- Mismatch Queue -->
+      <div class="queue-card">
+        <div class="queue-header">
+          <div class="queue-title">
+            &#9888; Mismatch Queue
+            <span class="queue-count queue-count-orange">6 items</span>
+          </div>
+          <button class="act-btn act-view" style="font-size:11px;">View All</button>
+        </div>
+        <div class="queue-body">
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2402</div>
+              <div class="queue-item-detail">Status Mismatch</div>
+            </div>
+            <div class="queue-item-time">14:45</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2388</div>
+              <div class="queue-item-detail">Amount Discrepancy</div>
+            </div>
+            <div class="queue-item-time">13:22</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2371</div>
+              <div class="queue-item-detail">Gateway Timeout</div>
+            </div>
+            <div class="queue-item-time">12:10</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2355</div>
+              <div class="queue-item-detail">Duplicate Detection</div>
+            </div>
+            <div class="queue-item-time">11:58</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2339</div>
+              <div class="queue-item-detail">Status Mismatch</div>
+            </div>
+            <div class="queue-item-time">10:43</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2301</div>
+              <div class="queue-item-detail">Gateway Mismatch</div>
+            </div>
+            <div class="queue-item-time">09:31</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing Callback Queue -->
+      <div class="queue-card">
+        <div class="queue-header">
+          <div class="queue-title">
+            &#10067; Missing Callback
+            <span class="queue-count queue-count-yellow">9 items</span>
+          </div>
+          <button class="act-btn act-retry" style="font-size:11px;">Retry All</button>
+        </div>
+        <div class="queue-body">
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2403</div>
+              <div class="queue-item-detail">No CB after 30s</div>
+            </div>
+            <div class="queue-item-time">15:01</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2398</div>
+              <div class="queue-item-detail">No CB after 30s</div>
+            </div>
+            <div class="queue-item-time">14:52</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2391</div>
+              <div class="queue-item-detail">Gateway silent</div>
+            </div>
+            <div class="queue-item-time">14:39</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2377</div>
+              <div class="queue-item-detail">No CB after 30s</div>
+            </div>
+            <div class="queue-item-time">13:51</div>
+          </div>
+          <div class="queue-item" style="background:#f8fafc;color:#94a3b8;font-size:11px;justify-content:center;padding:6px;">
+            + 5 more items
+          </div>
+        </div>
+      </div>
+
+      <!-- Refund Queue -->
+      <div class="queue-card">
+        <div class="queue-header">
+          <div class="queue-title">
+            &#8617; Refund Queue
+            <span class="queue-count queue-count-red">3 items</span>
+          </div>
+          <button class="act-btn act-refund" style="font-size:11px;">Request All</button>
+        </div>
+        <div class="queue-body">
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2404</div>
+              <div class="queue-item-detail">89,000 VND &middot; Wallet Debited</div>
+            </div>
+            <div class="queue-item-time">15:12</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2365</div>
+              <div class="queue-item-detail">120,000 VND &middot; GW Failed</div>
+            </div>
+            <div class="queue-item-time">12:47</div>
+          </div>
+          <div class="queue-item">
+            <div>
+              <div class="queue-item-id">TXN-2312</div>
+              <div class="queue-item-detail">55,000 VND &middot; Wallet Debited</div>
+            </div>
+            <div class="queue-item-time">10:05</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+
+  </div><!-- /main-grid -->
+
+  <!-- Annotation section -->
+  <div class="annotation-section">
+    <div class="annotation-section-title">BA Annotations — Design Decisions &amp; Business Rules</div>
+    <div class="annotation-grid">
+
+      <div class="ann-item">
+        <div class="ann-num">1</div>
+        <div class="ann-body">
+          <div class="ann-heading">Dual-Status Display: Core Detection Logic</div>
+          <div class="ann-text">Wallet status and Gateway status are always shown as two separate columns. A transaction is only considered reconciled when both statuses match. Any inconsistency between wallet ledger and gateway response is the primary signal for exception handling. Do not merge these into a single status column.</div>
+        </div>
+      </div>
+
+      <div class="ann-item">
+        <div class="ann-num">2</div>
+        <div class="ann-body">
+          <div class="ann-heading">Unknown Status: Inquiry-First Rule</div>
+          <div class="ann-text">An Unknown reconciliation status means the gateway has not yet confirmed the final outcome. The wallet must NOT be updated (debit or refund) until reconciliation completes. Ops must trigger a Retry Inquiry via the gateway's status API. Unknown status expires to FAILED after the reconciliation window (T+1 EOD).</div>
+        </div>
+      </div>
+
+      <div class="ann-item">
+        <div class="ann-num">3</div>
+        <div class="ann-body">
+          <div class="ann-heading">Refund Actions: Finance Approval Required</div>
+          <div class="ann-text">Refund actions require explicit Finance team approval before execution. The system must log: operator ID, timestamp, refund reason, and approval reference. Refunds must be processed through the wallet's reversal API — not a new credit transaction. Audit trail is mandatory for regulatory compliance.</div>
+        </div>
+      </div>
+
+      <div class="ann-item">
+        <div class="ann-num">4</div>
+        <div class="ann-body">
+          <div class="ann-heading">Manual Resolution: Operator Accountability</div>
+          <div class="ann-text">Any manual Mark Resolved action must capture: operator name (from authenticated session), resolution reason (from a controlled vocabulary list), and a free-text note. Resolution without these fields must be blocked. All manual resolutions are surfaced in the daily exception report sent to Finance and Compliance.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+</body>
+</html>
