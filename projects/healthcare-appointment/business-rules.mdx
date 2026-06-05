@@ -1,0 +1,129 @@
+---
+title: "Business Rules"
+description: "37 business rules cho toàn bộ luồng đặt lịch, check-in, HIS sync, no-show và queue management"
+icon: "book"
+---
+
+<Note>
+  **Practice Case Study** — MedBook tại CityHealth General Hospital (fictional). Tất cả rules và thresholds là fictional assumptions cho mục đích minh họa BA capability.
+</Note>
+
+## Tổng quan
+
+| Nhóm | Prefix | Số Rules | Mô tả |
+|---|---|---|---|
+| Booking Rules | BR-BOOK-xx | 8 | Slot, doctor schedule, duplicate prevention, cut-off |
+| Confirmation Rules | BR-CONF-xx | 5 | Auto-confirm, manual confirm, reminder, expiration |
+| Check-in Rules | BR-CHECKIN-xx | 7 | Time window, facility, early/late, caregiver, status |
+| HIS Sync Rules | BR-HIS-xx | 6 | Registration, matching, new patient, retry, idempotency |
+| Cancel / No-show / Reschedule | BR-CANCEL-xx | 6 | Cut-off, slot release, grace period, override |
+| Queue Rules | BR-QUEUE-xx | 5 | Generation, priority, room assignment, substitution |
+
+**Tổng: 37 rules**
+
+---
+
+## Nhóm 1: Booking Rules (BR-BOOK-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-BOOK-01** | Slot Availability Check | Patient chọn ngày khám và specialty | Patient đang trong bước chọn timeslot | MedBook hiển thị slot real-time (polling 30 giây). Slot đã hold hoặc booked được ẩn. Nếu không có kết nối real-time, hiển thị last-seen data với badge "Cập nhật lúc [HH:mm]" | Nếu 2 patients chọn cùng slot đồng thời, patient submit trước được ưu tiên; patient còn lại nhận thông báo "Slot vừa được đặt bởi người khác" | MedBook System |
+| **BR-BOOK-02** | Slot Hold During Form | Patient chọn timeslot và bắt đầu điền form | Slot phải đang Available | MedBook tạm thời lock slot trong **10 phút**. Countdown timer hiển thị trên UI. Nếu hết 10 phút chưa submit, slot được release, appointment chuyển sang EXPIRED, patient nhận thông báo | Nếu patient submit đúng lúc timeout (race condition), ưu tiên xử lý submit | MedBook System |
+| **BR-BOOK-03** | Doctor Schedule — Published Only | Patient tìm kiếm bác sĩ | Lịch làm việc phải có trạng thái `published` | Chỉ hiển thị timeslot thuộc lịch đã được publish. Lịch `draft` hoặc `pending_approval` không hiển thị. Nếu bác sĩ chưa có lịch published trong 30 ngày tới, hiển thị "Bác sĩ chưa có lịch khám" | Emergency appointment do Admin tạo thủ công có thể bypass published schedule | MedBook System / Doctor / System Admin |
+| **BR-BOOK-04** | Duplicate Booking Prevention | Patient submit form đặt lịch | System kiểm tra: patient có appointment nào trong cùng ngày, cùng specialty với status active không? | Nếu tồn tại duplicate: block submit, hiển thị "Bạn đã có lịch hẹn [specialty] vào ngày [date] lúc [time]" với link đến appointment hiện có | Cho phép đặt nhiều specialty khác nhau trong cùng ngày; Caregiver đặt cho nhiều family member khác nhau không bị block | MedBook System |
+| **BR-BOOK-05** | Booking Cut-off Time | Patient submit form đặt lịch | Thời điểm hiện tại phải cách `appointment_time` ít nhất **2 giờ** | Nếu cố đặt trong vòng 2 giờ trước giờ khám: block submit, hiển thị "Lịch hẹn phải đặt trước ít nhất 2 giờ". Ẩn tất cả slot trong vòng 2 giờ tới khỏi danh sách | Receptionist có thể tạo walk-in appointment ngoại lệ qua admin console | MedBook System / Receptionist |
+| **BR-BOOK-06** | Required Patient Information | Patient nhấn "Xác nhận đặt lịch" | Form phải có đầy đủ: `full_name`, `date_of_birth`, `identity_number`, `phone_number`, `chief_complaint` (tối thiểu 10 ký tự) | Validate client-side trước, sau đó validate server-side. Nếu thiếu field bắt buộc: highlight field đỏ, hiển thị message cụ thể. Không cho submit cho đến khi tất cả field hợp lệ | `insurance_number` là optional. Nếu chọn "Khám dịch vụ" (không dùng BHYT), field bị ẩn | MedBook System |
+| **BR-BOOK-07** | Family Member Booking | Patient chọn "Đặt lịch cho người thân" | Account đặt lịch phải có relationship record với patient được đặt, hoặc có `caregiver_authorization` token hợp lệ | Caregiver chọn từ danh sách family members đã liên kết. Form điền thông tin của patient (không phải caregiver). Appointment ghi nhận cả `booker_id` (caregiver) và `patient_id`. Notification gửi đến cả hai SĐT | Nếu chưa có relationship record, caregiver phải thực hiện "Thêm người thân" trước (yêu cầu xác minh CCCD của patient) | MedBook System / Patient |
+| **BR-BOOK-08** | Maximum Future Booking Window | Patient mở calendar chọn ngày | Ngày được chọn phải trong vòng **30 ngày** kể từ ngày hiện tại | Calendar disable tất cả ngày sau `today + 30 days`. Nếu patient cố chọn ngày ngoài window qua direct URL manipulation, server trả về `400 BOOKING_TOO_FAR_IN_ADVANCE` | System Admin có thể cấu hình `max_booking_window_days` khác nhau cho từng specialty | MedBook System / System Admin |
+
+---
+
+## Nhóm 2: Confirmation Rules (BR-CONF-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-CONF-01** | Auto-Confirm for General Specialties | Appointment chuyển sang PENDING_CONFIRMATION | Specialty thuộc danh sách `auto_confirm_specialties` (Đa khoa, Nội tổng quát, Nha khoa tổng quát) | MedBook tự động chuyển sang CONFIRMED trong vòng **30 giây**. Gửi confirmation notification qua SMS + push. Không cần Receptionist can thiệp | Nếu `auto_confirm_specialties` list chưa được cấu hình, mặc định áp dụng manual confirm cho tất cả | MedBook System / System Admin |
+| **BR-CONF-02** | Manual Confirmation for Specialist Clinics | Appointment chuyển sang PENDING_CONFIRMATION với specialty thuộc nhóm `manual_confirm_required` | Specialty thuộc danh sách `manual_confirm_specialties` (Tim mạch, Thần kinh, Ung bướu, Phẫu thuật) | Appointment giữ trạng thái PENDING_CONFIRMATION. Alert xuất hiện trên Receptionist dashboard với SLA countdown 30 phút. Receptionist Confirm hoặc Reject kèm lý do. Patient nhận notification kết quả | Nếu Receptionist không xử lý trong 30 phút, appointment tự động EXPIRED theo BR-CONF-04. Hệ thống gửi reminder alert tại T-10 phút | Receptionist / MedBook System |
+| **BR-CONF-03** | Appointment Reminder Schedule | Appointment ở trạng thái CONFIRMED | MedBook scheduler kiểm tra appointment sắp đến | Gửi reminder **lần 1** tại T-24h qua SMS + push. Gửi reminder **lần 2** tại T-2h qua SMS + push kèm QR code. Appointment chuyển sang REMINDER_SENT sau khi ít nhất 1 reminder được gửi thành công | Nếu cả SMS và push đều thất bại, retry 3 lần sau mỗi 5 phút. Appointment vẫn chuyển REMINDER_SENT để không block flow | MedBook System |
+| **BR-CONF-04** | Slot Hold Expiration — Pending Confirmation | Appointment đã ở PENDING_CONFIRMATION quá 30 phút chưa được Receptionist xử lý | Áp dụng cho `manual_confirm_specialties`; status vẫn PENDING_CONFIRMATION sau 30 phút | MedBook tự động chuyển appointment sang EXPIRED. Slot được release ngay. Patient nhận thông báo. Receptionist nhận alert về expired appointment để track performance | Nếu Receptionist đang trong quá trình confirm tại thời điểm timeout, hệ thống gia hạn thêm 5 phút (tối đa 1 lần) | MedBook System / Receptionist |
+| **BR-CONF-05** | Hospital Cancellation — Minimum Notice | Receptionist hoặc Admin thực hiện cancel appointment từ phía hospital | Appointment đang ở CONFIRMED hoặc REMINDER_SENT | Nếu `current_time` ≥ 2 giờ trước `appointment_time`: cho phép cancel, gửi notification ngay. Nếu `current_time` < 2 giờ: yêu cầu nhập lý do bắt buộc, gửi notification ưu tiên cao, escalate lên Hospital Admin. Trong mọi trường hợp: slot được release ngay | Trường hợp khẩn cấp (emergency closure toàn bệnh viện), Hospital Admin có thể bulk cancel với notification thay thế qua hotline | Receptionist / Hospital Admin |
+
+---
+
+## Nhóm 3: Check-in Rules (BR-CHECKIN-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-CHECKIN-01** | QR Check-in Time Window | Patient quét QR code tại kiosk hoặc dùng app | QR code hợp lệ khi: `appointment_time - 60 minutes ≤ current_time ≤ appointment_time + 30 minutes` | Trong window: chấp nhận check-in. Trước window: "Bạn đến quá sớm. Check-in sẽ mở lúc [time-60min]." Sau window: áp dụng BR-CHECKIN-04 | QR code là one-time use. Sau khi scan thành công, QR invalidated ngay lập tức | MedBook System |
+| **BR-CHECKIN-02** | Check-in Facility Validation | Patient quét QR tại kiosk hoặc dùng app | `facility_id` trong QR code phải khớp với `facility_id` của kiosk/cổng check-in | Nếu facility không khớp: "Vui lòng đến đúng cơ sở. Lịch hẹn của bạn tại [facility_name], [address]." Nếu khớp: tiếp tục check-in | CityHealth có nhiều cơ sở — appointment được đặt tại cơ sở nào chỉ check-in tại cơ sở đó | MedBook System |
+| **BR-CHECKIN-03** | Early Check-in Handling | Patient cố check-in trước window (> T-60 phút) | `current_time < appointment_time - 60 minutes` | Không cho phép check-in. Hiển thị friendly message: "Bạn đến sớm quá! Check-in sẽ mở lúc [time - 60min]." Cung cấp link hướng dẫn chuẩn bị hồ sơ và bản đồ cơ sở | Không có ngoại lệ — mọi patient phải chờ đến window | MedBook System |
+| **BR-CHECKIN-04** | Late Check-in — Override Required | Patient cố check-in sau window (> T+30 phút) nhưng trước khi appointment chuyển NO_SHOW | `appointment_time + 30 minutes < current_time` | Không cho phép self check-in qua app/kiosk. "Bạn đến trễ hơn khung giờ cho phép. Vui lòng đến quầy lễ tân." Receptionist kiểm tra tình huống, có thể override và check-in thủ công nếu còn slot | Nếu bác sĩ đã kết thúc buổi khám, không thể override. Receptionist tư vấn đặt lịch lại | Receptionist |
+| **BR-CHECKIN-05** | Prevent Duplicate Check-in | Patient hoặc bất kỳ ai cố check-in lần 2 cho cùng appointment | Appointment đã có status CHECKED_IN, WAITING_FOR_CONSULTATION, IN_CONSULTATION hoặc COMPLETED | Từ chối và hiển thị: "Lịch hẹn này đã được check-in lúc [time]. Số thứ tự: [queue_number]." QR code đã bị invalidated, không thể scan lại | Không có ngoại lệ | MedBook System |
+| **BR-CHECKIN-06** | Caregiver Check-in Authorization | Người thân/caregiver thay mặt bệnh nhân thực hiện check-in | Account thực hiện check-in phải là `booker_id` của appointment hoặc có `caregiver_authorization` ghi nhận | Caregiver dùng app của mình để check-in cho patient. Check-in thành công, ghi nhận `checked_in_by: caregiver_id`. QR code của patient cũng invalidated | Caregiver không có trong authorization list không được phép check-in kể cả có mặt cùng patient — yêu cầu Receptionist xác nhận thủ công | MedBook System / Patient |
+| **BR-CHECKIN-07** | Appointment Status Must Be Confirmed | Patient cố thực hiện check-in | Appointment phải ở trạng thái CONFIRMED hoặc REMINDER_SENT | Nếu PENDING_CONFIRMATION: "Lịch hẹn của bạn chưa được xác nhận. Vui lòng chờ thông báo." Các trạng thái khác: hiển thị thông báo phù hợp | Receptionist tạo walk-in appointment thủ công có thể set thẳng sang CONFIRMED và check-in ngay | MedBook System |
+
+---
+
+## Nhóm 4: HIS Sync Rules (BR-HIS-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-HIS-01** | HIS Registration Trigger on Check-in | Appointment chuyển sang CHECKED_IN thành công | Check-in đã được xác nhận bởi MedBook System | MedBook gửi HIS Registration Request ngay lập tức (< 5 giây) đến HIS API với payload: `{appointment_id, patient_identity_number, specialty_code, doctor_code, facility_code, appointment_time}`. HIS trả về `his_registration_id` và `queue_number` | Nếu HIS API không phản hồi trong 10 giây, coi là timeout và bắt đầu retry flow (BR-HIS-04) | MedBook System / HIS System |
+| **BR-HIS-02** | Patient Identity Matching | MedBook gửi HIS Registration Request | Request chứa `identity_number` (CCCD/Passport) của patient | HIS tra cứu theo `identity_number`. Nếu tìm thấy: trả về `his_patient_code` hiện có. MedBook lưu mapping để dùng cho lần sau. Nếu không tìm thấy: áp dụng BR-HIS-03 | Nếu có nhiều hơn 1 record HIS match với cùng `identity_number` (data duplicate trong HIS): set HIS_SYNC_FAILED và alert Receptionist xử lý thủ công | HIS System / MedBook System |
+| **BR-HIS-03** | New Patient Auto-Registration in HIS | BR-HIS-02 không tìm thấy patient trong HIS | `identity_number` không tồn tại trong HIS database | MedBook gửi request tạo patient mới trong HIS với: `{full_name, date_of_birth, identity_number, phone_number, insurance_number}`. HIS tạo mới và trả về `his_patient_code` mới. MedBook lưu mapping. Registration flow tiếp tục bình thường | Nếu HIS từ chối tạo patient mới (thiếu thông tin bắt buộc phía HIS): set HIS_SYNC_FAILED, alert Receptionist nhập thông tin thủ công vào HIS | HIS System / MedBook System |
+| **BR-HIS-04** | HIS Sync Failure — Retry and Escalation | HIS Registration Request thất bại (timeout, error 5xx, network failure) | Attempt đầu tiên thất bại | **Attempt 1 (initial):** Thất bại → retry sau 2 phút. **Attempt 2 (retry 1):** Thất bại → retry sau 2 phút. **Attempt 3 (retry 2):** Thất bại → chuyển sang HIS_SYNC_FAILED. Alert Receptionist dashboard, hướng dẫn patient đến quầy. Nếu không có Receptionist override trong 15 phút: chuyển sang EXCEPTION | Nếu error là `4xx` (client error, invalid payload), không retry — set HIS_SYNC_FAILED ngay và alert với error detail để Receptionist xử lý đúng nguyên nhân | MedBook System / Receptionist |
+| **BR-HIS-05** | Idempotency for HIS Registration | MedBook gửi HIS Registration Request (lần đầu hoặc retry) | Request phải kèm `idempotency_key = appointment_id` | HIS sử dụng `appointment_id` làm idempotency key. Nếu HIS đã nhận và xử lý request với `appointment_id` này trước đó: HIS trả về kết quả cũ thay vì tạo mới. Đảm bảo retry không tạo duplicate visit trong HIS | Nếu HIS không hỗ trợ idempotency key: MedBook tự kiểm tra bằng cách query HIS trước khi gửi request mới | MedBook System / HIS System |
+| **BR-HIS-06** | Queue Number Blocked Until HIS Sync Success | Attempt cấp queue number sau check-in | `his_registration_id` phải tồn tại và hợp lệ | Queue number chỉ được generate và hiển thị cho patient sau khi HIS trả về `his_registration_id` thành công. Trong thời gian HIS_SYNC_FAILED: patient không có queue number, không được gọi vào phòng khám. Receptionist thấy patient trên dashboard với status "Chờ xử lý HIS" | Receptionist có thể manually issue queue number sau khi xác nhận HIS đã được xử lý thủ công ngoài hệ thống | MedBook System / HIS System / Receptionist |
+
+---
+
+## Nhóm 5: No-show / Cancel / Reschedule Rules (BR-CANCEL-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-CANCEL-01** | Cancel Before Cut-off | Patient nhấn "Hủy lịch" trên app/web | `current_time < appointment_time - 2 hours` | Cho phép hủy ngay không cần lý do bắt buộc (lý do optional để improve data). Appointment chuyển sang CANCELLED_BY_PATIENT. Slot được release trong 30 phút. Patient nhận confirmation notification | Nếu appointment đang PENDING_CONFIRMATION, patient có thể hủy bất cứ lúc nào, không áp dụng cut-off | Patient / MedBook System |
+| **BR-CANCEL-02** | Cancel After Cut-off | Patient nhấn "Hủy lịch" sau cut-off (trong vòng 2 giờ trước giờ khám) | `appointment_time - 2 hours ≤ current_time < appointment_time` | Yêu cầu nhập lý do hủy bắt buộc. Cho phép hủy nhưng cảnh báo "Hủy muộn ảnh hưởng đến bệnh nhân khác." Nếu `current_time > appointment_time - 30 minutes`: slot không release tự động. Appointment chuyển CANCELLED_BY_PATIENT với lý do ghi nhận | Trường hợp khẩn cấp (nhập viện cấp cứu): Receptionist có thể override và xóa lịch sử late cancel khỏi record patient nếu có xác nhận | Patient / MedBook System |
+| **BR-CANCEL-03** | Reschedule Before Cut-off | Patient hoặc Hospital chọn "Đổi lịch" | `current_time < appointment_time - 2 hours` | MedBook: (1) Tạo appointment mới với new slot (new `appointment_id`), status PENDING_CONFIRMATION; (2) Mark appointment gốc là RESCHEDULED, lưu `rescheduled_to: new_appointment_id`; (3) Release slot cũ trong 30 phút; (4) New appointment đi qua confirm flow bình thường | Nếu reschedule sau cut-off: hiển thị cảnh báo trước khi cho phép. Hospital-initiated reschedule không bị giới hạn cut-off | Patient / Hospital / MedBook System |
+| **BR-CANCEL-04** | Auto No-show After Grace Period | MedBook scheduler job chạy mỗi 5 phút | Appointment ở REMINDER_SENT VÀ `current_time > appointment_time + 15 minutes` VÀ chưa có check-in | MedBook tự động chuyển appointment sang NO_SHOW. Slot được release trong 30 phút. Patient nhận notification. Doctor/Receptionist thấy NO_SHOW trên dashboard | Nếu bệnh nhân đang check-in đúng lúc job chạy (race condition): ưu tiên check-in thành công, không set NO_SHOW | MedBook System |
+| **BR-CANCEL-05** | Slot Release Timing | Appointment chuyển sang CANCELLED, EXPIRED, NO_SHOW, hoặc RESCHEDULED | Slot hiện đang được hold bởi appointment vừa cancelled/expired | Slot được release sau **30 phút** kể từ thời điểm cancel/expire, để tránh immediate re-booking không cần thiết và cho phép hệ thống xử lý edge cases | Nếu `current_time > appointment_time - 30 minutes` (sắp đến giờ khám): slot KHÔNG được release tự động — Hospital Admin quyết định | MedBook System |
+| **BR-CANCEL-06** | No-show Override by Receptionist | Receptionist nhận được giải thích từ patient về việc đến muộn | Appointment đang ở NO_SHOW VÀ `current_time ≤ no_show_set_at + 24 hours` | Receptionist truy cập appointment, nhấn "Override No-show", nhập lý do (bắt buộc). Appointment chuyển ngược về CHECKED_IN và bắt đầu HIS sync flow. Audit log ghi nhận override với `overridden_by: receptionist_id` | Sau 24 giờ, override không được phép — appointment NO_SHOW là final. Patient phải đặt lịch mới | Receptionist |
+
+---
+
+## Nhóm 6: Queue Rules (BR-QUEUE-xx)
+
+| Rule ID | Tên | Trigger | Điều kiện | Expected Behavior | Exception | Owner |
+|---|---|---|---|---|---|---|
+| **BR-QUEUE-01** | Queue Number Generation | HIS sync thành công, `his_registration_id` nhận được | Appointment đang chuyển từ CHECKED_IN sang WAITING_FOR_CONSULTATION | MedBook generate queue number theo format `[SpecialtyCode]-[Sequential]` (ví dụ: `TM-023` cho Tim mạch số 23). Sequential reset về 001 mỗi ngày tại 00:00. Queue number hiển thị ngay trên app patient và màn hình kiosk | Nếu `sequential` đạt 999 trong ngày (quá tải), mở rộng sang 4 chữ số và alert System Admin | MedBook System / HIS System |
+| **BR-QUEUE-02** | Priority Queue for Emergency Patients | Patient check-in thành công và HIS sync thành công | Patient có `priority_flag = true` hoặc appointment có `appointment_type = emergency` | Patient được insert vào đầu queue của specialty tương ứng. Queue number vẫn được cấp theo format chuẩn nhưng được đẩy lên trên danh sách chờ. Doctor dashboard hiển thị priority badge | Nếu có nhiều hơn 1 priority patient cùng lúc: xếp theo `checked_in_at` timestamp | MedBook System / Doctor / System Admin |
+| **BR-QUEUE-03** | Automatic Room Assignment | Patient chuyển sang WAITING_FOR_CONSULTATION | Tồn tại `doctor_room_mapping` cho `doctor_code` và `date` của appointment | MedBook tự động assign `room_id` cho appointment dựa trên doctor-room mapping được cấu hình trong admin. App patient hiển thị "Phòng khám: [Tầng X - Phòng Y]". Màn hình kiosk cũng hiển thị thông tin phòng | Nếu không có mapping: gán `room_id = TBD`, alert Receptionist để thông báo bệnh nhân bằng miệng | MedBook System / System Admin |
+| **BR-QUEUE-04** | Doctor Substitution | Doctor ban đầu không thể khám (báo vắng, lịch thay đổi đột xuất) | Appointment đang ở CONFIRMED, REMINDER_SENT, hoặc WAITING_FOR_CONSULTATION | **Nếu có substitute doctor cùng specialty đã pre-configured:** Auto-assign substitute, update appointment, notify patient. **Nếu không có substitute:** Alert Hospital Admin và Receptionist, Receptionist liên hệ patient thủ công | Nếu thay đổi xảy ra khi patient đang IN_CONSULTATION: Doctor khác không thể substitute mid-consultation | MedBook System / Hospital Admin / Receptionist |
+| **BR-QUEUE-05** | Queue Display with Estimated Wait Time | Patient vào WAITING_FOR_CONSULTATION và nhận queue number | Queue number đã được cấp, HIS sync thành công | App patient hiển thị: số thứ tự hiện tại đang được gọi, queue number của patient, estimated wait time (tính dựa trên average consultation time × số người trước). Estimated wait time cập nhật real-time mỗi 2 phút. Khi đến lượt: gửi push notification "Chuẩn bị vào khám!" | Nếu không có đủ data để tính estimated wait time (bác sĩ mới): hiển thị "Đang ước tính..." | MedBook System |
+
+---
+
+## Rule Dependency Map
+
+| Rule ID | Phụ thuộc vào | Lý do |
+|---|---|---|
+| BR-BOOK-02 | BR-BOOK-01 | Chỉ hold slot nếu slot đang available |
+| BR-BOOK-04 | BR-BOOK-01, BR-BOOK-06 | Cần slot valid và form hợp lệ trước khi check duplicate |
+| BR-BOOK-05 | BR-BOOK-03 | Cut-off check chỉ áp dụng sau khi schedule đã published |
+| BR-CONF-01 | BR-BOOK-04, BR-BOOK-06 | Auto-confirm chỉ trigger sau booking hợp lệ |
+| BR-CONF-02 | BR-CONF-01 | Manual confirm áp dụng khi BR-CONF-01 không applicable |
+| BR-CONF-03 | BR-CONF-01 hoặc BR-CONF-02 | Reminder chỉ gửi sau khi CONFIRMED |
+| BR-CONF-04 | BR-CONF-02 | Timeout chỉ xảy ra trong manual confirm flow |
+| BR-CHECKIN-01 | BR-CONF-03 | Check-in window liên quan đến appointment_time đã được confirm |
+| BR-CHECKIN-04 | BR-CHECKIN-01 | Late check-in là extension của time window rule |
+| BR-CHECKIN-07 | BR-CONF-01, BR-CONF-02 | Appointment phải CONFIRMED trước khi check-in |
+| BR-HIS-01 | BR-CHECKIN-01, BR-CHECKIN-07 | HIS trigger chỉ sau check-in hợp lệ |
+| BR-HIS-02 | BR-HIS-01 | Patient matching xảy ra trong HIS registration flow |
+| BR-HIS-03 | BR-HIS-02 | New patient creation chỉ khi matching thất bại |
+| BR-HIS-04 | BR-HIS-01 | Retry logic áp dụng khi BR-HIS-01 thất bại |
+| BR-HIS-05 | BR-HIS-01, BR-HIS-04 | Idempotency cần thiết khi có retry |
+| BR-HIS-06 | BR-HIS-01, BR-HIS-04 | Queue blocked khi HIS chưa thành công |
+| BR-QUEUE-01 | BR-HIS-01, BR-HIS-06 | Queue generation chỉ sau HIS sync success |
+| BR-CANCEL-01 | BR-CONF-01, BR-CONF-02 | Cancel chỉ áp dụng sau khi có appointment CONFIRMED |
+| BR-CANCEL-03 | BR-CANCEL-01, BR-BOOK-01 | Reschedule cần slot mới available |
+| BR-CANCEL-05 | BR-CANCEL-01, BR-CANCEL-04 | Slot release logic phụ thuộc vào loại cancellation |
+| BR-CANCEL-06 | BR-CANCEL-04 | Override chỉ áp dụng khi NO_SHOW đã được set |
