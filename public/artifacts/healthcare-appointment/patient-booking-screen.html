@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Booking Screen — CityHealth</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f4f8;
+    color: #1a2b3c;
+    min-height: 100vh;
+  }
+
+  /* Portfolio label */
+  .portfolio-label {
+    background: #1a2b3c;
+    color: #a8c4d8;
+    text-align: center;
+    padding: 7px 16px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .portfolio-label strong { color: #e0edf5; }
+
+  .page-wrapper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 36px;
+    padding: 32px 24px 48px;
+    min-height: calc(100vh - 33px);
+  }
+
+  /* ===== MOBILE FRAME ===== */
+  .mobile-frame {
+    width: 440px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07);
+    overflow: hidden;
+    border: 2px solid #dde8f0;
+    position: relative;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: #1a6b4e;
+    color: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 20px 6px;
+    font-size: 12px; font-weight: 600;
+  }
+  .status-bar-right { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+
+  /* App nav */
+  .app-nav {
+    background: #1a6b4e;
+    padding: 6px 16px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-back {
+    color: rgba(255,255,255,0.85);
+    font-size: 22px; cursor: pointer; line-height: 1;
+  }
+  .nav-title {
+    color: #fff;
+    font-size: 17px; font-weight: 700; flex: 1;
+  }
+
+  /* Progress steps */
+  .progress-bar {
+    background: #f5f8fa;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e8ecf0;
+  }
+  .steps {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .step {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    flex: 1; position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute; top: 14px; left: 60%; right: -40%;
+    height: 2px; background: #dde8f0;
+    z-index: 0;
+  }
+  .step.done:not(:last-child)::after,
+  .step.active:not(:last-child)::after { background: #1a6b4e; }
+
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    position: relative; z-index: 1;
+    border: 2.5px solid #dde8f0;
+    background: #fff;
+    color: #9baab5;
+  }
+  .step.done .step-circle {
+    background: #1a6b4e; border-color: #1a6b4e;
+    color: #fff;
+  }
+  .step.active .step-circle {
+    background: #fff; border-color: #1a6b4e;
+    color: #1a6b4e; font-weight: 800;
+  }
+  .step-label {
+    font-size: 10px; font-weight: 600; color: #9baab5;
+    text-align: center; line-height: 1.2;
+  }
+  .step.done .step-label { color: #1a6b4e; }
+  .step.active .step-label { color: #1a2b3c; font-weight: 700; }
+
+  /* Scroll area */
+  .scroll-area {
+    padding: 16px;
+    background: #f7faf8;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  /* Summary card */
+  .summary-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid #e0ede7;
+    position: relative;
+  }
+  .summary-hosp {
+    font-size: 13px; font-weight: 700; color: #1a2b3c;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hosp-icon {
+    width: 22px; height: 22px; background: #1a6b4e;
+    border-radius: 5px; display: flex; align-items: center;
+    justify-content: center; color: white; font-size: 11px;
+  }
+  .summary-rows { display: flex; flex-direction: column; gap: 4px; }
+  .summary-row {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12.5px; color: #3d5166;
+  }
+  .summary-icon { font-size: 13px; width: 16px; text-align: center; }
+  .summary-bold { font-weight: 600; color: #1a2b3c; }
+
+  /* Slot hold badge */
+  .slot-hold {
+    position: absolute; top: 14px; right: 14px;
+    background: linear-gradient(135deg, #ff6f00, #ffa000);
+    color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px;
+    box-shadow: 0 2px 8px rgba(255,111,0,0.3);
+  }
+  .slot-hold-time { font-size: 13px; font-weight: 800; }
+
+  /* Form section */
+  .form-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1.5px solid #e8ecf0;
+  }
+  .form-section-title {
+    font-size: 13px; font-weight: 700; color: #1a2b3c;
+    margin-bottom: 14px;
+    padding-bottom: 10px; border-bottom: 1px solid #eef2f6;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .section-icon {
+    width: 22px; height: 22px; background: #e8f5ef;
+    border-radius: 6px; display: flex; align-items: center;
+    justify-content: center; font-size: 12px;
+  }
+
+  .form-group { margin-bottom: 13px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label {
+    display: block;
+    font-size: 11.5px; font-weight: 600; color: #5c6f7e;
+    margin-bottom: 5px;
+  }
+  .form-label .required { color: #e53935; margin-left: 2px; }
+  .form-label .optional {
+    font-size: 10px; color: #9baab5; font-weight: 400;
+    background: #f0f4f8; padding: 1px 6px; border-radius: 8px;
+    margin-left: 4px;
+  }
+  .form-input {
+    width: 100%;
+    background: #f7faf8;
+    border: 1.5px solid #d4e0d9;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 13.5px; color: #1a2b3c;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: #1a6b4e; background: #fff; }
+  .form-input.masked { letter-spacing: 0.04em; color: #5c6f7e; }
+  .form-input.valid { border-color: #43a047; background: #f1fbf4; }
+
+  .input-helper {
+    font-size: 10.5px; color: #8fa0ad;
+    margin-top: 3px;
+  }
+  .char-count {
+    font-size: 10.5px; color: #8fa0ad;
+    text-align: right; margin-top: 3px;
+  }
+  .char-count span { color: #1a6b4e; font-weight: 600; }
+
+  textarea.form-input {
+    resize: none; min-height: 72px;
+    line-height: 1.5;
+  }
+
+  /* Radio group */
+  .radio-group {
+    display: flex; gap: 10px; margin-top: 2px;
+  }
+  .radio-opt {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13px; color: #1a2b3c;
+    cursor: pointer; padding: 8px 14px;
+    border: 1.5px solid #d4e0d9; border-radius: 9px;
+    flex: 1; justify-content: center;
+    transition: all 0.15s;
+  }
+  .radio-opt.selected {
+    border-color: #1a6b4e;
+    background: #e8f5ef; color: #1a6b4e; font-weight: 600;
+  }
+  .radio-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #c0cfd8;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .radio-opt.selected .radio-dot {
+    border-color: #1a6b4e;
+    background: #1a6b4e;
+  }
+  .radio-opt.selected .radio-dot::after {
+    content: ''; display: block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: white;
+  }
+
+  /* Footer buttons */
+  .form-footer {
+    padding: 14px 16px 20px;
+    background: #fff;
+    border-top: 1px solid #eef2f6;
+    display: flex; gap: 10px;
+  }
+  .btn-back {
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 14px; font-weight: 600;
+    border: 2px solid #d4e0d9;
+    background: #fff; color: #5c6f7e;
+    cursor: pointer; flex: 0;
+    white-space: nowrap;
+  }
+  .btn-next {
+    flex: 1;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 14.5px; font-weight: 700;
+    border: none;
+    background: linear-gradient(135deg, #1a6b4e, #22896a);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(26,107,78,0.35);
+    letter-spacing: 0.02em;
+  }
+
+  /* ===== ANNOTATION PANEL ===== */
+  .annotation-panel {
+    width: 340px;
+    flex-shrink: 0;
+    padding-top: 8px;
+  }
+  .annotation-header {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #1a6b4e;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .annotation-header::before {
+    content: ''; display: block;
+    width: 3px; height: 14px; border-radius: 2px;
+    background: #1a6b4e;
+  }
+
+  .annot-card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1.5px solid #e0ede7;
+    padding: 13px 15px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .annot-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 3px 0 0 3px;
+    background: #1a6b4e;
+  }
+  .annot-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px;
+    background: #e8f5ef; color: #1a6b4e;
+    border-radius: 50%; font-size: 10.5px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .annot-title {
+    font-size: 12.5px; font-weight: 700; color: #1a2b3c;
+    margin-bottom: 4px;
+  }
+  .annot-body {
+    font-size: 11.5px; color: #4a5e6e; line-height: 1.55;
+  }
+  .annot-rule {
+    display: inline-block;
+    background: #f0f7f4; color: #1a6b4e;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px;
+    margin-top: 5px; font-family: 'Courier New', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; <strong>Business Analyst</strong> &mdash; Patient Booking Screen (Mobile)</div>
+
+<div class="page-wrapper">
+
+  <!-- Mobile frame -->
+  <div class="mobile-frame">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>09:14</span>
+      <div class="status-bar-right">
+        <span>4G</span>
+        <span>⚡</span>
+        <span>87%</span>
+      </div>
+    </div>
+
+    <!-- App nav -->
+    <div class="app-nav">
+      <span class="nav-back">&#8592;</span>
+      <span class="nav-title">Đặt lịch khám</span>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar">
+      <div class="steps">
+        <div class="step done">
+          <div class="step-circle">✓</div>
+          <div class="step-label">Chuyên<br>khoa</div>
+        </div>
+        <div class="step done">
+          <div class="step-circle">✓</div>
+          <div class="step-label">Lịch &amp;<br>Bác sĩ</div>
+        </div>
+        <div class="step active">
+          <div class="step-circle">3</div>
+          <div class="step-label">Thông tin<br>BN</div>
+        </div>
+        <div class="step">
+          <div class="step-circle">4</div>
+          <div class="step-label">Xác<br>nhận</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll area -->
+    <div class="scroll-area">
+
+      <!-- Summary card -->
+      <div class="summary-card">
+        <div class="slot-hold">
+          ⏱ <span class="slot-hold-time">07:42</span>
+        </div>
+        <div class="summary-hosp">
+          <div class="hosp-icon">H</div>
+          CityHealth General Hospital
+        </div>
+        <div class="summary-rows">
+          <div class="summary-row">
+            <span class="summary-icon">🫀</span>
+            <span><span class="summary-bold">Tim mạch</span> · Dr. Trần Minh Tuấn</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-icon">📅</span>
+            <span>Thứ Năm, <span class="summary-bold">18/01/2024</span></span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-icon">⏰</span>
+            <span><span class="summary-bold">09:00 – 09:30</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Info Form -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-icon">👤</div>
+          Thông tin bệnh nhân
+        </div>
+
+        <!-- Full name -->
+        <div class="form-group">
+          <label class="form-label">Họ và tên <span class="required">*</span></label>
+          <input type="text" class="form-input valid" value="Nguyễn Văn An" readonly>
+        </div>
+
+        <!-- DOB -->
+        <div class="form-group">
+          <label class="form-label">Ngày sinh <span class="required">*</span></label>
+          <input type="text" class="form-input valid" value="15/08/1985" readonly>
+        </div>
+
+        <!-- CCCD -->
+        <div class="form-group">
+          <label class="form-label">Số CCCD <span class="required">*</span></label>
+          <input type="text" class="form-input masked valid" value="****5678901" readonly>
+          <div class="input-helper">Được mã hóa và gửi bảo mật đến HIS</div>
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label class="form-label">Số điện thoại <span class="required">*</span></label>
+          <input type="text" class="form-input valid" value="0912 345 678" readonly>
+        </div>
+
+        <!-- BHYT -->
+        <div class="form-group">
+          <label class="form-label">Số BHYT <span class="optional">Không bắt buộc</span></label>
+          <input type="text" class="form-input" value="DN4010001..." readonly>
+        </div>
+
+        <!-- Chief complaint -->
+        <div class="form-group">
+          <label class="form-label">Lý do khám <span class="required">*</span></label>
+          <textarea class="form-input valid" readonly>Tim đập nhanh, khó thở khi leo cầu thang</textarea>
+          <div class="char-count"><span>47</span>/200 ký tự</div>
+        </div>
+
+        <!-- Booking for -->
+        <div class="form-group">
+          <label class="form-label">Đặt lịch cho</label>
+          <div class="radio-group">
+            <div class="radio-opt selected">
+              <div class="radio-dot"></div>
+              Bản thân
+            </div>
+            <div class="radio-opt">
+              <div class="radio-dot" style="border-color:#c0cfd8;"></div>
+              Người thân
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer buttons -->
+    <div class="form-footer">
+      <button class="btn-back">&#8592; Quay lại</button>
+      <button class="btn-next">Tiếp tục &#8594;</button>
+    </div>
+
+  </div><!-- end mobile-frame -->
+
+  <!-- Annotation panel -->
+  <div class="annotation-panel">
+    <div class="annotation-header">BA Design Notes</div>
+
+    <div class="annot-card">
+      <div class="annot-num">1</div>
+      <div class="annot-title">Slot Hold Timer</div>
+      <div class="annot-body">Slot is locked for 10 minutes while patient fills the form. Auto-expires and releases slot if not submitted within the window — preventing ghost reservations.</div>
+      <div class="annot-rule">BR-BOOK-02</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">2</div>
+      <div class="annot-title">Required Fields Validation</div>
+      <div class="annot-body">full_name, DOB, identity_number, phone, chief_complaint (min 10 chars) are all required. Submit button is disabled until all validations pass.</div>
+      <div class="annot-rule">BR-BOOK-06</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">3</div>
+      <div class="annot-title">Identity Number — Masked Display</div>
+      <div class="annot-body">CCCD is shown masked (****5678901) for privacy on screen. The full value is encrypted in transit and sent to HIS for patient matching and deduplication.</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">4</div>
+      <div class="annot-title">Duplicate Appointment Check</div>
+      <div class="annot-body">System checks if patient already has a same-day same-specialty appointment before allowing submit. Duplicate detected = block with explanation message.</div>
+      <div class="annot-rule">BR-BOOK-04</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">5</div>
+      <div class="annot-title">Booking Cut-off Rule</div>
+      <div class="annot-body">Cannot book within 2 hours of the appointment time. The slot is hidden from search results once cut-off is reached — not just blocked at submit.</div>
+      <div class="annot-rule">BR-BOOK-05</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">6</div>
+      <div class="annot-title">Family Member Flow</div>
+      <div class="annot-body">If "Người thân" is selected, system requires caregiver authorization link. A secondary contact form appears, and relationship must be declared for audit compliance.</div>
+    </div>
+
+  </div><!-- end annotation panel -->
+
+</div><!-- end page wrapper -->
+
+</body>
+</html>
