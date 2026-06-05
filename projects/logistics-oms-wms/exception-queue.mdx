@@ -1,0 +1,308 @@
+---
+title: "Exception Queue & Dashboard"
+description: "Tài liệu nghiệp vụ — Exception Queue, UI Requirements, và Dashboard Wireframe cho hệ thống OMS/WMS tại VietFulfill"
+---
+
+<Warning>
+**Practice Case Study** — VietFulfill là công ty 3PL fictional. Tài liệu này mô tả logic nghiệp vụ để Dev hiểu và implement — không phải UI spec hay API doc.
+</Warning>
+
+---
+
+# Phần 1: Exception Queue
+
+## Tổng quan và lý do tồn tại
+
+Trong giai đoạn vận hành thủ công, VietFulfill xử lý các sự cố đơn hàng qua Zalo group và file Excel chia sẻ trên Google Drive. Mỗi khi có vấn đề — địa chỉ sai, hàng hết kho, barcode lỗi — nhân viên kho nhắn tin vào group, CS reply, thông tin thất lạc trong chat, không ai biết exception đó đang ở trạng thái nào, ai đang xử lý, và SLA có bị vi phạm không. Kết quả là đơn bị delay, khách phàn nàn, và team vận hành không có số liệu để cải thiện.
+
+Exception Queue là module tập trung mọi sự cố cần can thiệp thủ công vào một nơi duy nhất, có trạng thái rõ ràng, phân quyền theo role, và theo dõi SLA tự động. Thay vì nhắn Zalo, hệ thống OMS/WMS tự động phát hiện exception, tạo ticket, notify đúng người, và ghi lại mọi hành động xử lý.
+
+### Ai thấy gì — phân quyền theo role
+
+**Warehouse Supervisor** thấy toàn bộ exception liên quan đến kho mình phụ trách: picking errors, barcode failures, stock issues, return damages. Họ có quyền resolve, reassign trong nội bộ kho, và escalate lên Operation Manager khi cần.
+
+**Customer Service (CS)** thấy exception ảnh hưởng trực tiếp đến khách hàng: địa chỉ không hợp lệ, carrier pickup thất bại, yêu cầu huỷ muộn. CS có quyền chỉnh sửa thông tin đơn (địa chỉ, SĐT), liên hệ khách, và resolve sau khi đã xác nhận với khách.
+
+**Operation Manager** thấy toàn bộ exception của tất cả kho và tất cả loại. Đây là người có thể escalate lên carrier hoặc merchant, approve các action có rủi ro cao, và xem báo cáo SLA breach theo ngày.
+
+**System / Automation** không có màn hình riêng nhưng là actor tạo ra phần lớn exception thông qua các trigger tự động từ OMS và WMS.
+
+---
+
+## Khi nào order vào Exception Queue
+
+| Exception Trigger | Source State | System tạo exception | Actor được notify |
+|---|---|---|---|
+| Address validation API trả về invalid hoặc undeliverable | `CONFIRMED` | OMS | CS |
+| Inventory allocation thành công nhưng physical pick thất bại do hết hàng thực tế | `ALLOCATED` | WMS | Warehouse Supervisor |
+| Picker scan barcode nhưng SKU không khớp với pick list | `PICKING` | WMS | Warehouse Supervisor |
+| Barcode scan không đọc được sau 3 lần thử | `PICKING` | WMS | Warehouse Supervisor |
+| Carrier driver không đến lấy hàng trong pickup window | `READY_TO_SHIP` | OMS (carrier webhook timeout) | CS + Operation Manager |
+| Webhook sync status giữa OMS và WMS trả về lỗi hoặc timeout | Bất kỳ | OMS/WMS Integration layer | Operation Manager |
+| Hệ thống phát hiện `order_code` hoặc `external_ref` trùng lặp | `PENDING` | OMS | CS |
+| CS hoặc merchant gửi cancel request nhưng đơn đã ở trạng thái `PACKED` hoặc muộn hơn | `PACKED` / `READY_TO_SHIP` | OMS | CS + Operation Manager |
+| Return item nhập kho nhưng QC phát hiện hàng bị hỏng | `RETURN_IN_TRANSIT` | WMS (QC scan) | CS + Warehouse Supervisor |
+
+---
+
+## Exception Types — 9 loại
+
+### EXC-INVALID-ADDR — Địa chỉ không hợp lệ
+
+| | |
+|---|---|
+| **Exception ID** | EXC-INVALID-ADDR |
+| **Tên** | Invalid Delivery Address |
+| **Trigger** | Address validation API trả về undeliverable, hoặc field bắt buộc bị thiếu |
+| **SLA Resolution** | **4 giờ** kể từ khi exception được tạo |
+| **Người xử lý** | CS — liên hệ khách để lấy địa chỉ đúng, sau đó update trực tiếp trên Order Detail screen |
+| **Actions khả dụng** | Update Address · Contact Customer · Cancel Order · Escalate |
+| **Audit log cần ghi** | `actor_id`, `actor_role`, `action_type`, `old_address`, `new_address`, `contact_channel`, `timestamp`, `exception_status_before`, `exception_status_after` |
+
+---
+
+### EXC-OUT-OF-STOCK — Hết hàng sau khi đã allocation
+
+| | |
+|---|---|
+| **Exception ID** | EXC-OUT-OF-STOCK |
+| **Tên** | Out of Stock After Allocation |
+| **Trigger** | Inventory đã `ALLOCATED` trên hệ thống nhưng khi picker đến vị trí bin thực tế thì không có hàng |
+| **SLA Resolution** | **2 giờ** — exception ảnh hưởng trực tiếp đến throughput picking |
+| **Người xử lý** | Warehouse Supervisor — kiểm tra bin khác, quyết định substitute hoặc backorder |
+| **Actions khả dụng** | Transfer from Another Bin · Mark Backorder · Cancel Line Item · Cancel Full Order · Escalate to Merchant |
+| **Audit log cần ghi** | `actor_id`, `actor_role`, `sku_id`, `bin_location_checked`, `system_qty_at_exception`, `physical_qty_found`, `action_type`, `timestamp` |
+
+---
+
+### EXC-SKU-MISMATCH — SKU không khớp khi picking
+
+| | |
+|---|---|
+| **Exception ID** | EXC-SKU-MISMATCH |
+| **Tên** | SKU Mismatch During Picking |
+| **Trigger** | Picker scan barcode, WMS so sánh với pick list và phát hiện SKU scanned khác với SKU yêu cầu |
+| **SLA Resolution** | **1 giờ** — picking bị block |
+| **Người xử lý** | Warehouse Supervisor — xác minh hàng thực tế, kiểm tra bin, quyết định action |
+| **Actions khả dụng** | Confirm Correct Item · Reject and Re-pick · Pause Picking Task · Trigger Stock Audit |
+| **Audit log cần ghi** | `actor_id`, `actor_role`, `order_id`, `expected_sku`, `scanned_sku`, `bin_location`, `action_type`, `relabel_required`, `timestamp` |
+
+---
+
+### EXC-BARCODE-ERR — Barcode scan error
+
+| | |
+|---|---|
+| **Exception ID** | EXC-BARCODE-ERR |
+| **Tên** | Barcode Scan Failure |
+| **Trigger** | Scanner không đọc được barcode của item sau 3 lần thử liên tiếp trong cùng một pick task |
+| **SLA Resolution** | **1 giờ** — picking bị block |
+| **Người xử lý** | Warehouse Supervisor — inspect item trực tiếp, quyết định manual override hoặc relabel |
+| **Actions khả dụng** | Manual Override · Request Relabel · Reject Item |
+| **Audit log cần ghi** | `actor_id`, `actor_role`, `sku_id_manual_input`, `scan_attempt_count`, `action_type`, `reason`, `timestamp` |
+
+---
+
+### EXC-CARRIER-FAIL — Carrier pickup thất bại
+
+| | |
+|---|---|
+| **Exception ID** | EXC-CARRIER-FAIL |
+| **Tên** | Carrier Pickup Failed |
+| **Trigger** | Đơn đã được pack và ở `READY_TO_SHIP`, nhưng webhook từ carrier không nhận được `PICKED_UP` event trong 2 giờ sau pickup window |
+| **SLA Resolution** | **3 giờ** |
+| **Người xử lý** | CS — liên hệ carrier để xác nhận và reschedule |
+| **Actions khả dụng** | Reschedule Pickup · Switch Carrier · Hold for Merchant Decision · Cancel Order |
+| **Audit log cần ghi** | `actor_id`, `actor_role`, `carrier_id`, `original_pickup_window`, `new_pickup_datetime`, `new_carrier_id`, `timestamp` |
+
+---
+
+### EXC-SYNC-FAIL — Status sync thất bại
+
+| | |
+|---|---|
+| **Exception ID** | EXC-SYNC-FAIL |
+| **Tên** | Status Sync Failed Between Systems |
+| **Trigger** | Integration layer ghi nhận timeout hoặc HTTP 5xx sau 3 lần retry tự động vẫn fail |
+| **SLA Resolution** | **2 giờ** |
+| **Người xử lý** | Operation Manager — trigger manual sync, force update trạng thái, hoặc escalate lên Tech |
+| **Actions khả dụng** | Trigger Manual Sync · Force Status Update · Escalate to Tech · Acknowledge & Monitor |
+| **Audit log cần ghi** | `actor_id`, `source_system`, `target_system`, `sync_error_code`, `trace_id`, `retry_count`, `forced_status`, `timestamp` |
+
+---
+
+### EXC-DUPLICATE — Đơn hàng trùng lặp
+
+| | |
+|---|---|
+| **Exception ID** | EXC-DUPLICATE |
+| **Tên** | Duplicate Order Detected |
+| **Trigger** | OMS phát hiện đơn mới có `order_code` hoặc `external_ref` trùng với đơn đã tồn tại và có trạng thái active |
+| **SLA Resolution** | **1 giờ** |
+| **Người xử lý** | CS — xác nhận với merchant đơn nào là đơn đúng |
+| **Actions khả dụng** | Mark as Duplicate & Cancel · Mark as Duplicate & Cancel Original · Merge Orders · Escalate |
+| **Audit log cần ghi** | `actor_id`, `duplicate_order_id`, `original_order_id`, `match_field`, `action_type`, `timestamp` |
+
+---
+
+### EXC-CANCEL-LATE — Huỷ đơn muộn sau khi đã packed
+
+| | |
+|---|---|
+| **Exception ID** | EXC-CANCEL-LATE |
+| **Tên** | Late Cancellation Request |
+| **Trigger** | Merchant hoặc CS gửi cancel request cho đơn đang ở `PACKED` hoặc `READY_TO_SHIP` |
+| **SLA Resolution** | **2 giờ** |
+| **Người xử lý** | Operation Manager — người duy nhất có quyền approve cancel ở giai đoạn này |
+| **Actions khả dụng** | Approve Cancel · Reject Cancel · Intercept at Carrier |
+| **Audit log cần ghi** | `actor_id`, `order_status_at_request`, `cancel_requester`, `action_type`, `unpack_task_id`, `carrier_void_status`, `timestamp` |
+
+---
+
+### EXC-RETURN-DMG — Hàng hoàn trả bị hỏng
+
+| | |
+|---|---|
+| **Exception ID** | EXC-RETURN-DMG |
+| **Tên** | Returned Item Damaged / Not Original |
+| **Trigger** | Return item nhập kho và QC team scan nhập hệ thống, phát hiện item bị hỏng hóc, thiếu phụ kiện, hoặc không phải hàng gốc |
+| **SLA Resolution** | **4 giờ** |
+| **Người xử lý** | CS — điều phối giữa merchant, khách hàng, và carrier để xác định trách nhiệm |
+| **Actions khả dụng** | Approve Refund to Customer · Reject Refund · File Carrier Claim · Hold for Investigation · Dispose Item |
+| **Audit log cần ghi** | `actor_id`, `return_id`, `qc_status`, `damage_description`, `evidence_photos`, `action_type`, `carrier_claim_id`, `refund_amount`, `timestamp` |
+
+---
+
+## UI Requirements — Exception Queue Screen
+
+### Mục tiêu màn hình
+
+Warehouse Supervisor và CS cần một view duy nhất để thấy toàn bộ exception đang open, biết exception nào cần xử lý gấp nhất (dựa trên SLA countdown), và thực hiện action mà không cần rời màn hình sang Order Detail.
+
+### Key Components
+
+**Filter Bar** nằm ở trên cùng, luôn visible kể cả khi scroll. Gồm: dropdown **Exception Type** (multi-select), dropdown **Status** (OPEN / IN_PROGRESS / ESCALATED), dropdown **Assigned To**, dropdown **Warehouse**, và **Date Range** picker (default: today).
+
+**Exception Table** là component chính, gồm các cột:
+- **Exception Type** — badge màu với icon và tên ngắn
+- **Order ID** — dạng link, kèm `external_ref` in nhỏ phía dưới
+- **SKU** — chỉ hiển thị khi exception liên quan đến SKU cụ thể
+- **Current Status** — badge OPEN (xám) / IN_PROGRESS (xanh dương) / ESCALATED (cam) / RESOLVED (xanh lá)
+- **Assigned To** — avatar + tên; "Unassigned" màu đỏ nếu chưa có ai
+- **Time Created** — timestamp tương đối (VD: "23 phút trước") với tooltip datetime đầy đủ
+- **SLA Remaining** — progress bar màu + countdown timer: **xanh lá** khi > 50%, **vàng** khi 20–50%, **đỏ** khi < 20% hoặc đã breach ("Quá hạn X phút")
+- **Actions** — quick action buttons: Resolve · Reassign · Escalate · View Order
+
+### Empty / Loading / Error States
+
+- **Empty**: "Không có exception nào. Tất cả đơn đang xử lý bình thường."
+- **Loading**: skeleton table 3–5 rows (không dùng spinner toàn trang)
+- **Error**: banner đỏ "Không thể tải dữ liệu exception" + nút "Thử lại ngay"
+
+---
+
+## Audit Log Requirements
+
+| Action | Fields cần log |
+|---|---|
+| Exception Created (by system) | `exception_id`, `exception_type`, `order_id`, `trigger_source`, `trigger_event`, `order_state_at_creation`, `created_at` |
+| Exception Viewed | `exception_id`, `viewer_id`, `viewer_role`, `viewed_at` — chỉ log lần đầu |
+| Assigned to User | `exception_id`, `assigned_by_id`, `assigned_to_id`, `note`, `assigned_at`, `previous_assignee_id` |
+| Status Changed | `exception_id`, `changed_by_id`, `status_before`, `status_after`, `changed_at` |
+| Escalated | `exception_id`, `escalated_by_id`, `escalated_to_id`, `escalation_reason`, `escalated_at` |
+| Action Taken (Resolution) | `exception_id`, `actor_id`, `actor_role`, `action_type`, `action_detail` (JSON), `note`, `acted_at` |
+| Order Data Modified | `exception_id`, `actor_id`, `field_modified`, `value_before`, `value_after`, `modified_at` |
+| Resolved | `exception_id`, `resolved_by_id`, `resolution_type`, `resolution_note`, `resolved_at`, `time_to_resolve_minutes`, `sla_met` |
+| SLA Breached | `exception_id`, `sla_limit_hours`, `actual_elapsed_hours`, `breach_detected_at`, `assignee_at_breach_id` |
+
+---
+
+# Phần 2: Dashboard & Wireframe Suggestions
+
+---
+
+## Screen 1: Operation Dashboard
+
+### Mục tiêu
+
+Operation Manager cần view tổng thể để theo dõi KPI vận hành theo thời gian thực trong ca làm việc — không cần drill vào từng đơn, chỉ cần nhìn thoáng qua để biết mọi thứ đang đi đúng hướng hay có vấn đề cần can thiệp.
+
+### Key Metrics — 6 KPI Cards (top row)
+
+| Card | Mô tả | Behavior |
+|---|---|---|
+| **Total Orders Today** | Tổng số đơn nhận trong ngày | Click → filter order list theo ngày hôm nay |
+| **Processing / In Warehouse** | Số đơn đang nằm trong kho (CONFIRMED → READY_TO_SHIP) | Indicator về khối lượng đang chiếm không gian kho |
+| **SLA Breach Count** | Số đơn đã/đang vi phạm SLA giao hàng | Badge đỏ nếu > 0 |
+| **Exception Count (Open)** | Số exception đang OPEN hoặc IN_PROGRESS | Click → mở Exception Queue với filter status = OPEN |
+| **Warehouse Backlog** | Số đơn ở ALLOCATED chờ picking quá X giờ | Indicator picking team đang overload |
+| **Pending Carrier Pickup** | Số đơn READY_TO_SHIP đã chờ carrier quá 1 giờ | Tiền đề của EXC-CARRIER-FAIL |
+
+### Charts
+
+**Order Funnel Chart** (40% width): horizontal funnel chart thể hiện số đơn ở mỗi stage trong ngày. Giúp Operation Manager thấy bottleneck đang ở stage nào.
+
+**Throughput by Hour Chart** (60% width): bar chart theo giờ trong ngày, số đơn shipped trong giờ đó. Line overlay thể hiện target throughput. Khi bar thấp hơn target, màu bar chuyển đỏ.
+
+**Carrier Performance Panel** (full width): bảng carrier đang active hôm nay với tỷ lệ pickup đúng hẹn (%). Màu row: xanh ≥ 95%, vàng 80–95%, đỏ < 80%.
+
+### Wireframe Placeholder
+
+`[Insert: Dashboard wireframe — 6 KPI cards trên top, order funnel chart bên trái, throughput by hour chart bên phải, carrier performance table phía dưới, filters bar sticky ở trên cùng]`
+
+---
+
+## Screen 2: Order Detail
+
+### Mục tiêu
+
+CS và Operation Manager cần màn hình tra cứu đơn hàng đủ đầy để trả lời bất kỳ câu hỏi nào của merchant hay khách hàng mà không cần nhảy giữa OMS và WMS.
+
+### Key Sections
+
+**Header Bar** (sticky): Order ID + status badge + tên merchant + kênh bán + ngày tạo. Bên phải: Action Buttons theo role (CS thấy: Contact Customer, Add Note; Operation Manager thấy thêm: Force Cancel, Reassign Warehouse, Print Label).
+
+**SKU List Section** (40% width): bảng SKU với ordered qty, picked qty (xanh nếu khớp, đỏ nếu thiếu), shipped qty, returned qty. Dưới bảng: địa chỉ giao hàng, số điện thoại, tên người nhận.
+
+**Status Timeline** (60% width): vertical timeline scroll được, sự kiện mới nhất ở trên cùng. Interleave toàn bộ events từ OMS (xanh dương) + WMS (xanh lá) + Carrier (cam) + System (xám) + Human (tím) theo thứ tự chronological thực sự.
+
+**Exception History Section**: liệt kê tất cả exception đã từng tạo cho đơn này, kể cả đã resolved.
+
+**Audit Log Section** (collapse mặc định): table thô ghi toàn bộ hành động.
+
+### Wireframe Placeholder
+
+`[Insert: Order Detail wireframe — sticky header bar với action buttons theo role, 2-cột layout với status timeline bên trái và SKU list bên phải, exception history và audit log collapse ở dưới]`
+
+---
+
+## Screen 3: Exception Queue Screen
+
+### Mục tiêu
+
+Warehouse Supervisor và CS cần xử lý exception nhanh nhất có thể. Màn hình phải trả lời ngay: exception nào đang sắp hết SLA, ai đang xử lý, và action tiếp theo là gì.
+
+### Table Columns (8 cột)
+
+| Cột | Width | Mô tả |
+|---|---|---|
+| Checkbox | 40px | Select multiple rows cho bulk action |
+| Exception Type | 180px | Badge màu với icon; mỗi loại có màu riêng |
+| Order ID | 140px | Link màu xanh; dòng phụ: merchant name |
+| SKU | 120px | Chỉ hiển thị khi liên quan đến SKU; "—" nếu không |
+| Current Status | 100px | Badge OPEN / IN_PROGRESS / ESCALATED |
+| Assigned To | 150px | Avatar + tên; "Unassigned" màu đỏ |
+| Time Created | 100px | Timestamp tương đối + tooltip |
+| SLA Remaining | 160px | Progress bar màu + countdown; **đây là cột quan trọng nhất** |
+| Actions | 160px | Resolve · Reassign · Escalate · View Order |
+
+### SLA Progress Bar Logic
+
+- Còn > 50% thời gian: **xanh lá** — "Còn 2g 15p"
+- Còn 20–50%: **vàng**
+- Còn < 20%: **đỏ** + text nhấp nháy nhẹ
+- Đã breach: **đỏ** hoàn toàn — "Quá hạn 1g 10p" in đậm
+
+### Wireframe Placeholder
+
+`[Insert: Exception Queue wireframe — sticky filter bar với active filter tags, sortable table 8 cột, SLA progress bars màu green/yellow/red, inline action buttons theo role, bulk action bar cố định ở dưới cùng khi có selection]`
