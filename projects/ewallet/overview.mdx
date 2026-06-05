@@ -1,23 +1,51 @@
 ---
-title: "Tổng quan sản phẩm"
-description: "Generic E-Wallet App — Bộ tài liệu BA đầy đủ cho ứng dụng ví điện tử"
+title: "Digital Payment — Overview"
+description: "Digital Payment Case Study — QR Payment & Transaction Reconciliation · E-wallet background context · Reconstructed practice case"
 icon: "wallet"
 ---
 
-# Generic E-Wallet App — Product Overview
+# Digital Payment Case Study — QR Payment & Transaction Reconciliation
+
+<Warning>
+  **Practice / Reconstructed Case Study — Không phải dự án thật**
+
+  Bộ tài liệu này là **reconstructed practice case study** được xây dựng để minh họa năng lực BA trong domain Digital Banking / Payment / E-wallet. **FinPay** là công ty fictional. Mọi số liệu KPI, hạn mức giao dịch, tên tổ chức và tình huống nghiệp vụ đều là **fictional assumptions** cho mục đích học tập — không đại diện cho bất kỳ sản phẩm thương mại nào. Các tham chiếu quy định pháp lý cần xác nhận với Legal/Compliance trong dự án thực tế.
+</Warning>
 
 <Info>
-  **Loại tài liệu:** Sample Project — Thực hành BA  
-  **Domain:** Fintech / E-Wallet  
-  **Quy định áp dụng:** Thông tư 39/2014/TT-NHNN · Nghị định 52/2024/NĐ-CP  
-  **Phiên bản:** v1.0 · **Cập nhật:** 2026-05-25
+  **Loại tài liệu:** Practice Case Study — Reconstructed from real-world domain knowledge  
+  **Domain:** Digital Banking / Payment / E-wallet  
+  **Focus Case:** QR Payment + Transaction Reconciliation  
+  **Background Modules:** 8 e-wallet modules (context/supporting docs)  
+  **Phiên bản:** v2.0 · **Cập nhật:** 2026-06-05
 </Info>
 
 ---
 
-## Giới thiệu sản phẩm
+## Định vị Case Study
 
-**Generic E-Wallet App** là bộ tài liệu BA mẫu mô tả đầy đủ nghiệp vụ cho một ứng dụng ví điện tử tiêu chuẩn tại thị trường Việt Nam. Bộ tài liệu bao gồm **8 module chức năng cốt lõi**, từ đăng ký tài khoản đến thanh toán QR và quản lý giao dịch.
+Bộ tài liệu này được tổ chức theo hai tầng:
+
+<CardGroup cols={2}>
+  <Card title="🎯 Hero Case — QR Payment & Reconciliation" icon="credit-card" href="/projects/ewallet/payment-case-study">
+    **Đây là case study chính.** Tập trung vào: transaction state machine, timeout/unknown handling, idempotency, callback failure, reconciliation dashboard, exception queue và mismatch resolution.
+
+    Đọc trang này trước nếu bạn là hiring manager muốn hiểu BA thinking trong 3–5 phút.
+
+    [→ Đọc Payment Case Study](/projects/ewallet/payment-case-study)
+  </Card>
+  <Card title="📚 Background System — 8 E-wallet Modules" icon="wallet">
+    Auth · KYC · Wallet Core · Bank Linking · Transfer · QR Payment · Transaction History · Notifications — 8 module tạo nên context của toàn bộ hệ thống FinPay.
+
+    Dùng như supporting documents — mỗi module là một Hybrid PRD đầy đủ.
+  </Card>
+</CardGroup>
+
+---
+
+## Giới thiệu hệ thống FinPay (Context)
+
+**FinPay** là ứng dụng ví điện tử fictional tại Việt Nam. Bộ tài liệu BA mẫu mô tả đầy đủ nghiệp vụ cho **8 module chức năng cốt lõi**, từ đăng ký tài khoản đến thanh toán QR và quản lý giao dịch.
 
 Tài liệu được viết theo format **Hybrid PRD** — mỗi module là một PRD đầy đủ gồm: user flow (Mermaid), sequence diagram, screen spec, validation rules, notification spec, API summary và error codes. Định dạng này phản ánh cách BA chuyên nghiệp làm việc thực tế với Development và QA team.
 
