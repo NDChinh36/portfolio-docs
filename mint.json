@@ -75,6 +75,26 @@
       ]
     },
     {
+      "group": "Tài liệu mẫu — Logistics / OMS-WMS (Nâng cao)",
+      "pages": [
+        {
+          "group": "OMS/WMS Fulfillment Platform",
+          "icon": "truck",
+          "pages": [
+            "projects/logistics-oms-wms/overview",
+            "projects/logistics-oms-wms/fulfillment-flow",
+            "projects/logistics-oms-wms/state-machine",
+            "projects/logistics-oms-wms/business-rules",
+            "projects/logistics-oms-wms/data-mapping",
+            "projects/logistics-oms-wms/rbac",
+            "projects/logistics-oms-wms/api-integration",
+            "projects/logistics-oms-wms/exception-queue",
+            "projects/logistics-oms-wms/uat"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Tài liệu mẫu — Ví điện tử (Cơ bản)",
       "pages": [
         {
