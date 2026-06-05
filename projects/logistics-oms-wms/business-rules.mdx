@@ -1,0 +1,188 @@
+---
+title: "Business Rules — OMS/WMS"
+description: "Tài liệu Business Rules cho hệ thống Order Management System và Warehouse Management System tại VietFulfill. Practice case study."
+---
+
+<Warning>
+  **Practice Case Study** — Tài liệu này được tạo cho mục đích học tập và luyện tập phân tích nghiệp vụ. Không phải tài liệu dự án thực tế.
+</Warning>
+
+## Tổng quan
+
+Tài liệu này định nghĩa toàn bộ Business Rules điều phối luồng xử lý đơn hàng trong hệ thống OMS/WMS của VietFulfill, bao gồm 6 nhóm chức năng chính:
+
+| Nhóm | Prefix | Số Rules | Mô tả |
+|------|--------|----------|-------|
+| Order Validation | BR-VAL | 8 rules | Kiểm tra tính hợp lệ của đơn hàng đầu vào |
+| Inventory Allocation | BR-INV | 6 rules | Phân bổ tồn kho cho đơn hàng |
+| Picking & Packing | BR-PICK | 6 rules | Quy trình nhặt hàng và đóng gói |
+| Cancellation | BR-CANCEL | 5 rules | Hủy đơn theo từng trạng thái |
+| Delivery & Return | BR-DELIVER | 6 rules | Giao hàng và xử lý hàng hoàn |
+| SLA | BR-SLA | 5 rules | Ngưỡng thời gian và cảnh báo vi phạm |
+
+**Tổng cộng: 36 rules**
+
+---
+
+## Nhóm 1: Order Validation (BR-VAL-xx)
+
+> **Mục đích:** Đảm bảo mọi đơn hàng nhập vào hệ thống đều hợp lệ trước khi tiến hành allocation và fulfillment. Áp dụng ngay tại bước **ORDER_RECEIVED → VALIDATED**.
+
+<Info>
+  Tất cả validation chạy theo thứ tự BR-VAL-01 → BR-VAL-08. Nếu fail ở bất kỳ rule nào, đơn được gán trạng thái `VALIDATION_FAILED` và dừng xử lý.
+</Info>
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|-----------|-------------------|-------------------|-------|
+| **BR-VAL-01** | Duplicate Order Detection | Đơn hàng được push vào OMS từ sales channel | `order_code` hoặc `external_order_id` đã tồn tại trong hệ thống với trạng thái khác `CANCELLED` hoặc `COMPLETED` | OMS từ chối nhận đơn, trả về `409 Conflict` kèm `duplicate_order_id`. Đơn mới không được tạo. Ghi log audit trail | Nếu đơn trùng đã ở trạng thái `CANCELLED`: cho phép tạo đơn mới, ghi chú "Re-order from cancelled". Nếu sales channel retry do timeout: so sánh `idempotency_key` để tránh reject nhầm | OMS System |
+| **BR-VAL-02** | Missing Shipping Address | OMS nhận payload đơn hàng từ API hoặc webhook | Trường `shipping_address` null, hoặc thiếu ít nhất một trong các subfield bắt buộc: `province`, `district`, `ward`, `street` | OMS gán đơn trạng thái `VALIDATION_FAILED`, gửi notification về CS queue để bổ sung địa chỉ. Đơn bị hold, không tiến hành allocation | Nếu sales channel cung cấp `address_raw` (địa chỉ chuỗi tự do): OMS gọi Address Standardization Service để parse. Nếu parse thành công → tiếp tục. Nếu parse thất bại → fail và alert CS | OMS System / CS |
+| **BR-VAL-03** | Invalid Phone Number | OMS nhận payload đơn hàng | Trường `customer_phone` không match regex chuẩn số điện thoại Việt Nam: `^(0\|84)(3\|5\|7\|8\|9)\d{8}$`. Hoặc null/empty | OMS gán `VALIDATION_FAILED`, ghi `error_code: INVALID_PHONE`. CS nhận task liên hệ khách cập nhật SĐT. Đơn bị hold tối đa 24 giờ trước khi auto-cancel | Nếu khách hàng có tài khoản đăng nhập với SĐT đã xác thực: OMS lấy SĐT từ profile thay thế, ghi log override, tiếp tục xử lý | OMS System / CS |
+| **BR-VAL-04** | Unsupported Province/District | OMS nhận địa chỉ hợp lệ, tiến hành kiểm tra vùng phủ carrier | `province_code` + `district_code` không có trong bảng `carrier_coverage` của bất kỳ carrier nào đang active | OMS gán `VALIDATION_FAILED` với `error_code: UNSUPPORTED_DELIVERY_ZONE`. CS được alert để liên hệ khách đổi địa chỉ hoặc sắp xếp giao thủ công. Đơn hold tối đa 48 giờ | Nếu merchant có thoả thuận self-delivery cho vùng đó: bypass rule này, gán carrier `MERCHANT_SELF_DELIVERY` | OMS System / CS / Operation Manager |
+| **BR-VAL-05** | Invalid / Unknown SKU | OMS validation phase, sau khi address check pass | Một hoặc nhiều `sku_code` không tồn tại trong Product Catalog, hoặc SKU đang ở trạng thái `INACTIVE` / `DISCONTINUED` | OMS gán `VALIDATION_FAILED` với `error_code: UNKNOWN_SKU` kèm danh sách SKU lỗi. Alert Merchant để xác nhận. Đơn hold tối đa 24 giờ | Nếu merchant có mapping bảng `sku_alias` (SKU bí danh từ sàn): OMS auto-map sang `master_sku` trước khi validate | OMS System / Merchant |
+| **BR-VAL-06** | Order Cancelled from Sales Channel Before Processing | Webhook cancel từ sales channel được push vào OMS | Đơn hàng đang ở `ORDER_RECEIVED` hoặc `VALIDATING` và nhận được cancel event từ sales channel | OMS ngay lập tức gán đơn trạng thái `CANCELLED`, ghi `cancel_source: SALES_CHANNEL`. Không cần approval. Ghi log timestamp | Nếu webhook cancel đến sau khi đơn đã qua `ALLOCATED`: áp dụng BR-CANCEL-02 hoặc BR-CANCEL-03 tương ứng | OMS System |
+| **BR-VAL-07** | Invalid Payment Method | OMS validation phase | Trường `payment_method` chứa giá trị không nằm trong danh sách cho phép của merchant config. Hoặc merchant không enable payment method đó | OMS gán `VALIDATION_FAILED` với `error_code: UNSUPPORTED_PAYMENT_METHOD`. Merchant được alert. Đơn bị reject | Nếu `payment_method = COD` nhưng đơn vượt giá trị COD limit (mặc định 5.000.000 VNĐ): fail với `error_code: COD_LIMIT_EXCEEDED` | OMS System / Merchant |
+| **BR-VAL-08** | Order Value Below Minimum | OMS validation phase, sau payment method check | Tổng giá trị đơn hàng thấp hơn ngưỡng `min_order_value` được cấu hình cho merchant. Ngưỡng mặc định: 10.000 VNĐ | OMS gán `VALIDATION_FAILED` với `error_code: ORDER_VALUE_TOO_LOW` kèm `min_required_value`. Sales channel nhận response lỗi | Nếu merchant cấu hình `min_order_value = 0`: rule này bị bypass hoàn toàn | OMS System / Merchant |
+
+---
+
+## Nhóm 2: Inventory Allocation (BR-INV-xx)
+
+> **Mục đích:** Đảm bảo tồn kho được phân bổ chính xác và nhất quán giữa OMS và WMS. Áp dụng tại bước **VALIDATED → ALLOCATED**.
+
+<Note>
+  Stock được tính theo công thức: `Available = On-hand − Reserved − Quarantine`. Chỉ `Available` stock mới được phép allocate cho đơn mới.
+</Note>
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|-----------|-------------------|-------------------|-------|
+| **BR-INV-01** | Available Stock Sufficient | OMS gửi allocation request xuống WMS sau khi đơn pass validation | Với mỗi `sku_code`, `available_qty` trong WMS ≥ `ordered_qty` | WMS lock (reserve) đúng số lượng yêu cầu, giảm `available_qty`, tăng `reserved_qty`. OMS cập nhật đơn sang `ALLOCATED`. Trả về `allocation_id` | Nếu có race condition (concurrent allocation): WMS dùng optimistic locking. Nếu lock thất bại: retry tối đa 3 lần với backoff 500ms | OMS System / WMS System |
+| **BR-INV-02** | Reserved Stock — Allocated to Another Order | OMS gửi allocation request xuống WMS | `available_qty` đủ nhưng một phần đang bị `reserved` bởi đơn hàng khác có priority cao hơn | WMS từ chối allocation, trả về `error_code: STOCK_RESERVED_BY_HIGHER_PRIORITY`. OMS đặt đơn vào queue chờ, retry sau 15 phút. Sau 3 lần retry thất bại: escalate lên Operation Manager | Nếu đơn bị block là priority thấp và đơn hiện tại là priority cao: Operation Manager có quyền force-preempt reservation | WMS System / Operation Manager |
+| **BR-INV-03** | Out of Stock Completely | OMS gửi allocation request xuống WMS | `available_qty` + `reserved_qty` = 0 cho ít nhất một SKU trong đơn | WMS trả về `error_code: OUT_OF_STOCK` kèm danh sách SKU hết hàng. OMS gán đơn trạng thái `ALLOCATION_FAILED`. CS và Merchant được alert ngay lập tức | Nếu merchant có cấu hình `allow_backorder = true`: OMS tạo backorder record, đơn ở `BACKORDERED` và tự động re-allocate khi nhập kho mới | OMS System / WMS System / CS / Merchant |
+| **BR-INV-04** | Partial Stock — Có Một Phần SKU | OMS gửi allocation request; đơn hàng có nhiều SKU | Một số SKU đủ `available_qty`, nhưng ít nhất một SKU khác `available_qty` < `ordered_qty` | WMS KHÔNG allocate bất kỳ SKU nào (không split allocation một phần). OMS giữ toàn bộ đơn ở `ALLOCATION_FAILED`. CS được alert để hỏi khách: chờ hàng, thay thế SKU, hoặc cancel | Nếu merchant cấu hình `allow_partial_fulfillment = true`: OMS tách đơn thành 2 sub-order. Cần thông báo cho khách về split | OMS System / WMS System / CS |
+| **BR-INV-05** | Stock Discrepancy Between OMS và WMS | Xảy ra khi OMS query stock level từ WMS | `stock_qty` trong OMS cache khác với `stock_qty` thực tế trong WMS > ngưỡng tolerance (mặc định: ±5 units hoặc ±2%) | OMS tự động trigger sync job, lấy WMS làm source of truth. Ghi discrepancy record vào `inventory_audit_log`. Alert System Admin và Operation Manager. Tạm dừng auto-allocation cho SKU bị discrepancy | Nếu sync job chạy nhưng discrepancy vẫn tồn tại sau 2 lần: escalate thủ công — Warehouse Staff phải physical count | OMS System / WMS System / System Admin / Operation Manager |
+| **BR-INV-06** | Stock Allocation Timeout | OMS gửi allocation request xuống WMS | WMS không trả về response trong vòng 30 giây | OMS coi allocation là thất bại do timeout, gán đơn `ALLOCATION_FAILED` với `error_code: ALLOCATION_TIMEOUT`. OMS gửi compensation request để đảm bảo WMS không giữ reserved stock "treo". Retry sau 5 phút | Nếu WMS trả về response sau timeout (delayed response): OMS kiểm tra `allocation_id` — nếu WMS đã allocate thành công, OMS reconcile trạng thái. Tránh double-allocation bằng idempotency check | OMS System / WMS System / System Admin |
+
+---
+
+## Nhóm 3: Picking & Packing (BR-PICK-xx)
+
+> **Mục đích:** Đảm bảo độ chính xác 100% trong quá trình nhặt hàng và đóng gói. Mọi sai lệch phải được phát hiện và xử lý trước khi đơn chuyển sang PACKED.
+
+<Warning>
+  Picking errors ảnh hưởng trực tiếp đến trải nghiệm khách hàng và tỷ lệ hoàn hàng. Mọi exception ở nhóm này đều cần được ghi nhận đầy đủ để phân tích root cause.
+</Warning>
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|-----------|-------------------|-------------------|-------|
+| **BR-PICK-01** | Barcode Scan Mismatch khi Picking | Warehouse Staff scan barcode sản phẩm trong quá trình picking | Barcode scanned không match với `sku_barcode` của SKU được yêu cầu trong pick list | WMS phát âm thanh cảnh báo, hiển thị thông báo lỗi: "SAI SẢN PHẨM — Vui lòng kiểm tra lại". Picking action bị reject. Ghi `picking_error_log` | Nếu Staff quét sai 3 lần liên tiếp cho cùng pick line: WMS tự động lock pick task và tạo exception ticket, Warehouse Supervisor được alert | WMS System / Warehouse Staff / Warehouse Supervisor |
+| **BR-PICK-02** | Pick Số Lượng Sai (Thiếu/Thừa) | Warehouse Staff confirm số lượng đã pick và submit pick line | Số lượng Staff nhập (`picked_qty`) khác với `required_qty` trong pick list | WMS reject submit, hiển thị: "Số lượng không khớp. Yêu cầu: [X]. Đã pick: [Y]. Vui lòng kiểm tra lại." Ghi log nếu Staff vẫn submit giá trị sai lần thứ 2 | Nếu Staff xác nhận thiếu hàng thực tế tại bin: Staff trigger "Shortage Report". WMS tạo shortage exception, notify Supervisor | WMS System / Warehouse Staff / Warehouse Supervisor |
+| **BR-PICK-03** | Picking Wrong SKU Confirmed | Warehouse Staff đã pick xong và submit, WMS phát hiện sai SKU trong quality check | `picked_sku` không match `required_sku` trong pick list, hoặc QC scan tại packing station phát hiện sai sản phẩm sau khi pick đã confirm | WMS gán pick task trạng thái `PICK_ERROR`, tạo exception ticket. Warehouse Supervisor được alert. Hàng sai phải được đưa trở lại đúng vị trí bin. Staff phải thực hiện lại pick task | Nếu sai SKU gây ra misplace (hàng đặt nhầm vị trí): Supervisor phải thực hiện bin relocation task trước khi cho phép pick lại | WMS System / Warehouse Staff / Warehouse Supervisor / Operation Manager |
+| **BR-PICK-04** | Pack Thiếu Item So Với Pick List | Packing Staff đóng gói và scan confirm từng item | Số lượng item được scan xác nhận tại packing station < số lượng đã pick confirmed trong pick list | WMS reject pack confirmation, hiển thị danh sách item còn thiếu. Packing Staff phải tìm item thiếu và scan lại. Ghi `packing_error_log`. Nếu không tìm thấy: tạo exception ticket "Missing Item at Packing" | Nếu item bị thất lạc giữa picking và packing: Supervisor điều tra, kiểm tra camera nếu cần. Nếu xác nhận thất lạc thật sự: tạo `inventory_loss_record`, trigger BR-INV-05 | WMS System / Warehouse Staff / Warehouse Supervisor |
+| **BR-PICK-05** | Weight/Dimension Mismatch khi Pack | Packing Staff đặt kiện hàng lên cân/máy đo tự động sau khi đóng gói xong | Trọng lượng (`actual_weight`) hoặc kích thước (`actual_dimension`) lệch so với `expected_weight`/`expected_dimension` > ngưỡng tolerance: weight ±5%, dimension ±3cm | WMS hiển thị cảnh báo, yêu cầu Packing Staff xác nhận lại. Ghi actual measurements vào system. Nếu delta lớn (>10% weight hoặc >5cm): WMS tự động recalculate shipping fee | Nếu actual weight/dimension lớn hơn đáng kể dự kiến: Supervisor phải mở gói kiểm tra lại trước khi cho phép hand over | WMS System / Warehouse Staff / Warehouse Supervisor / CS |
+| **BR-PICK-06** | Supervisor Approval Required khi Có Exception Picking | Bất kỳ picking hoặc packing exception nào được tạo từ BR-PICK-01 đến BR-PICK-05 | Exception ticket chưa được resolve sau 30 phút; hoặc exception thuộc loại nghiêm trọng: wrong SKU confirmed, missing item, hoặc đây là lần thứ 3+ exception của cùng đơn | WMS gửi notification tức thì cho Warehouse Supervisor trực ca. Supervisor phải acknowledge trong vòng 15 phút. Đơn không được tiến hành tiếp cho đến khi Supervisor approve | Nếu Supervisor không acknowledge trong 15 phút: WMS escalate lên Operation Manager. Nếu OM cũng không response: đơn bị hold với status `ESCALATED_EXCEPTION` | Warehouse Supervisor / Operation Manager / WMS System |
+
+---
+
+## Nhóm 4: Cancellation (BR-CANCEL-xx)
+
+> **Mục đích:** Xác định rõ quyền hạn và quy trình hủy đơn theo từng giai đoạn xử lý. Mức độ phức tạp tăng dần theo tiến trình fulfillment.
+
+<Info>
+  Nguyên tắc chung: càng về cuối luồng, việc cancel càng tốn chi phí và cần nhiều approval hơn. Mọi cancel action đều phải ghi đầy đủ `cancel_timestamp`, `cancelled_by`, `cancel_reason`, `cancel_source`.
+</Info>
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|-----------|-------------------|-------------------|-------|
+| **BR-CANCEL-01** | Cancel Trước Khi ALLOCATED — System Auto Cancel | CS, Merchant, hoặc Sales Channel gửi cancel request | Đơn hàng đang ở `ORDER_RECEIVED`, `VALIDATING`, hoặc `VALIDATION_FAILED` | OMS tự động cancel ngay lập tức, không cần approval. Không có tác động gì đến inventory. Gửi confirmation notification về sales channel | Không có exception đặc biệt — đây là trường hợp đơn giản nhất | OMS System / CS / Merchant |
+| **BR-CANCEL-02** | Cancel Sau ALLOCATED, Trước PICKING — System Cancel + Release Stock | CS hoặc Merchant gửi cancel request | Đơn hàng ở `ALLOCATED` (stock đã reserve trong WMS nhưng chưa có pick task nào được started) | OMS gửi lệnh release allocation xuống WMS. WMS giải phóng `reserved_qty` của tất cả SKU. OMS cập nhật đơn sang `CANCELLED`. Ghi `stock_release_record` | Nếu WMS trả về lỗi khi release (timeout): OMS vẫn gán đơn `CANCELLED` nhưng đánh dấu `stock_release_status: PENDING`. System Admin được alert để manual release | OMS System / WMS System / System Admin |
+| **BR-CANCEL-03** | Cancel Trong Khi Đang PICKING — Yêu Cầu Supervisor Review | CS hoặc Merchant gửi cancel request | Đơn hàng ở `PICKING` — pick task đã được assigned và đang trong quá trình thực hiện | OMS gửi interrupt signal xuống WMS, WMS hiển thị cảnh báo cho Warehouse Staff: "ĐƠN NÀY ĐANG ĐƯỢC YÊU CẦU HỦY — Dừng picking và chờ Supervisor". Supervisor quyết định: (1) Confirm cancel → hoàn trả hàng, release stock; (2) Reject cancel | Nếu Supervisor không response trong 30 phút: OMS escalate lên Operation Manager. Nếu Staff đã pick xong toàn bộ trước khi interrupt: chuyển sang xử lý theo BR-CANCEL-04 | Warehouse Supervisor / Operation Manager / OMS System / WMS System |
+| **BR-CANCEL-04** | Cancel Sau PACKED — Cần Supervisor + CS Approval | CS hoặc Merchant gửi cancel request | Đơn hàng ở `PACKED` (đã đóng gói xong, đang chờ carrier pickup) | OMS tạo cancel request ở trạng thái `PENDING_APPROVAL`. Cả Warehouse Supervisor và CS Lead phải approve. Nếu cả hai approve: WMS được lệnh unpack, hoàn trả từng item về đúng bin, release allocation | Nếu Supervisor approve nhưng CS reject: cancel bị từ chối, đơn tiếp tục. Nếu CS approve nhưng Supervisor reject: escalate lên Operation Manager. SLA resolve: 2 giờ kể từ khi tạo cancel request | Warehouse Supervisor / CS / Operation Manager / OMS System |
+| **BR-CANCEL-05** | Cancel Sau HANDED_OVER — Không Thể Cancel, Phải Recall Từ Carrier | CS hoặc Merchant gửi cancel request | Đơn hàng ở `HANDED_OVER` hoặc `IN_TRANSIT` — đã bàn giao cho carrier | OMS từ chối cancel thông thường, trả về `error_code: CANNOT_CANCEL_IN_TRANSIT`. OMS tạo Recall Request gửi đến carrier qua API hoặc email/hotline. CS được assigned task theo dõi recall | Nếu carrier xác nhận recall thành công: đơn về kho, xử lý như BR-DELIVER-04. Nếu carrier từ chối recall: CS thông báo cho khách từ chối nhận hàng khi shipper đến | OMS System / CS / Operation Manager |
+
+---
+
+## Nhóm 5: Delivery & Return (BR-DELIVER-xx)
+
+> **Mục đích:** Xử lý các tình huống phát sinh trong quá trình vận chuyển và sau giao hàng thất bại.
+
+<Note>
+  Số lần giao hàng thất bại tối đa (max failed delivery attempts) là cấu hình per carrier, thường là 3 lần. Sau đó carrier tự động initiate return.
+</Note>
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|-----------|-------------------|-------------------|-------|
+| **BR-DELIVER-01** | Carrier Failed Pickup — Không Đến Lấy Hàng | Scheduled pickup time đã qua, OMS/WMS không nhận được pickup confirmation | Đơn ở `READY_TO_SHIP` và đã qua `scheduled_pickup_time` + buffer 2 giờ mà không có carrier scan/pickup event | OMS gán trạng thái `PICKUP_FAILED`, ghi timestamp. CS được alert. Operation Manager được notify. OMS tự động reschedule pickup cho ngày tiếp theo (nếu Carrier API hỗ trợ). Ghi incident cho SLA tracking | Nếu failed pickup xảy ra 2 lần liên tiếp với cùng carrier: Operation Manager được alert để xem xét chuyển sang carrier backup | OMS System / CS / Operation Manager |
+| **BR-DELIVER-02** | Failed Delivery Lần 1 — Carrier Giao Không Thành Công | Carrier push failed delivery event qua webhook | Carrier ghi nhận `delivery_status: FAILED` lần đầu tiên | OMS nhận webhook, cập nhật tracking: `DELIVERY_ATTEMPT_1_FAILED`. CS được alert, tự động gửi SMS/Zalo cho khách. Không cần action từ Staff | Nếu lý do failed là `WRONG_ADDRESS`: CS phải liên hệ khách cập nhật địa chỉ và gửi update cho carrier trước lần giao tiếp theo | OMS System / CS |
+| **BR-DELIVER-03** | Customer Refused Delivery | Carrier push event `CUSTOMER_REFUSED` qua webhook | Khách hàng chủ động từ chối nhận hàng tại cửa khi shipper đến | OMS cập nhật trạng thái `CUSTOMER_REFUSED`. CS được alert với priority cao. CS phải liên hệ khách trong vòng 1 giờ để quyết định: (1) Thuyết phục nhận hàng; (2) Initiate return | Nếu khách từ chối vì lý do sản phẩm không đúng mô tả/bị lỗi: CS ghi nhận complaint, escalate lên merchant | OMS System / CS / Merchant |
+| **BR-DELIVER-04** | Return Initiated Sau Failed Delivery | Carrier đã thực hiện đủ số lần giao thất bại, hoặc CS xác nhận return | Carrier tạo return shipment, push event `RETURN_INITIATED` vào OMS. Hoặc Operation Manager/CS manually trigger return | OMS cập nhật đơn sang `RETURN_IN_TRANSIT`. Tạo Return record với `return_id`. WMS được notify để chuẩn bị nhận hàng hoàn. CS thông báo merchant | Nếu carrier không push return webhook trong 72 giờ sau failed delivery cuối: CS chủ động gọi carrier xác nhận tình trạng kiện hàng | OMS System / CS / Operation Manager |
+| **BR-DELIVER-05** | Returned Item Damaged | Warehouse Staff nhận hàng hoàn từ carrier, thực hiện inspection | Trong quá trình inspection, Staff phát hiện sản phẩm bị hư hỏng: bao bì rách/vỡ, sản phẩm bị móp méo, tem/seal bị mở | WMS Staff chụp ảnh toàn bộ tình trạng (bắt buộc, tối thiểu 4 góc), upload lên WMS. Gán trạng thái sản phẩm `DAMAGED`. Tạo `damage_report`. Warehouse Supervisor review. Hàng chuyển vào khu Quarantine | Nếu hư hỏng rõ ràng do lỗi carrier: CS mở claim với carrier trong vòng 24 giờ. Nếu hư hỏng do lỗi đóng gói ban đầu: ghi nhận quality issue, báo cáo Merchant | WMS System / Warehouse Staff / Warehouse Supervisor / CS / Operation Manager |
+| **BR-DELIVER-06** | Restock vs Quarantine Returned Item | Warehouse Supervisor hoàn tất inspection hàng hoàn | Dựa trên kết quả inspection: (A) Còn nguyên vẹn → Restock; (B) Có dấu hiệu đã dùng, bao bì hỏng → Quarantine; (C) Hư hỏng hoàn toàn → Disposal | (A) RESTOCK: WMS tăng `available_qty`, ghi `restock_record`. (B) QUARANTINE: chuyển vào khu quarantine, Merchant được notify để quyết định disposition trong 7 ngày. (C) DISPOSAL: tạo disposal record, chờ merchant approval | Nếu merchant không phản hồi về hàng quarantine sau 7 ngày: OMS gửi reminder. Sau 14 ngày không phản hồi: Operation Manager quyết định disposal hoặc tính phí lưu kho | Warehouse Staff / Warehouse Supervisor / Operation Manager / Merchant |
+
+---
+
+## Nhóm 6: SLA (BR-SLA-xx)
+
+> **Mục đích:** Định nghĩa ngưỡng thời gian cho từng giai đoạn xử lý và cơ chế cảnh báo khi vi phạm SLA.
+
+<Info>
+  **Cơ chế cảnh báo 2 cấp:**
+  - **Warning (80% SLA):** Notification tự động, không cần action ngay
+  - **Breach (100% SLA):** Alert khẩn cấp, yêu cầu action trong vòng 15 phút
+</Info>
+
+| Rule ID | Tên Rule | Trigger | SLA Threshold | Điều kiện Vi Phạm | Expected Behavior | Exception / Error | Owner |
+|---------|----------|---------|--------------|-------------------|-------------------|-------------------|-------|
+| **BR-SLA-01** | Order Không Được Pick Trong X Giờ Sau FULFILLMENT_CREATED | Đơn hàng chuyển sang `FULFILLMENT_CREATED` | **X = 4 giờ** (standard). **X = 2 giờ** (express). **X = 1 giờ** (VIP) | Đơn ở `FULFILLMENT_CREATED` quá X giờ mà chưa có pick task nào được assigned và started | Tại **80%**: OMS gửi warning cho Supervisor và Operation Manager. Tại **100%**: OMS gán `SLA_BREACH`, gửi alert khẩn cấp, tạo escalation ticket. Operation Manager phải assign Staff và bắt đầu pick trong 15 phút | Nếu breach do thiếu Staff: Operation Manager ghi nhận `breach_reason: UNDERSTAFFED`. Nếu breach do WMS downtime: ghi `breach_reason: SYSTEM_OUTAGE`, không tính vào KPI Staff | Operation Manager / Warehouse Supervisor / OMS System |
+| **BR-SLA-02** | Order Không Được Pack Trong Y Giờ Sau PICKED | Đơn hàng chuyển sang `PICKED` | **Y = 2 giờ** (standard). **Y = 1 giờ** (express). **Y = 30 phút** (VIP) | Đơn ở `PICKED` quá Y giờ mà chưa chuyển sang `PACKED` | Tại **80%**: OMS gửi warning cho Warehouse Supervisor. Tại **100%**: OMS gán `SLA_BREACH`, tạo escalation ticket | Nếu delay do exception đang chờ resolve (BR-PICK-06): SLA timer tự động pause trong khi exception đang open, resume sau khi resolved | Warehouse Supervisor / OMS System |
+| **BR-SLA-03** | Carrier Không Đến Lấy Trong Z Giờ Sau READY_TO_SHIP | Đơn hàng chuyển sang `READY_TO_SHIP` | **Z = 24 giờ** (standard). **Z = 4 giờ** (express). **Z = 2 giờ** (VIP on-demand) | Đơn ở `READY_TO_SHIP` quá Z giờ mà không có pickup confirmation từ carrier | Tại **80%**: OMS gửi warning, CS chuẩn bị liên hệ carrier. Tại **100%**: OMS gán `PICKUP_SLA_BREACH`, CS phải gọi carrier hotline ngay. Ghi vào carrier performance scorecard | Nếu breach do ngày lễ/Tết: SLA timer điều chỉnh theo `carrier_holiday_calendar`, không tính giờ ngoài working hours | CS / Operation Manager / OMS System |
+| **BR-SLA-04** | Exception Không Được Resolve Trong W Giờ | Bất kỳ exception ticket nào được tạo trong hệ thống | **W = 2 giờ** (critical). **W = 4 giờ** (high). **W = 24 giờ** (medium). **W = 72 giờ** (low) | Exception ticket còn ở status `OPEN` hoặc `IN_PROGRESS` quá W giờ mà không có `resolution_action` được ghi nhận | Tại **80% W**: reminder notification gửi đến assignee và direct manager. Tại **100% W**: OMS gán `EXCEPTION_SLA_BREACH`, escalate lên cấp quản lý cao hơn | Nếu exception cần thông tin từ bên ngoài: assignee có thể request SLA pause với lý do rõ ràng. Tổng thời gian pause không được quá 50% SLA threshold | Warehouse Supervisor / Operation Manager / CS / System Admin |
+| **BR-SLA-05** | Return Không Được Nhận Trong Kho Trong V Ngày | OMS nhận event `RETURN_INITIATED` | **V = 5 ngày làm việc** (standard). **V = 3 ngày** (express — hàng > 1.000.000 VNĐ). **V = 7 ngày** (remote area) | Từ ngày `return_initiated_date` đến ngày V mà WMS chưa nhận được hàng hoàn | Tại **80% V**: CS gửi reminder cho carrier tracking. Tại **100% V**: OMS gán `RETURN_SLA_BREACH`, CS phải liên hệ carrier trực tiếp, tạo incident report. Ghi vào carrier KPI | Nếu return tracking không có update trong 48 giờ: CS chủ động liên hệ carrier để trace. Nếu carrier xác nhận thất lạc: mở claim bảo hiểm | CS / Operation Manager / OMS System |
+
+---
+
+## Rule Dependency Map
+
+> Bảng này cho thấy các rules có mối quan hệ phụ thuộc hoặc tương tác với nhau. Khi thay đổi một rule, cần review tất cả rules phụ thuộc.
+
+| Rule ID | Phụ Thuộc Vào | Được Phụ Thuộc Bởi | Loại Quan Hệ |
+|---------|---------------|---------------------|-------------|
+| BR-VAL-01 | — | BR-VAL-02 đến BR-VAL-08 | Là tiền điều kiện — phải pass trước khi các BR-VAL khác chạy |
+| BR-VAL-02 | BR-VAL-01 | BR-VAL-04 | Sequential — address phải có trước khi check carrier coverage |
+| BR-VAL-04 | BR-VAL-02 | — | Phụ thuộc vào address đã được validate |
+| BR-VAL-05 | BR-VAL-01 | BR-INV-01 đến BR-INV-04 | SKU phải valid trước khi có thể allocate |
+| BR-VAL-06 | — | BR-CANCEL-01 | Trigger cancel ngay, bypass validation chain còn lại |
+| BR-INV-01 | BR-VAL-01 đến BR-VAL-08 (tất cả pass) | BR-PICK-01 đến BR-PICK-05 | Allocation thành công mới mở khóa picking |
+| BR-INV-03 | BR-INV-01 (fail) | BR-CANCEL-01 (nếu merchant cancel) | Out of stock có thể dẫn đến cancel |
+| BR-INV-05 | BR-INV-01 hoặc BR-INV-06 | BR-INV-01 (retry sau sync) | Discrepancy phải resolve trước khi retry allocation |
+| BR-PICK-01 | BR-INV-01 (allocated) | BR-PICK-06 | Barcode mismatch tạo exception, trigger supervisor review |
+| BR-PICK-06 | BR-PICK-01 đến BR-PICK-05 | BR-SLA-04 | Exception tạo ra → SLA tracking bắt đầu |
+| BR-CANCEL-02 | BR-INV-01 (đã allocated) | BR-INV-01 (reverse) | Cancel phải đảo ngược allocation |
+| BR-CANCEL-05 | BR-CANCEL-04 (sau handover) | BR-DELIVER-04 (recall → return) | Cancel sau handover dẫn đến BR-DELIVER-04 |
+| BR-DELIVER-04 | BR-DELIVER-02, BR-DELIVER-03, BR-CANCEL-05 | BR-DELIVER-05, BR-DELIVER-06, BR-SLA-05 | Return initiated → SLA tracking + inspection |
+| BR-DELIVER-05 | BR-DELIVER-04 (hàng về kho) | BR-DELIVER-06 | Inspection result xác định restock hay quarantine |
+| BR-DELIVER-06 | BR-DELIVER-05 | BR-INV-01 (nếu restock) | Restock → available qty tăng, có thể allocate lại |
+| BR-SLA-01 đến BR-SLA-03 | Các state tương ứng | BR-SLA-04 (nếu escalate thành exception) | SLA breach tạo escalation → BR-SLA-04 track resolution |
+| BR-SLA-04 | BR-PICK-06, BR-SLA-01, BR-SLA-02, BR-SLA-03 | — | Meta-rule tracking resolution SLA của mọi exception và breach |
+
+---
+
+## Appendix: Owner Glossary
+
+| Owner | Mô Tả | Công Cụ Chính |
+|-------|--------|---------------|
+| **OMS System** | Hệ thống Order Management tự động | OMS API, Rule Engine, Event Bus |
+| **WMS System** | Hệ thống Warehouse Management tự động | WMS API, Inventory Ledger, Scanner/PDA |
+| **Warehouse Staff** | Nhân viên kho thực hiện picking, packing | WMS Mobile App trên PDA/Scanner |
+| **Warehouse Supervisor** | Quản lý ca kho, review và approve exceptions | WMS Dashboard, Mobile Alert |
+| **CS** | Customer Service — xử lý vấn đề phía khách hàng | CS CRM, OMS Portal |
+| **Operation Manager** | Quản lý vận hành tổng thể, escalation cuối | OMS/WMS Dashboard, Report Portal |
+| **System Admin** | Quản trị hệ thống, xử lý technical issues | Server Console, Log Management |
+| **Merchant** | Đối tác bán hàng, chủ sở hữu hàng hóa | Merchant Portal |
+
+---
+
+<Note>
+  **Tổng số rules:** 36 (BR-VAL: 8, BR-INV: 6, BR-PICK: 6, BR-CANCEL: 5, BR-DELIVER: 6, BR-SLA: 5)
+  
+  Practice Case Study — VietFulfill là công ty fictional.
+</Note>
