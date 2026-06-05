@@ -1,169 +1,122 @@
 ---
 title: "Nguyễn Đức Chinh — BA Portfolio"
-description: "Business Analyst | Fintech & Trading Platform | Hà Nội, Việt Nam"
+description: "Business Analyst · Fintech & Trading Platform · Hà Nội"
 ---
 
-<Info>
-  Business Analyst với kinh nghiệm thực tế tại công ty fintech, tập trung vào phân tích nghiệp vụ cho các sản phẩm **trading platform** và **ví điện tử**. Có khả năng khai thác yêu cầu, viết tài liệu PRD/BRS/SRS, thiết kế user flow và phối hợp cross-team trong môi trường Agile.
-</Info>
+Business Analyst tại Nami Innovation — một trong những nền tảng crypto trading đầu tiên tại Việt Nam. Hơn 2 năm làm việc trong môi trường fintech thực tế: định nghĩa business rules cho futures trading, thiết kế campaign logic cho 20,000+ users, và phối hợp cross-functional trong Agile team.
+
+Điều tôi quan tâm không chỉ là viết tài liệu đúng format — mà là đảm bảo team hiểu đúng bài toán trước khi bắt đầu build, edge cases được xác định trước khi QA tìm ra, và thứ được release thực sự giải quyết đúng vấn đề của người dùng.
 
 ---
 
-## Kinh nghiệm làm việc
+## Cách tôi làm việc như một BA
+
+<Steps>
+  <Step title="Hiểu context business trước, requirements sau">
+    Tôi bắt đầu bằng câu hỏi *tại sao* feature này cần tồn tại — không phải *nó làm gì*. Điều này có nghĩa là nói chuyện với CS để hiểu pain point thực từ user, phân tích cách đối thủ giải quyết bài toán tương tự, và xác nhận với PM rằng business objective và user need đang được nhìn nhất quán trước khi viết một chữ nào.
+  </Step>
+  <Step title="Xác định actor, vẽ luồng As-is và tìm điểm đau thực sự">
+    Trước khi thiết kế To-be, tôi luôn vẽ luồng đang xảy ra như thế nào. Thường thì vấn đề thực sự — thứ cần được giải quyết — không phải là thứ được đặt hàng ban đầu.
+  </Step>
+  <Step title="Xây dựng business rules và xác định exception cases từ sớm">
+    Happy path ai cũng nghĩ được. Giá trị của BA nằm ở chỗ xác định các edge case trước khi dev gặp phải: partial fill khi order khớp một phần, balance lock khi user có open position, campaign budget hết giữa chừng. Tôi build danh sách exception từ đầu, không để QA tìm ra ở cuối.
+  </Step>
+  <Step title="Viết tài liệu theo đúng người đọc và quyết định họ cần đưa ra">
+    PRD cho Dev khác BRD cho Product Lead. User Guide cho CS khác Functional Spec cho Engineering. Tài liệu đúng người đọc, đúng mức độ chi tiết — tiết kiệm rất nhiều thời gian giải thích lại sau này.
+  </Step>
+  <Step title="Tham gia UAT, theo dõi sau release và điều chỉnh khi có data">
+    Công việc không kết thúc khi dev merge code. Tôi tham gia UAT để verify logic (không chỉ ký tên), theo dõi funnel và metric sau launch, và sẵn sàng update requirements khi có data thực tế — đặc biệt với các tính năng campaign và reward.
+  </Step>
+</Steps>
+
+---
+
+## Dự án đã làm
 
 <CardGroup cols={2}>
-  <Card title="Nami Innovation" icon="building" href="#">
-    **Business Analyst** · 1/2024 – Hiện tại
+  <Card title="Crypto Futures Trading Platform" icon="chart-line" href="/projects/nami-futures-trading">
+    **Domain phức tạp nhất tôi từng làm.** Định nghĩa business rules cho margin, liquidation engine và risk control — domain mà một rule sai có thể dẫn đến tổn thất tài chính thực cho user. Học cách xây business rule register để tracking dependency giữa hàng chục rules phụ thuộc nhau.
 
-    Phân tích nghiệp vụ cho các tính năng của nền tảng crypto trading: Futures Trading, Reward Program, Money Transfer, Calculator. Team size 40–50 người (Hà Nội & HCM).
+    `Nami Innovation` · `6 tháng` · `~20 người`
   </Card>
 
-  <Card title="Nami Foundation" icon="bullhorn" href="#">
-    **Marketing Intern** · 3/2022 – 1/2024
+  <Card title="Reward Program & Campaign System" icon="gift" href="/projects/nami-reward-program">
+    **Bài toán stakeholder phức tạp nhất.** Cầu nối giữa 8 teams với kỳ vọng xung đột — Growth muốn flexibility tối đa, Engineering muốn simplicity. Sau launch, làm việc với BI team để phát hiện drop-off và adjust campaign logic dựa trên data thực.
 
-    Nghiên cứu thị trường, tạo nội dung cho các dự án blockchain, tổ chức sự kiện và quản lý cộng đồng.
+    `Nami Innovation` · `8 tháng` · `~20 người`
+  </Card>
+
+  <Card title="Internal Money Transfer" icon="arrow-right-arrow-left" href="/projects/nami-money-transfer">
+    **Bài toán ownership đầu tiên.** End-to-end từ elicitation đến UAT lead — với transfer logic phức tạp: nhiều loại tài khoản, balance lock khi có open position, và UX cần đơn giản dù phía sau rất nhiều điều kiện.
+
+    `Nami Innovation` · `4 tháng` · `~10 người`
+  </Card>
+
+  <Card title="Trading Calculator Feature" icon="calculator" href="/projects/nami-calculator">
+    **Bài toán research-driven.** Bắt đầu từ CS interview và competitor analysis — không phải spec từ trên xuống. Xác định đúng nhu cầu 3 nhóm trader khác nhau, define công thức tính toán chuẩn, và phối hợp Design + Dev để đảm bảo UX không mâu thuẫn với logic.
+
+    `Nami Innovation` · `5 tháng` · `~10 người`
   </Card>
 </CardGroup>
 
 ---
 
-## Dự án nổi bật
+<Card title="Tài liệu mẫu — Generic E-Wallet App" icon="wallet" href="/projects/ewallet/project-context">
+  Bộ tài liệu BA hoàn chỉnh theo SDLC sequence: BRD · User Stories · Use Case Spec · FRD · ERD · UAT Test Cases. Được viết như một reconstructed case study — áp dụng kinh nghiệm thực tế vào domain ví điện tử để thực hành chuẩn hóa tài liệu theo từng loại và đúng người đọc.
 
-<AccordionGroup>
-  <Accordion title="Crypto Futures Trading Platform — BA (6/2025 – 1/2026)" icon="chart-line">
-    Ra mắt sản phẩm futures trading với các chức năng cốt lõi: leverage trading, margin management và risk control.
-
-    **Platform:** Web / Mobile · **Team size:** ~20 (BA, Dev, QA, UI/UX)
-
-    | Kết quả | Số liệu |
-    | --- | --- |
-    | Active Users | 6,000\+ |
-    | Trading Volume | ~\$10M |
-
-    **Đóng góp:**
-
-    - Định nghĩa business rules cho logic trading: margin calculation, liquidation conditions
-    - Viết BRS, PRD, User Guide và chuyển đổi yêu cầu thành functional specifications
-    - Thiết kế user flows cho order placement và position management
-    - Phối hợp với Engineering giải quyết edge cases trong trading scenarios
-    - Validate trading flows và system behavior trước khi release
-  </Accordion>
-
-  <Accordion title="Reward Program Feature — BA (10/2024 – 6/2025)" icon="gift">
-    Hệ thống reward hỗ trợ các chiến dịch user engagement dựa trên hành động trong app.
-
-    **Platform:** Web / Mobile · **Team size:** ~20 (BA, Dev, QA, UI/UX, Content, CS, BI, Growth)
-
-    | Kết quả | Số liệu |
-    | --- | --- |
-    | User Engagement | 20,000\+ |
-    | Volume Increase | 60%\+ |
-
-    **Đóng góp:**
-
-    - Phối hợp PO và Growth/MKT để định nghĩa reward logic và campaign requirements
-    - Xác định reward conditions, limits và automation rules
-    - Viết PRD chi tiết flow và experience cho từng chương trình
-    - Tracking campaign data và tinh chỉnh reward logic dựa trên performance
-  </Accordion>
-
-  <Accordion title="Money Transfer Feature — BA (6/2024 – 10/2024)" icon="arrow-right-arrow-left">
-    Tính năng chuyển tiền nội bộ cho phép user chuyển tiền giữa các tài khoản.
-
-    **Platform:** Mobile · **Team size:** ~10 (BA, Dev, QA, UI/UX, Growth, Brand)
-
-    **Đóng góp:**
-
-    - Định nghĩa transfer rules: validation logic và user constraints
-    - Viết PRD, User Guide và align yêu cầu với các team
-    - Thiết kế user flows cho các transfer scenarios và edge cases
-    - Verify functionality và UX consistency qua QA validation
-  </Accordion>
-
-  <Accordion title="Calculator Trading Feature — BA (1/2024 – 5/2024)" icon="calculator">
-    Công cụ tính toán giúp user ước tính kết quả giao dịch trước khi đặt lệnh.
-
-    **Platform:** Web / Mobile · **Team size:** ~10 (BA, Dev, QA, UI/UX)
-
-    **Đóng góp:**
-
-    - Thu thập user feedback qua đội customer support
-    - Phân tích competitor platforms để xác định feature scope
-    - Viết PRD và định nghĩa formulas cho leverage, entry/exit price, PnL
-    - Finalize UI/UX flow với Design và logic với Development team
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Tài liệu mẫu
-
-<Card title="MoMo — Chuyển tiền nội bộ ví điện tử" icon="wallet" href="/projects/momo-transfer/overview">
-  Bộ tài liệu BA đầy đủ cho tính năng chuyển tiền: BRD · FRD · User Stories · Use Case Spec · ERD. Thực hành áp dụng kinh nghiệm từ dự án Money Transfer thực tế tại Nami vào domain ví điện tử (MoMo).
+  <Warning>**Practice case** — Tài liệu thực hành. Không phải dự án tại công ty.</Warning>
 </Card>
 
 ---
 
-## Kỹ năng
+## Kỹ năng cốt lõi
 
 <CardGroup cols={2}>
-  <Card title="Business Analysis" icon="file-lines">
-    Requirement Gathering · BRS / PRD / SRS · User Stories · BPMN · User Flow Design
+  <Card title="Business Analysis & Documentation" icon="file-lines">
+    Viết BRD, PRD, FRD, User Stories, Use Case Spec, User Guide — đúng audience và đúng giai đoạn SDLC. Biết tài liệu nào phục vụ ai và kích hoạt quyết định gì.
   </Card>
 
-  <Card title="Agile Collaboration" icon="arrows-spin">
-    Agile / Scrum · Cross-functional Communication · Stakeholder Management
+  <Card title="Business Rules & Logic Modeling" icon="diagram-project">
+    Định nghĩa business rules có cấu trúc: conditions, exception cases, dependency giữa các rules. Kinh nghiệm với domain phức tạp: futures trading mechanics, reward campaign logic, transfer constraints.
   </Card>
 
-  <Card title="Tools" icon="wrench">
-    Jira · Confluence · Figma · Draw.io · Metabase
+  <Card title="Stakeholder Alignment" icon="people-group">
+    Làm việc cross-functional với Dev, QA, UX, Growth, CS, BI — đặc biệt trong các tình huống kỳ vọng xung đột. Biết cách tổng hợp nhiều góc nhìn thành requirements được đồng thuận.
   </Card>
 
-  <Card title="Data & Analytics" icon="chart-bar">
-    Excel · Metabase · BI Dashboard · Data Analysis Report
+  <Card title="User Flow & Scenario Design" icon="arrows-split-up-and-left">
+    Thiết kế happy path và edge cases từ góc nhìn user, không phải từ góc nhìn hệ thống. Sử dụng BPMN, user flow diagram để làm rõ luồng trước khi viết spec chi tiết.
+  </Card>
+
+  <Card title="Data-Informed Iteration" icon="chart-bar">
+    Theo dõi funnel, drop-off và campaign metric sau launch bằng Metabase. Có kinh nghiệm điều chỉnh logic và requirements dựa trên data thực, không chỉ dừng lại ở spec ban đầu.
+  </Card>
+
+  <Card title="Domain Knowledge — Fintech" icon="chart-candlestick">
+    Crypto futures: margin types (Isolated/Cross), liquidation mechanics, funding rate, order types, PnL. E-wallet: KYC flow, internal transfer, balance validation, transaction states.
   </Card>
 </CardGroup>
 
----
-
-## Học vấn & Chứng chỉ
-
-<CardGroup cols={2}>
-  <Card title="Banking Academy" icon="graduation-cap">
-    **Quản trị Kinh doanh** · 2021 – 2024
-
-    GPA: 3.34 / 4.0
-  </Card>
-
-  <Card title="M2MBA Center" icon="book">
-    **Business Analyst Course** · 4/2024 – 9/2024
-
-    Hoàn thành khóa học BA thực hành
-  </Card>
-</CardGroup>
-
-| Chứng chỉ | Thời gian |
-| --- | --- |
-| Microsoft Excel MOS Certificate | 9/2022 |
-| HubSpot Content Marketing Certification | 8/2022 |
-| Google Digital Marketing Certification | 7/2022 |
+**Công cụ:** Jira · Confluence · Figma · Draw.io · Metabase · Excel · Mermaid
 
 ---
 
-## Thành tích & Hoạt động
+## Nền tảng
 
-- 🏆 **Top 5** cuộc thi ESG Sustainable Development tại Học viện Ngân hàng (2023), do SSC tổ chức
-- 🤖 **Tình nguyện viên** Robocon Vietnam (2021 – 2025) — Hỗ trợ ban tổ chức và ban giám khảo
-- 🏃 **Tình nguyện viên** Hanoi Half Marathon (2021 – 2025) — Hỗ trợ logistics và hướng dẫn lộ trình
+| | |
+|---|---|
+| **Business Analyst** | Nami Innovation · 1/2024 – Hiện tại |
+| **Marketing Intern** | Nami Foundation · 3/2022 – 1/2024 |
+| **Học vấn** | Quản trị Kinh doanh — Banking Academy · 2021–2024 · GPA 3.34/4.0 |
+| **Đào tạo BA** | Business Analyst Course — M2MBA Center · 2024 |
 
 ---
 
 ## Liên hệ
 
-|  |  |
-| --- | --- |
-| 📧 Email | [chinhducnguyen2003@gmail.com](mailto:chinhducnguyen2003@gmail.com) |
-| 📞 Phone | 0865 652 291 |
-| 💼 LinkedIn | [linkedin.com/in/chinhredc](https://linkedin.com/in/chinhredc/) |
-| 🐙 GitHub | [github.com/NDChinh36](https://github.com/NDChinh36) |
-| 📍 Location | Long Biên, Hà Nội |
+| | |
+|---|---|
+| **Email** | [chinhducnguyen2003@gmail.com](mailto:chinhducnguyen2003@gmail.com) |
+| **LinkedIn** | [linkedin.com/in/chinhredc](https://linkedin.com/in/chinhredc/) |
+| **Điện thoại** | 0865 652 291 |
+| **Địa điểm** | Long Biên, Hà Nội |
