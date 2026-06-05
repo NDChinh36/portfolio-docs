@@ -1,0 +1,169 @@
+---
+title: "Role & Permission Matrix (RBAC)"
+description: "Phân quyền cho 7 roles trong hệ thống MedBook — Patient, Caregiver, Receptionist, Doctor, Nurse, Hospital Admin, System Admin"
+icon: "shield-check"
+---
+
+<Note>
+  **Practice Case Study** — MedBook tại CityHealth General Hospital (fictional). Mọi thay đổi quyền phải được approve bởi Hospital Admin và ghi lại trong audit log.
+</Note>
+
+## Role Definitions
+
+### Patient (Bệnh nhân)
+Đặt lịch khám, theo dõi lịch hẹn, tự check-in qua QR. **Pain point:** Phải gọi điện để đặt lịch; không biết số thứ tự; không nhận được nhắc lịch kịp thời; phải xếp hàng tại quầy để check-in.
+
+### Caregiver (Người chăm sóc / Thân nhân)
+Đặt và quản lý lịch khám thay cho thành viên gia đình (người già, trẻ em). **Pain point:** Phải dùng tài khoản của người nhà (vi phạm privacy) hoặc ra quầy làm thủ công; không có authorization flow chính thức.
+
+### Receptionist (Lễ tân / Nhân viên tiếp đón)
+Hỗ trợ check-in thủ công, quản lý lịch trong ngày, điều phối phòng và hàng chờ. **Pain point:** Phải tra cứu thủ công trên HIS legacy; không có alert khi HIS sync fail; không thể xem tổng quan lịch cả ngày trên 1 màn hình.
+
+### Doctor (Bác sĩ)
+Xem lịch bệnh nhân của mình trong ngày, truy cập thông tin cơ bản trước khám. **Pain point:** Không có màn hình tổng quan appointment theo bác sĩ; phải vào HIS để xem từng ca.
+
+### Nurse (Y tá / Điều dưỡng)
+Hỗ trợ check-in, chuẩn bị hồ sơ, hỗ trợ điều phối bệnh nhân tại phòng khám. **Pain point:** Quyền truy cập bị hạn chế trên HIS legacy; phải nhờ Receptionist thực hiện các thao tác đơn giản.
+
+### Hospital Admin (Quản trị bệnh viện)
+Vận hành và giám sát toàn bộ hệ thống đặt lịch; xử lý exception; báo cáo. **Pain point:** Không có dashboard monitoring tổng quan; phải check HIS riêng và MedBook riêng.
+
+### System Admin (Quản trị hệ thống / IT)
+Vận hành kỹ thuật hệ thống, quản lý users, configuration, security. **Pain point:** Chưa có centralized audit log; phải login nhiều hệ thống khác nhau để trace 1 incident.
+
+---
+
+## Permission Matrix — 7 Roles × 20 Permissions
+
+**Ký hiệu:** ✅ Allowed | ❌ Denied | 🔒 Conditional (xem chi tiết bên dưới)
+
+| # | Permission | Patient | Caregiver | Receptionist | Doctor | Nurse | Hospital Admin | System Admin |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | Create appointment (own) | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| 2 | View own appointment | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| 3 | View family/caregiver appointment | ❌ | 🔒 | ✅ | ❌ | ❌ | ✅ | ✅ |
+| 4 | Cancel appointment (own, before cut-off) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 5 | Reschedule appointment (own, before cut-off) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 6 | QR check-in (self) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 7 | QR check-in (for family member) | ❌ | 🔒 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| 8 | Manual check-in (reception) | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| 9 | View daily appointment list | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 10 | Update appointment status | ❌ | ❌ | ✅ | ❌ | ❌ | 🔒 | 🔒 |
+| 11 | Assign room / queue number | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| 12 | View patient basic information | ❌ | 🔒 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 13 | Retry / sync HIS registration | ❌ | ❌ | ❌ | ❌ | ❌ | 🔒 | ✅ |
+| 14 | Mark no-show | ❌ | ❌ | ✅ | ❌ | ❌ | 🔒 | ❌ |
+| 15 | Hospital cancel appointment | ❌ | ❌ | ❌ | ❌ | ❌ | 🔒 | ❌ |
+| 16 | Override late check-in | ❌ | ❌ | 🔒 | ❌ | ❌ | ✅ | ❌ |
+| 17 | Export appointment report | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| 18 | Manage doctor schedule | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| 19 | Manage user roles | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| 20 | View audit log | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+
+<Info>
+  **Lưu ý về Doctor (Permission #1):** Bác sĩ KHÔNG tạo appointment qua MedBook (lịch do HIS quản lý). Nếu tương lai có flow "bác sĩ tạo follow-up appointment", cần thêm permission riêng.
+</Info>
+
+---
+
+## Conditional Permission Details
+
+### 🔒 Permission #3 & #7 — Caregiver xem/check-in cho Family Member
+
+Caregiver chỉ được xem appointment của người khác hoặc check-in thay nếu có **Authorization Link** hợp lệ:
+
+1. Authorization Link phải ở trạng thái `ACTIVE` (không expired, chưa bị revoke)
+2. Được tạo bởi Patient hoặc Hospital Admin (trường hợp patient không có khả năng tự authorize)
+3. Caregiver chỉ thấy appointment của patient được authorize, không thấy appointment của các patient khác
+
+**Phạm vi quyền theo Authorization Link:**
+
+| Scope | Mô tả |
+|---|---|
+| `VIEW` | Chỉ xem appointment |
+| `CHECKIN` | Xem + QR check-in thay |
+| `FULL` | Xem + check-in + cancel + reschedule |
+
+**Audit requirement:** Mọi hành động của Caregiver trên appointment của patient phải log `acting_as = CAREGIVER` + `caregiver_user_id` + `authorization_link_id`.
+
+---
+
+### 🔒 Permission #16 — Override Late Check-in (Receptionist)
+
+Receptionist có thể override late check-in khi:
+
+1. `appointment_status = CONFIRMED` hoặc `REMINDER_SENT`
+2. Thời gian hiện tại vượt quá check-in deadline
+3. Receptionist phải chọn **reason code** bắt buộc:
+   - `PATIENT_DELAYED_TRAFFIC` — Kẹt xe
+   - `PATIENT_DELAYED_MEDICAL` — Lý do sức khỏe
+   - `SYSTEM_ERROR` — Lỗi hệ thống
+   - `HOSPITAL_DELAY` — Bệnh viện delay
+   - `OTHER` — Khác (ghi chú tối thiểu 20 ký tự)
+4. Chỉ trong vòng **2 giờ** sau check-in deadline. Sau đó chỉ Hospital Admin mới override được.
+
+---
+
+### 🔒 Permission #13 — Retry / Sync HIS Registration (Hospital Admin)
+
+Hospital Admin chỉ được trigger retry HIS sync khi:
+
+1. `his_sync_status = HIS_SYNC_FAILED` (đã failed sau tất cả auto-retry)
+2. `appointment_status` phải là `CONFIRMED`, `HIS_SYNC_FAILED`, hoặc `REMINDER_SENT`
+3. Mỗi manual retry được log với `triggered_by = admin_user_id`
+4. **Limit:** Tối đa 5 manual retries. Sau đó cần escalate lên System Admin.
+
+---
+
+### 🔒 Permission #14 — Mark No-Show Override (Hospital Admin)
+
+Hospital Admin có thể override no-show khi:
+
+1. `appointment_status = NO_SHOW` (đã được auto-mark)
+2. Thời gian override: **trong vòng 24 giờ** sau khi `no_show_at` được set
+3. Phải cung cấp reason: `PATIENT_ARRIVED_LATE`, `SYSTEM_MARKED_INCORRECTLY`, hoặc `OTHER` (ghi chú bắt buộc)
+4. Override action: thay đổi `appointment_status` từ `NO_SHOW` về `CHECKED_IN` (không về `CONFIRMED`)
+
+---
+
+### 🔒 Permission #15 — Hospital Cancel Appointment (Hospital Admin)
+
+Điều kiện áp dụng:
+
+1. `appointment_status` phải thuộc: `CONFIRMED`, `HIS_SYNC_PENDING`, `HIS_SYNC_FAILED`, `REMINDER_SENT`
+2. Bắt buộc chọn **reason code**:
+   - `DOCTOR_UNAVAILABLE`, `FACILITY_CLOSED`, `SYSTEM_MAINTENANCE`, `PATIENT_REQUEST_VIA_PHONE`, `DUPLICATE_APPOINTMENT`, `OTHER`
+3. Hệ thống **tự động trigger notification** cho patient sau khi hospital cancel
+4. Nếu cancel trong vòng **2 giờ** trước giờ khám: bắt buộc thêm `priority_reschedule = true`
+
+---
+
+### 🔒 Permission #10 — Override Status (Hospital Admin + System Admin)
+
+1. Chỉ áp dụng cho các trường hợp exception không có trong state machine thông thường
+2. Bắt buộc cung cấp `override_reason` (tối thiểu 50 ký tự)
+3. Một số transitions bị block vĩnh viễn ngay cả với override:
+   - `COMPLETED → bất kỳ` — Không thể undo appointment đã hoàn thành
+   - `CANCELLED_* → CONFIRMED` — Phải tạo mới appointment
+
+---
+
+## Sensitive Actions Audit Requirements
+
+| Action | Fields Phải Log | Alert |
+|---|---|---|
+| **Create appointment** | `user_id`, `patient_id`, `appointment_id`, `acting_as`, `authorization_link_id`, `timestamp`, `ip_address` | Không |
+| **Cancel appointment (patient)** | `user_id`, `appointment_id`, `previous_status`, `new_status`, `cancelled_at`, `ip_address` | Không |
+| **Hospital cancel appointment** | `admin_user_id`, `appointment_id`, `reason_code`, `reason_note`, `notification_triggered`, `timestamp` | Có — alert Hospital Director |
+| **Manual check-in** | `staff_user_id`, `appointment_id`, `patient_id`, `checkin_method`, `checkin_at`, `terminal_id` | Không |
+| **Override late check-in** | `receptionist_user_id`, `appointment_id`, `original_deadline`, `override_at`, `reason_code`, `reason_note` | Có — alert Hospital Admin |
+| **Mark no-show (override)** | `admin_user_id`, `appointment_id`, `no_show_at`, `override_at`, `reason_code`, `new_status` | Có |
+| **Retry HIS sync** | `triggered_by_user_id`, `appointment_id`, `retry_count`, `retry_at`, `his_response`, `result_status` | Nếu retry count > 3 |
+| **Update appointment status (override)** | `user_id`, `role`, `appointment_id`, `from_status`, `to_status`, `override_reason`, `timestamp` | Có — alert System Admin |
+| **Manage user roles** | `admin_user_id`, `target_user_id`, `old_role`, `new_role`, `timestamp`, `justification` | Có — alert System Admin |
+| **Access identity_number (unmasked)** | `user_id`, `role`, `patient_id`, `access_reason`, `timestamp`, `ip_address` | Có — immediate alert |
+| **Export appointment report** | `user_id`, `role`, `export_filter`, `record_count`, `exported_at`, `file_hash` | Có — nếu > 1000 records |
+
+<Warning>
+  **PII Access Logging là bắt buộc.** Mọi trường hợp access `identity_number`, `date_of_birth`, hoặc `phone_number` đầy đủ (unmasked) phải được log và alert. Đây là yêu cầu compliance theo Nghị định 13/2023/ND-CP về bảo vệ dữ liệu cá nhân. Retention: tối thiểu 7 năm.
+</Warning>
