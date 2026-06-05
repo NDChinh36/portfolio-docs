@@ -75,6 +75,28 @@
       ]
     },
     {
+      "group": "Tài liệu mẫu — Healthcare (Nâng cao)",
+      "pages": [
+        {
+          "group": "Hospital Appointment & HIS Check-in",
+          "icon": "hospital",
+          "pages": [
+            "projects/healthcare-appointment/overview",
+            "projects/healthcare-appointment/booking-flow",
+            "projects/healthcare-appointment/state-machine",
+            "projects/healthcare-appointment/business-rules",
+            "projects/healthcare-appointment/data-mapping",
+            "projects/healthcare-appointment/source-of-truth",
+            "projects/healthcare-appointment/rbac",
+            "projects/healthcare-appointment/api-integration",
+            "projects/healthcare-appointment/exception-handling",
+            "projects/healthcare-appointment/uat-scenarios",
+            "projects/healthcare-appointment/wireframe-plan"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Tài liệu mẫu — Logistics / OMS-WMS (Nâng cao)",
       "pages": [
         {
