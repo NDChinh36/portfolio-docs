@@ -299,40 +299,63 @@ stateDiagram-v2
 
 ## Visual Artifacts
 
-```
-[Insert: QR Payment confirmation screen annotated]
-Bao gồm: merchant name + logo, amount, transaction reference,
-wallet balance check indicator, authentication method selector
-(PIN primary / Biometric shortcut), và idempotency key generation
-flow chú thích rõ tại bước nào key được tạo và validated.
+### Artifact 1 — QR Payment Confirmation Screen
+
+*Annotated UI showing validation, authentication and duplicate-prevention rules.*
+
+<iframe
+  src="/artifacts/digital-payment/qr-payment-confirmation.html"
+  width="100%"
+  height="720"
+  style="border:1px solid #e5e7eb;border-radius:12px;"
+></iframe>
+
+---
+
+### Artifact 2 — Transaction State Machine
+
+*Highlights why timeout must move to Unknown — not directly to Failed — in payment systems.*
+
+```mermaid
+flowchart TD
+    Created([Created]) --> PendingConf[Pending Confirmation]
+    PendingConf --> PendingAuth[Pending Authentication]
+    PendingConf --> Cancelled([Cancelled])
+    PendingAuth --> Processing[Processing]
+    PendingAuth --> Failed([Auth Failed])
+    PendingAuth --> Cancelled
+    Processing --> Success[Success]
+    Processing --> FailedPay([Failed])
+    Processing --> Timeout[Timeout]
+    Timeout --> Unknown[Unknown]
+    Unknown --> ReconPending[Reconciliation Pending]
+    Unknown --> Success
+    Unknown --> FailedPay
+    Success --> ReconPending
+    ReconPending --> Matched([Matched])
+    ReconPending --> Mismatched[Mismatched]
+    Mismatched --> RefundRequired[Refund Required]
+    Mismatched --> ManualResolved([Manually Resolved])
+    RefundRequired --> Refunded([Refunded])
+    RefundRequired --> ManualResolved
 ```
 
-```
-[Insert: Transaction state machine diagram — 15 states]
-Full diagram với tất cả transitions, bao gồm:
-- Timeout → Unknown path (highlight màu khác)
-- Mismatched → Refund Required / Manually Resolved paths
-- Actor trigger annotation trên mỗi transition (who triggers what)
-- "Money state" annotation (hold / confirmed / released / pending refund)
-```
+<Note>
+**Critical design rule:** `Timeout` must NOT transition directly to `Failed`. If NAPAS already processed the payment but the response was lost, marking as Failed releases the balance — leading to double charge when the user retries. `Timeout → Unknown → Reconciliation` is the safe path.
+</Note>
 
-```
-[Insert: Reconciliation dashboard wireframe]
-Bao gồm: mismatch queue với severity tags (Critical / High / Normal),
-filter bar (date range, status, amount range, merchant),
-transaction detail panel (ví record vs bank record side-by-side),
-manual resolve action dropdown + required reason field,
-audit trail log hiển thị mọi action với actor và timestamp.
-```
+---
 
-```
-[Insert: Exception handling decision tree]
-Bao gồm: timeout detection → Unknown state logic,
-retry policy (when to retry, max attempts, backoff),
-idempotency check flow (lock → check → write order),
-callback failure handling (late ACK sau timeout),
-và escalation path khi exception không resolve trong SLA.
-```
+### Artifact 3 — Reconciliation Dashboard
+
+*Operation view for detecting mismatched transaction states between wallet and payment gateway.*
+
+<iframe
+  src="/artifacts/digital-payment/reconciliation-dashboard.html"
+  width="100%"
+  height="760"
+  style="border:1px solid #e5e7eb;border-radius:12px;"
+></iframe>
 
 ---
 
