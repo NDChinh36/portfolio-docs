@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annotated Order Form — Crypto Futures</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0c12;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .portfolio-label {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ─── LEFT: ORDER FORM ─── */
+  .order-form-card {
+    background: #1a1d27;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .form-header {
+    background: #141622;
+    border-bottom: 1px solid #2d3148;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .form-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btc-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #f7931a, #e07b10);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .pair-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: 0.03em;
+  }
+
+  .pair-sub {
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 1px;
+  }
+
+  .change-badge {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .form-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Section label */
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  /* Margin Mode */
+  .margin-mode-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #2d3148;
+    background: #141622;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .mode-btn.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.12);
+    color: #60a5fa;
+  }
+
+  .mode-btn .radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .mode-btn.active .radio-dot::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #3b82f6;
+  }
+
+  .scope-tag {
+    font-size: 9px;
+    font-weight: 500;
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.15);
+    border: 1px solid rgba(100, 116, 139, 0.25);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 2px;
+    white-space: nowrap;
+  }
+
+  /* Leverage */
+  .leverage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .leverage-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f59e0b;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .warn-icon {
+    width: 16px;
+    height: 16px;
+    background: #f59e0b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #0a0c12;
+    flex-shrink: 0;
+  }
+
+  .leverage-slider-wrap {
+    position: relative;
+    padding: 4px 0 8px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, #f59e0b 0%, #f59e0b 16%, #2d3148 16%, #2d3148 100%);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #0a0c12;
+    box-shadow: 0 0 0 1px #f59e0b;
+    cursor: pointer;
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #0a0c12;
+    cursor: pointer;
+  }
+
+  .leverage-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .leverage-ticks span {
+    font-size: 10px;
+    color: #475569;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Order type tabs */
+  .order-tabs {
+    display: flex;
+    background: #141622;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .order-tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .order-tab.active {
+    background: #1e2538;
+    color: #e2e8f0;
+    border-radius: 7px;
+    margin: 2px;
+  }
+
+  /* Side buttons */
+  .side-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .side-btn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+
+  .side-btn.long {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: #22c55e;
+    color: #22c55e;
+  }
+
+  .side-btn.short {
+    background: #141622;
+    border-color: #2d3148;
+    color: #64748b;
+  }
+
+  /* Input fields */
+  .input-group {
+    position: relative;
+  }
+
+  .input-field {
+    width: 100%;
+    background: #141622;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    padding: 10px 60px 10px 12px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .input-field:focus {
+    border-color: #3b82f6;
+  }
+
+  .input-suffix {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    pointer-events: none;
+  }
+
+  /* Quantity with slider */
+  .qty-slider {
+    margin-top: 8px;
+  }
+
+  input[type=range].qty-range {
+    background: linear-gradient(to right, #3b82f6 0%, #3b82f6 12.5%, #2d3148 12.5%, #2d3148 100%);
+  }
+
+  input[type=range].qty-range::-webkit-slider-thumb {
+    background: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+
+  /* Info rows */
+  .info-grid {
+    background: #141622;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    border-bottom: 1px solid #1e2538;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-row-label {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .info-row-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+    font-variant-numeric: tabular-nums;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .info-row-value.liq {
+    color: #ef4444;
+  }
+
+  .info-row-value.balance {
+    color: #22c55e;
+  }
+
+  /* Warning banner */
+  .warning-banner {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #fcd34d;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .warning-banner .warn-prefix {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 9px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: not-allowed;
+    opacity: 0.55;
+    letter-spacing: 0.03em;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .lock-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    opacity: 0.8;
+  }
+
+  /* ─── RIGHT: ANNOTATION PANEL ─── */
+  .annotation-panel {
+    background: #1e2538;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .annotation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .annotation-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #252d42;
+    position: relative;
+  }
+
+  .annotation-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .annotation-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0a0c12;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .annotation-content {
+    flex: 1;
+  }
+
+  .annotation-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .annotation-body {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.55;
+  }
+
+  .annotation-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    letter-spacing: 0.05em;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .annotation-tag.scope {
+    background: rgba(100, 116, 139, 0.15);
+    color: #94a3b8;
+    border-color: rgba(100, 116, 139, 0.25);
+  }
+
+  .annotation-tag.br {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+
+  .annotation-tag.decision {
+    background: rgba(34, 197, 94, 0.1);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.2);
+  }
+
+  .annotation-tag.risk {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .maps-to {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #475569;
+    margin-top: 5px;
+  }
+
+  .maps-to::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 1px;
+    background: #475569;
+    margin-right: 2px;
+  }
+
+  .maps-to-arrow {
+    color: #f59e0b;
+  }
+
+  /* Connector dots on the form side */
+  .callout-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0a0c12;
+    font-size: 9px;
+    font-weight: 800;
+    margin-left: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    line-height: 1;
+  }
+
+  /* section divider */
+  .section-block {
+    /* no gap needed, controlled by parent gap */
+  }
+
+  .divider {
+    height: 1px;
+    background: #2d3148;
+    margin: 2px 0;
+  }
+</style>
+</head>
+<body>
+
+<p class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; Business Analyst</p>
+
+<div class="wrapper">
+
+  <!-- ─── LEFT: ORDER FORM ─── -->
+  <div class="order-form-card">
+
+    <!-- Header -->
+    <div class="form-header">
+      <div class="form-header-left">
+        <div class="btc-icon">₿</div>
+        <div>
+          <div class="pair-name">BTC/USDT Perpetual</div>
+          <div class="pair-sub">Futures · USDT-Margined</div>
+        </div>
+      </div>
+      <div class="change-badge">▲ +2.4%</div>
+    </div>
+
+    <!-- Body -->
+    <div class="form-body">
+
+      <!-- Margin Mode -->
+      <div class="section-block">
+        <div class="field-label">
+          Margin Mode
+          <span class="callout-dot">1</span>
+        </div>
+        <div class="margin-mode-row">
+          <button class="mode-btn active">
+            <span class="radio-dot"></span>
+            Isolated
+          </button>
+          <button class="mode-btn">
+            <span class="radio-dot"></span>
+            Cross
+            <span class="scope-tag">Out of MVP</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Leverage -->
+      <div class="section-block">
+        <div class="leverage-header">
+          <div class="field-label" style="margin-bottom:0">
+            Leverage
+            <span class="callout-dot">2</span>
+          </div>
+          <div class="leverage-value">
+            <span class="warn-icon">!</span>
+            20x
+          </div>
+        </div>
+        <div class="leverage-slider-wrap">
+          <input type="range" min="1" max="125" value="20" step="1" readonly>
+          <div class="leverage-ticks">
+            <span>1x</span>
+            <span>25x</span>
+            <span>50x</span>
+            <span>75x</span>
+            <span>100x</span>
+            <span>125x</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Type -->
+      <div class="section-block">
+        <div class="field-label">Order Type</div>
+        <div class="order-tabs">
+          <button class="order-tab">Market</button>
+          <button class="order-tab active">Limit</button>
+          <button class="order-tab">Stop-Limit</button>
+        </div>
+      </div>
+
+      <!-- Side -->
+      <div class="section-block">
+        <div class="field-label">Side</div>
+        <div class="side-btns">
+          <button class="side-btn long">
+            <span>▲</span> Long
+          </button>
+          <button class="side-btn short">
+            <span>▼</span> Short
+          </button>
+        </div>
+      </div>
+
+      <!-- Entry Price -->
+      <div class="section-block">
+        <div class="field-label">Entry Price</div>
+        <div class="input-group">
+          <input class="input-field" type="text" value="43,250.00" readonly>
+          <span class="input-suffix">USDT</span>
+        </div>
+      </div>
+
+      <!-- Quantity -->
+      <div class="section-block">
+        <div class="field-label">Quantity</div>
+        <div class="input-group">
+          <input class="input-field" type="text" value="0.050" readonly>
+          <span class="input-suffix">BTC</span>
+        </div>
+        <div class="qty-slider">
+          <input type="range" class="qty-range" min="0" max="100" value="12" step="1" readonly>
+        </div>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-row-label">
+            Required Margin
+            <span class="callout-dot">4</span>
+          </span>
+          <span class="info-row-value">108.13 USDT</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">
+            Est. Liquidation Price
+            <span class="callout-dot">3</span>
+          </span>
+          <span class="info-row-value liq">41,835.00 USDT</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Fee</span>
+          <span class="info-row-value">~0.043 USDT <span style="color:#475569;font-size:10px">(Taker)</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Available Balance</span>
+          <span class="info-row-value balance">2,162.50 USDT</span>
+        </div>
+      </div>
+
+      <!-- Warning Banner -->
+      <div class="warning-banner">
+        <span class="warn-prefix">⚠</span>
+        <span>
+          <strong>Leverage ≥ 20x — High risk.</strong><span class="callout-dot" style="margin-left:4px">6</span><br>
+          Mandatory confirmation required before order submission.
+        </span>
+      </div>
+
+      <!-- Submit Button -->
+      <div>
+        <div class="field-label" style="margin-bottom:6px">
+          Submit
+          <span class="callout-dot">5</span>
+        </div>
+        <button class="submit-btn" disabled>
+          <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Open Long Position
+        </button>
+      </div>
+
+    </div><!-- /form-body -->
+  </div><!-- /order-form-card -->
+
+  <!-- ─── RIGHT: ANNOTATION PANEL ─── -->
+  <div class="annotation-panel">
+
+    <div class="panel-title">BA Annotations &amp; Design Decisions</div>
+
+    <div class="annotation-list">
+
+      <!-- 1 -->
+      <div class="annotation-item">
+        <div class="annotation-num">1</div>
+        <div class="annotation-content">
+          <div class="annotation-tag scope">SCOPE · OUT OF MVP</div>
+          <div class="annotation-title">Cross Margin — Deferred to v2</div>
+          <div class="annotation-body">
+            Cross Margin increases formula complexity and introduces edge cases that are 2× harder to validate (shared margin pool, liquidation cascade scenarios). Deferred to reduce launch risk. Isolated Margin covers ~85% of new user flows.
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Margin Mode toggle</div>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="annotation-item">
+        <div class="annotation-num">2</div>
+        <div class="annotation-content">
+          <div class="annotation-tag br">BR-LEV-01</div>
+          <div class="annotation-title">Leverage ≥ 20x Confirmation Trigger</div>
+          <div class="annotation-body">
+            When leverage ≥ 20x, a mandatory confirmation popup must appear before the order is submitted. This prevents accidental high-risk orders from users who scroll the slider without reading. The threshold was aligned with exchange industry standard (Binance, Bybit).
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Leverage slider (current: 20x)</div>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="annotation-item">
+        <div class="annotation-num">3</div>
+        <div class="annotation-content">
+          <div class="annotation-tag decision">BA DECISION</div>
+          <div class="annotation-title">Liquidation Price — Shown on Order Form</div>
+          <div class="annotation-body">
+            Original dev spec placed this only in Position Management. BA decision: surface it during order entry too. User research showed "surprised by liquidation" was a top-3 CS ticket category. Liq. price recalculates on every input change (price, qty, leverage).
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Est. Liquidation Price field (red)</div>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="annotation-item">
+        <div class="annotation-num">4</div>
+        <div class="annotation-content">
+          <div class="annotation-tag">FORMULA</div>
+          <div class="annotation-title">Required Margin Preview</div>
+          <div class="annotation-body">
+            Calculated as <strong style="color:#e2e8f0; font-family: 'SF Mono','Consolas',monospace; font-size:11px">Position Size ÷ Leverage</strong>. Must be compared against Available Balance before submit is enabled. If Required Margin &gt; Available Balance, submit is disabled with an inline error state.
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Required Margin row</div>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="annotation-item">
+        <div class="annotation-num">5</div>
+        <div class="annotation-content">
+          <div class="annotation-tag risk">DISABLED STATE</div>
+          <div class="annotation-title">Submit Button — Two Disable Conditions</div>
+          <div class="annotation-body">
+            Button is disabled if: <strong style="color:#e2e8f0">(A)</strong> Required Margin &gt; Available Balance, OR <strong style="color:#e2e8f0">(B)</strong> Leverage ≥ 20x AND user has not acknowledged the risk confirmation popup. Both conditions must be clear in the UI via distinct visual states.
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Open Long Position button (locked)</div>
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="annotation-item">
+        <div class="annotation-num">6</div>
+        <div class="annotation-content">
+          <div class="annotation-tag br">BR-LEV-01</div>
+          <div class="annotation-title">High Leverage Warning — Must Be Pre-Modal</div>
+          <div class="annotation-body">
+            Warning banner must be visible on the Order Form itself, not only inside the confirmation popup. This ensures the risk message is seen before the user clicks "submit" — satisfying compliance requirement that risk disclosure precedes order action.
+          </div>
+          <div class="maps-to"><span class="maps-to-arrow">→</span> Yellow warning banner</div>
+        </div>
+      </div>
+
+    </div><!-- /annotation-list -->
+  </div><!-- /annotation-panel -->
+
+</div><!-- /wrapper -->
+
+</body>
+</html>
