@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Payment Confirmation — BA Portfolio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0f172a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 48px;
+  }
+
+  /* Top label */
+  .portfolio-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 24px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 6px 16px;
+    border-radius: 20px;
+  }
+
+  /* Layout wrapper */
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  /* Phone card */
+  .phone-card {
+    width: 420px;
+    min-width: 340px;
+    background: #ffffff;
+    border-radius: 32px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: #1a1a2e;
+    padding: 10px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .status-time {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .status-icons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .status-icons span {
+    font-size: 11px;
+    color: #ffffff;
+  }
+
+  /* App header */
+  .app-header {
+    background: #ffffff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .btn-back {
+    font-size: 14px;
+    color: #22c55e;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .app-header-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .header-spacer { width: 60px; }
+
+  /* Scrollable content */
+  .screen-content {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Merchant card */
+  .merchant-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .merchant-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    color: #fff;
+    font-weight: 700;
+  }
+  .merchant-info .merchant-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .merchant-info .merchant-meta {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .merchant-verified {
+    margin-left: auto;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Amount block */
+  .amount-block {
+    text-align: center;
+    padding: 8px 0;
+  }
+  .amount-label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .amount-value {
+    font-size: 38px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -1px;
+  }
+  .amount-currency {
+    font-size: 18px;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: 4px;
+  }
+
+  /* Detail rows */
+  .detail-rows {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row.total-row {
+    background: #f8fafc;
+  }
+  .detail-label {
+    font-size: 13px;
+    color: #64748b;
+  }
+  .detail-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .detail-value.green { color: #16a34a; }
+  .detail-value.total { font-size: 15px; font-weight: 800; }
+
+  /* Balance row */
+  .balance-row {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .balance-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .balance-icon {
+    width: 28px;
+    height: 28px;
+    background: #22c55e;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+  }
+  .balance-text .balance-title {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+  }
+  .balance-text .balance-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #16a34a;
+  }
+  .balance-check {
+    font-size: 11px;
+    font-weight: 700;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: -6px;
+    margin-top: 2px;
+  }
+
+  /* Payment source */
+  .source-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34,197,94,0.15);
+  }
+  .radio-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .radio-dot.selected::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+  }
+  .source-info .source-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .source-info .source-sub {
+    font-size: 11px;
+    color: #64748b;
+  }
+  .source-check {
+    margin-left: auto;
+    color: #22c55e;
+    font-size: 16px;
+  }
+
+  /* Auth section */
+  .auth-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .auth-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+  }
+  .auth-option:last-child { border-bottom: none; }
+  .auth-option.active {
+    background: #f0fdf4;
+  }
+  .auth-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .auth-icon.pin { background: #dbeafe; }
+  .auth-icon.bio { background: #f1f5f9; }
+  .auth-text .auth-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .auth-text .auth-desc {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .auth-option .radio-dot {
+    margin-left: auto;
+  }
+  .pin-dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .pin-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0f172a;
+  }
+
+  /* Idempotency badge */
+  .idem-badge {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .idem-icon {
+    font-size: 14px;
+  }
+  .idem-text {
+    font-size: 11px;
+    color: #64748b;
+    font-family: "Courier New", Courier, monospace;
+  }
+  .idem-text strong {
+    color: #475569;
+    font-weight: 700;
+  }
+
+  /* Action buttons */
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+  .btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-confirm {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35);
+  }
+
+  /* Home indicator */
+  .home-indicator {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+  }
+  .home-bar {
+    width: 120px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+
+  /* Annotation panel */
+  .annotation-panel {
+    flex: 1;
+    min-width: 0;
+  }
+  .annotation-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 14px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 6px 14px;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .annotation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .annotation-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    position: relative;
+  }
+  .annotation-number {
+    width: 26px;
+    height: 26px;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+  }
+  .annotation-body {}
+  .annotation-heading {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+  .annotation-text {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+  .annotation-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+  }
+  .tag-critical { background: #fee2e2; color: #dc2626; }
+  .tag-security { background: #ede9fe; color: #7c3aed; }
+  .tag-ux { background: #dcfce7; color: #16a34a; }
+  .tag-resilience { background: #fef3c7; color: #d97706; }
+  .tag-state { background: #dbeafe; color: #2563eb; }
+
+  @media (max-width: 780px) {
+    .layout { flex-direction: column; align-items: center; }
+    .phone-card { width: 100%; max-width: 420px; }
+    .annotation-panel { width: 100%; max-width: 420px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;&middot;&nbsp; Business Analyst</div>
+
+<div class="layout">
+
+  <!-- PHONE CARD -->
+  <div class="phone-card">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <span>&#9679;&#9679;&#9679;&#9679;</span>
+        <span>WiFi</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <!-- App header -->
+    <div class="app-header">
+      <div class="btn-back">&#8592; Back</div>
+      <div class="app-header-title">Confirm Payment</div>
+      <div class="header-spacer"></div>
+    </div>
+
+    <!-- Screen content -->
+    <div class="screen-content">
+
+      <!-- Merchant card -->
+      <div class="merchant-card">
+        <div class="merchant-icon">HC</div>
+        <div class="merchant-info">
+          <div class="merchant-name">Highlands Coffee</div>
+          <div class="merchant-meta">F&amp;B &nbsp;&middot;&nbsp; Merchant ID: HC-2024-0891</div>
+        </div>
+        <div class="merchant-verified">&#10003; Active</div>
+      </div>
+
+      <!-- Amount -->
+      <div class="amount-block">
+        <div class="amount-label">Payment Amount</div>
+        <div class="amount-value">75,000<span class="amount-currency">VND</span></div>
+      </div>
+
+      <!-- Detail rows -->
+      <div class="detail-rows">
+        <div class="detail-row">
+          <span class="detail-label">Transaction Fee</span>
+          <span class="detail-value green">0 VND</span>
+        </div>
+        <div class="detail-row total-row">
+          <span class="detail-label" style="font-weight:700;color:#0f172a;">Total Payable</span>
+          <span class="detail-value total">75,000 VND</span>
+        </div>
+      </div>
+
+      <!-- Balance -->
+      <div class="balance-row">
+        <div class="balance-left">
+          <div class="balance-icon">&#9679;</div>
+          <div class="balance-text">
+            <div class="balance-title">Wallet Balance</div>
+            <div class="balance-amount">2,450,000 VND</div>
+          </div>
+        </div>
+        <div class="balance-check">&#10003; Sufficient</div>
+      </div>
+
+      <!-- Payment Source -->
+      <div class="section-title">Payment Source</div>
+      <div class="source-card">
+        <div class="radio-dot selected"></div>
+        <div class="source-info">
+          <div class="source-name">Main Wallet</div>
+          <div class="source-sub">Balance: 2,450,000 VND</div>
+        </div>
+        <div class="source-check">&#10003;</div>
+      </div>
+
+      <!-- Authentication -->
+      <div class="section-title">Authentication</div>
+      <div class="auth-section">
+        <div class="auth-option active">
+          <div class="auth-icon pin">&#128274;</div>
+          <div class="auth-text">
+            <div class="auth-name">PIN Code &nbsp;<span style="font-size:10px;color:#16a34a;background:#dcfce7;padding:2px 6px;border-radius:4px;">PRIMARY</span></div>
+            <div class="pin-dots">
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+            </div>
+          </div>
+          <div class="radio-dot selected" style="margin-left:auto;"></div>
+        </div>
+        <div class="auth-option">
+          <div class="auth-icon bio">&#128065;</div>
+          <div class="auth-text">
+            <div class="auth-name">Biometric &nbsp;<span style="font-size:10px;color:#64748b;background:#f1f5f9;padding:2px 6px;border-radius:4px;">SHORTCUT</span></div>
+            <div class="auth-desc">Fallback to PIN if failed</div>
+          </div>
+          <div class="radio-dot" style="margin-left:auto;border-color:#cbd5e1;"></div>
+        </div>
+      </div>
+
+      <!-- Idempotency badge -->
+      <div class="idem-badge">
+        <span class="idem-icon">&#128273;</span>
+        <span class="idem-text"><strong>Key generated:</strong> txn_1703a9f2e8b4c... &nbsp;&#183;&nbsp; TTL: 5 min</span>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button class="btn-cancel">Cancel</button>
+        <button class="btn-confirm">&#10003;&nbsp; Confirm Payment</button>
+      </div>
+
+    </div><!-- /screen-content -->
+
+    <!-- Home indicator -->
+    <div class="home-indicator">
+      <div class="home-bar"></div>
+    </div>
+
+  </div><!-- /phone-card -->
+
+  <!-- ANNOTATION PANEL -->
+  <div class="annotation-panel">
+    <div class="annotation-title">&#128196; BA Annotations</div>
+    <div class="annotation-list">
+
+      <div class="annotation-item">
+        <div class="annotation-number">1</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">QR Validation</div>
+          <div class="annotation-text">QR payload must be fully validated <em>before</em> this screen is shown. Merchant must have ACTIVE status. Accepted formats: EMV Co QR / VietQR. Invalid or expired QR codes must be rejected at scan stage — never reach this screen.</div>
+          <span class="annotation-tag tag-critical">Critical Path</span>
+        </div>
+      </div>
+
+      <div class="annotation-item">
+        <div class="annotation-number">2</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">Balance Validation</div>
+          <div class="annotation-text">Available balance must cover the total payable amount. Balance check result must be surfaced clearly — green indicator when sufficient, red block with message when insufficient. Locked/reserved amounts must be excluded from available balance.</div>
+          <span class="annotation-tag tag-ux">UX Requirement</span>
+        </div>
+      </div>
+
+      <div class="annotation-item">
+        <div class="annotation-number">3</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">Limit Validation</div>
+          <div class="annotation-text">Amount must comply with per-transaction limits and the user's KYC tier limits (e.g., Tier 1: max 10M VND/txn; Tier 2: 50M VND/txn). Validation runs server-side before screen renders. Failed limit check must show specific error message with current limit and tier.</div>
+          <span class="annotation-tag tag-critical">Compliance</span>
+        </div>
+      </div>
+
+      <div class="annotation-item">
+        <div class="annotation-number">4</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">Idempotency Key</div>
+          <div class="annotation-text">A unique idempotency key is generated when this screen loads — before the user confirms. Key is stored server-side with a 5-minute TTL. On retry or duplicate tap, the same key is reused to prevent double-charging. Key must be included in the payment API request header.</div>
+          <span class="annotation-tag tag-resilience">Resilience</span>
+        </div>
+      </div>
+
+      <div class="annotation-item">
+        <div class="annotation-number">5</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">Authentication Layer</div>
+          <div class="annotation-text">PIN is the primary authentication method. Biometric (Face ID / Fingerprint) is a convenience shortcut only — it must fall back to PIN if biometric fails or is unavailable. Biometric auth must <em>not</em> bypass the transaction signing step. Max 3 PIN attempts before lockout.</div>
+          <span class="annotation-tag tag-security">Security</span>
+        </div>
+      </div>
+
+      <div class="annotation-item">
+        <div class="annotation-number">6</div>
+        <div class="annotation-body">
+          <div class="annotation-heading">Transaction State Machine</div>
+          <div class="annotation-text">After Confirm is tapped, transaction enters PROCESSING state immediately. Wallet balance shows a loading/pending state — do not deduct balance display yet. State transitions: PENDING &#8594; PROCESSING &#8594; SUCCESS / FAILED. UI must handle timeout gracefully (30s max).</div>
+          <span class="annotation-tag tag-state">State Design</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /annotation-panel -->
+
+</div><!-- /layout -->
+
+</body>
+</html>
