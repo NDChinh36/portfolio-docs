@@ -1,0 +1,94 @@
+---
+title: "Source of Truth"
+description: "Phân định nguồn dữ liệu gốc cho mỗi data object trong hệ thống MedBook + HIS"
+icon: "circle-check"
+---
+
+<Note>
+  **Practice Case Study** — MedBook tại CityHealth General Hospital (fictional). Tài liệu này xác định rõ ai sở hữu dữ liệu (Source of Truth) và ai nhận bản sao (Sync Target) cho từng data object trong hệ thống.
+</Note>
+
+## Source of Truth Matrix
+
+| # | Data Object | Source of Truth | Sync Target(s) | Why | Risk if Inconsistent | Notes |
+|---|---|---|---|---|---|---|
+| 1 | **Patient Demographic Info**<br/>(name, DOB, gender, phone) | Patient Profile Service (MedBook) | HIS, Notification Service, Kiosk/Reception | Dữ liệu do patient tự cập nhật qua app MedBook; eKYC verified. HIS nhận bản sao tại thời điểm booking — không phải source | HIS hiển thị tên sai → nhầm bệnh nhân khi gọi tên tại phòng khám. Notification gửi đến số điện thoại cũ | HIS không tự động sync khi patient cập nhật profile. Cần reconcile flow khi có thay đổi |
+| 2 | **Patient Identity**<br/>(CCCD/passport, `his_patient_code`) | Patient Profile Service (MedBook) cho `identity_number`; HIS cho `his_patient_code` | Appointment Service (lưu cả hai để cross-reference) | `identity_number` là dữ liệu patient nhập/eKYC — MedBook owns. `his_patient_code` do HIS assign — HIS owns. Hai trường cần tồn tại song song | Mismatch → không tìm được bệnh nhân trong HIS khi check-in → xử lý thủ công tại quầy | Lưu mapping `identity_number ↔ his_patient_code` trong Patient Profile để tránh lookup HIS mỗi lần |
+| 3 | **Appointment Status**<br/>(`appointment_status`) | Appointment Service | Patient App, HIS (receive events), Kiosk/Reception, Notification Service | Appointment là entity do MedBook quản lý. Mọi state transition đi qua Appointment Service. HIS nhận event, không dictate trạng thái | Patient App hiển thị sai trạng thái → patient confused. Notification sai → không nhắc lịch. Kiosk không cho check-in dù appointment hợp lệ | HIS có thể cập nhật trạng thái nội bộ (visit status), nhưng phải callback về Appointment Service để cập nhật `appointment_status` |
+| 4 | **Check-in Status**<br/>(`checkin_status`) | Appointment Service (event từ Kiosk/Reception) | Patient App, HIS | Check-in là hành động physical xảy ra tại bệnh viện. Kiosk/Reception trigger event, Appointment Service ghi nhận và là source | HIS nghĩ patient chưa check-in → không bắt đầu visit flow → patient chờ vô hạn | Tách `checkin_status` khỏi `appointment_status` để độc lập track 2 concerns khác nhau |
+| 5 | **HIS Visit / Registration**<br/>(`his_visit_id`, visit status) | HIS | Appointment Service (lưu `his_visit_id`), Patient App (display), Kiosk | Visit trong HIS là entity của HIS — chỉ HIS mới có đầy đủ thông tin (billing, clinical notes). MedBook chỉ lưu `his_visit_id` như foreign key | Appointment Service không có `his_visit_id` → không in được phiếu khám → không check-in được tại một số kiosk | `his_visit_id` là read-only tại MedBook — không được modify |
+| 6 | **HIS Sync Status**<br/>(`his_sync_status`) | Appointment Service | Hospital Admin UI (monitoring), Alert System | `his_sync_status` là metadata của MedBook về trạng thái tích hợp — không phải dữ liệu nghiệp vụ. HIS không biết field này tồn tại | Hospital Admin không biết sync failed → không retry → appointment không có `his_visit_id` → check-in fail | Cần dashboard monitoring `his_sync_status = FAILED` với alert real-time |
+| 7 | **Queue Number**<br/>(`queue_number`) | HIS | Appointment Service (cache), Patient App (display), Kiosk (display) | Queue do HIS generate và quản lý theo quy trình nội bộ của bệnh viện. MedBook chỉ receive và display | Patient App hiển thị số thứ tự sai → patient không biết khi nào đến lượt. Kiosk hiển thị sai → nhầm lộn tại phòng chờ | Cache `queue_number` tại Appointment Service để không phải query HIS mỗi lần. Invalidate khi HIS có update |
+| 8 | **Doctor Schedule**<br/>(working hours, available slots) | HIS | Appointment Service (cache, TTL-based), Patient App (display) | Lịch làm việc bác sĩ do bệnh viện quản lý trong HIS. MedBook consume, không own | Patient thấy slot available nhưng HIS đã đóng → booking fail tại bước sync → UX tệ | Cache slot availability với TTL ngắn (5-15 phút). Real-time slot lock tại HIS khi user confirm booking |
+| 9 | **Room Assignment**<br/>(`room_number`) | HIS / Reception | Appointment Service (cache), Patient App (display sau check-in) | Phòng khám do Reception/HIS assign dựa trên workflow nội bộ. MedBook receive và display | Patient không biết phòng → hỏi quầy lễ tân → tắc nghẽn tại quầy | Push notification khi `room_number` được assign. Nếu thay đổi → push update |
+| 10 | **Slot Availability** | HIS (inventory of slots per doctor per day) | Appointment Service (cache, short TTL), Patient App | Slot là tài nguyên HIS quản lý — số lượng giới hạn, cần lock khi booking | Cache stale → show slot đã đầy → booking fail → patient frustrated | Pessimistic display nếu uncertain (show unavailable). Lock slot tại HIS ngay khi user bắt đầu confirm (time-limited lock, 5 phút) |
+| 11 | **Notification Status**<br/>(delivery status) | Notification Service | Appointment Service (callback để audit) | Notification Service owns delivery tracking. Appointment Service chỉ cần biết để audit và retry | Appointment Service không biết notification failed → không retry → patient không nhận nhắc lịch → no-show tăng | Notification Service callback về Appointment Service với `delivery_status`. AS log nhưng không re-own |
+| 12 | **Payment Status**<br/>(`payment_status`) | Payment Service (Phase 2) hoặc HIS | Appointment Service (reference), Patient App, Kiosk | Thanh toán là domain của Payment Service / HIS. MedBook chỉ cần biết status để gate check-in | Check-in blocked sai (patient đã thanh toán nhưng status = PENDING) → patient phải vào quầy | MVP: `payment_status = NOT_REQUIRED`. Phase 2: tích hợp Payment Service |
+| 13 | **Audit Log** | Appointment Service (primary); mỗi service log riêng | SIEM / Centralized Log System | Mỗi service là source of truth cho hành động của chính mình. Centralized log là aggregation, không phải replacement | Audit trail không đầy đủ → không điều tra được incident. Compliance risk (Nghị định 13/2023) | Immutable log — không được delete hay update. Retention: tối thiểu 5 năm theo quy định y tế |
+
+---
+
+## Design Principles — Tại Sao Tách 3 Status Fields?
+
+<Info>
+  Đây là một trong những quyết định thiết kế quan trọng nhất của MedBook. Phần này giải thích lý do tách `appointment_status`, `checkin_status`, và `his_sync_status` thành 3 fields riêng biệt thay vì dùng 1 status field duy nhất.
+</Info>
+
+### Vấn đề với 1 Status Field
+
+Nếu dùng 1 field duy nhất, cần các state như:
+```
+CONFIRMED_NOT_SYNCED_NOT_CHECKED_IN
+CONFIRMED_SYNC_FAILED_NOT_CHECKED_IN
+CONFIRMED_SYNCED_CHECKED_IN
+CONFIRMED_SYNCED_NOT_CHECKED_IN
+CONFIRMED_SYNC_RETRYING_NOT_CHECKED_IN
+...
+```
+
+→ **Số lượng state bùng nổ theo tích Descartes** (3 concerns × n states mỗi concern). Không maintainable.
+
+### 3 Concerns Độc Lập Nhau
+
+| Status Field | Domain Concern | Who Cares | Update Trigger |
+|---|---|---|---|
+| `appointment_status` | **Nghiệp vụ lịch hẹn** — appointment có tồn tại không, đang ở bước nào | Patient, Hospital, Doctor | Patient action, Hospital action, Time-based auto |
+| `checkin_status` | **Sự kiện vật lý** — bệnh nhân có mặt tại bệnh viện chưa | Reception, Doctor, Queue System | Kiosk scan, Reception manual input |
+| `his_sync_status` | **Tích hợp kỹ thuật** — MedBook đã đăng ký vào HIS chưa | Hospital Admin, System, DevOps | HIS API response, retry job |
+
+### Ví dụ Minh Họa Sự Cần Thiết
+
+**Scenario A — HIS sync failed nhưng patient vẫn check-in được:**
+- `appointment_status = CONFIRMED` ✅
+- `his_sync_status = FAILED` ❌ (cần retry)
+- `checkin_status = NOT_CHECKED_IN`
+
+→ Reception có thể cho phép manual check-in trong khi IT team retry sync. **Không thể biểu diễn trạng thái này với 1 field.**
+
+**Scenario B — Patient đã check-in nhưng HIS chưa nhận được:**
+- `appointment_status = CHECKED_IN` (or CONFIRMED)
+- `checkin_status = CHECKED_IN` ✅
+- `his_sync_status = RETRYING` ⚠️
+
+→ Doctor biết patient đã đến (qua `checkin_status`). IT biết cần retry (qua `his_sync_status`). Patient không bị ảnh hưởng UX.
+
+**Scenario C — Appointment bị cancel nhưng HIS sync đang pending:**
+- `appointment_status = CANCELLED_BY_PATIENT`
+- `checkin_status = NOT_CHECKED_IN`
+- `his_sync_status = PENDING`
+
+→ System tự động skip sync và gọi HIS cancel API thay vì register API. **Logic này chỉ đơn giản khi 3 fields tách biệt.**
+
+### Nguyên Tắc Thiết Kế Áp Dụng
+
+<CardGroup cols={3}>
+  <Card title="Single Responsibility" icon="circle-1">
+    Mỗi field chịu trách nhiệm cho đúng 1 concern. Không mix business logic với integration status.
+  </Card>
+  <Card title="Independent Evolvability" icon="circle-2">
+    Mỗi concern có thể thêm states mới mà không ảnh hưởng 2 concerns còn lại. Vd: thêm `HIS_SYNC_QUEUED` không làm ảnh hưởng `appointment_status` logic.
+  </Card>
+  <Card title="Clear Ownership" icon="circle-3">
+    Mỗi field có đúng 1 owner rõ ràng. Tránh tranh giành quyền update từ nhiều services.
+  </Card>
+</CardGroup>
