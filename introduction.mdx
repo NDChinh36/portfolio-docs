@@ -3,68 +3,87 @@ title: "Nguyễn Đức Chinh — BA Portfolio"
 description: "Business Analyst · Fintech & Trading Platform · Hà Nội"
 ---
 
-Business Analyst tại Nami Innovation — một trong những nền tảng crypto trading đầu tiên tại Việt Nam. Hơn 2 năm làm việc trong môi trường fintech thực tế: định nghĩa business rules cho futures trading, thiết kế campaign logic cho 20,000+ users, và phối hợp cross-functional trong Agile team.
+Business Analyst tại Nami Innovation — nền tảng crypto trading. Hơn 2 năm làm việc thực tế: define business rules cho futures trading platform, thiết kế reward campaign logic và phối hợp cross-functional trong môi trường Agile.
 
-Điều tôi quan tâm không chỉ là viết tài liệu đúng format — mà là đảm bảo team hiểu đúng bài toán trước khi bắt đầu build, edge cases được xác định trước khi QA tìm ra, và thứ được release thực sự giải quyết đúng vấn đề của người dùng.
+Tôi không chỉ viết tài liệu — tôi giúp team hiểu đúng bài toán, xác định edge case trước khi dev gặp phải, và đảm bảo thứ được release thực sự giải quyết đúng vấn đề của người dùng.
 
 ---
 
 ## Cách tôi làm việc như một BA
 
 <Steps>
-  <Step title="Hiểu context business trước, requirements sau">
-    Tôi bắt đầu bằng câu hỏi *tại sao* feature này cần tồn tại — không phải *nó làm gì*. Điều này có nghĩa là nói chuyện với CS để hiểu pain point thực từ user, phân tích cách đối thủ giải quyết bài toán tương tự, và xác nhận với PM rằng business objective và user need đang được nhìn nhất quán trước khi viết một chữ nào.
+  <Step title="Hiểu business context và mục tiêu">
+    Tìm hiểu *tại sao* feature cần tồn tại trước khi hỏi nó làm gì. Nói chuyện với CS để hiểu pain point thực, phân tích cách đối thủ giải quyết bài toán tương tự, xác nhận business objective và user need đang được nhìn nhất quán.
   </Step>
-  <Step title="Xác định actor, vẽ luồng As-is và tìm điểm đau thực sự">
-    Trước khi thiết kế To-be, tôi luôn vẽ luồng đang xảy ra như thế nào. Thường thì vấn đề thực sự — thứ cần được giải quyết — không phải là thứ được đặt hàng ban đầu.
+  <Step title="Làm rõ actor, user và pain point thực sự">
+    Vẽ luồng As-is trước khi thiết kế To-be. Vấn đề thực sự cần giải quyết thường không phải thứ được đặt hàng ban đầu.
   </Step>
-  <Step title="Xây dựng business rules và xác định exception cases từ sớm">
-    Happy path ai cũng nghĩ được. Giá trị của BA nằm ở chỗ xác định các edge case trước khi dev gặp phải: partial fill khi order khớp một phần, balance lock khi user có open position, campaign budget hết giữa chừng. Tôi build danh sách exception từ đầu, không để QA tìm ra ở cuối.
+  <Step title="Mô hình hóa user flow và business flow">
+    Thiết kế happy path và edge cases từ góc nhìn user — dùng flow diagram và BPMN để align team trước khi viết spec. Giảm misunderstanding sớm nhất có thể.
   </Step>
-  <Step title="Viết tài liệu theo đúng người đọc và quyết định họ cần đưa ra">
-    PRD cho Dev khác BRD cho Product Lead. User Guide cho CS khác Functional Spec cho Engineering. Tài liệu đúng người đọc, đúng mức độ chi tiết — tiết kiệm rất nhiều thời gian giải thích lại sau này.
+  <Step title="Xác định business rules, edge cases và validation logic">
+    Happy path ai cũng nghĩ được. Giá trị BA nằm ở chỗ xác định edge cases trước khi dev gặp phải: partial fill, balance lock khi có open position, campaign budget hết giữa chừng, concurrent transfer.
   </Step>
-  <Step title="Tham gia UAT, theo dõi sau release và điều chỉnh khi có data">
-    Công việc không kết thúc khi dev merge code. Tôi tham gia UAT để verify logic (không chỉ ký tên), theo dõi funnel và metric sau launch, và sẵn sàng update requirements khi có data thực tế — đặc biệt với các tính năng campaign và reward.
+  <Step title="Viết tài liệu và review với Dev / QA / Design">
+    PRD cho Dev khác BRD cho Product Lead. Tài liệu đúng người đọc, đúng mức chi tiết — tiết kiệm thời gian giải thích lại và giảm revision sau này.
+  </Step>
+  <Step title="Hỗ trợ UAT, release và theo dõi feedback sau launch">
+    Tham gia UAT để verify logic theo business rules (không chỉ ký tên), phân loại bug theo business impact, và theo dõi metric sau launch để điều chỉnh nếu cần.
   </Step>
 </Steps>
 
 ---
 
-## Dự án đã làm
+## Các bài toán tôi đã xử lý
 
 <CardGroup cols={2}>
   <Card title="Crypto Futures Trading Platform" icon="chart-line" href="/projects/nami-futures-trading">
-    **Domain phức tạp nhất tôi từng làm.** Định nghĩa business rules cho margin, liquidation engine và risk control — domain mà một rule sai có thể dẫn đến tổn thất tài chính thực cho user. Học cách xây business rule register để tracking dependency giữa hàng chục rules phụ thuộc nhau.
+    **Vấn đề:** Nami mở rộng sang futures — domain mới với hàng chục business rules phụ thuộc nhau; một rule sai có thể dẫn đến tổn thất tài chính thực cho user.
 
-    `Nami Innovation` · `6 tháng` · `~20 người`
+    **Đóng góp:** Define toàn bộ trading mechanics, xây business rule register, phối hợp Engineering và QA xuyên suốt đến release.
+
+    **Outcome:** 6,000+ active users · ~$10M trading volume trong giai đoạn early rollout.
+
+    [→ Đọc case study](/projects/nami-futures-trading)
   </Card>
 
   <Card title="Reward Program & Campaign System" icon="gift" href="/projects/nami-reward-program">
-    **Bài toán stakeholder phức tạp nhất.** Cầu nối giữa 8 teams với kỳ vọng xung đột — Growth muốn flexibility tối đa, Engineering muốn simplicity. Sau launch, làm việc với BI team để phát hiện drop-off và adjust campaign logic dựa trên data thực.
+    **Vấn đề:** Growth cần hệ thống reward tự configure không cần dev — nhưng 8 stakeholder teams có kỳ vọng xung đột nhau.
 
-    `Nami Innovation` · `8 tháng` · `~20 người`
+    **Đóng góp:** Align stakeholders, define campaign logic và anti-abuse rules, iterate dựa trên funnel data sau launch.
+
+    **Outcome:** 20,000+ user engagement · trading volume tăng 60%+ trong giai đoạn chạy campaign.
+
+    [→ Đọc case study](/projects/nami-reward-program)
   </Card>
 
   <Card title="Internal Money Transfer" icon="arrow-right-arrow-left" href="/projects/nami-money-transfer">
-    **Bài toán ownership đầu tiên.** End-to-end từ elicitation đến UAT lead — với transfer logic phức tạp: nhiều loại tài khoản, balance lock khi có open position, và UX cần đơn giản dù phía sau rất nhiều điều kiện.
+    **Vấn đề:** User cần chuyển tài sản giữa các tài khoản trong hệ sinh thái Nami — với nhiều loại tài khoản, balance lock logic và UX cần đơn giản dù phía sau phức tạp.
 
-    `Nami Innovation` · `4 tháng` · `~10 người`
+    **Đóng góp:** End-to-end: elicitation → PRD → user flow → UAT lead. Dự án BA đầu tiên độc lập.
+
+    **Outcome:** Release đúng timeline 4 tháng, không có critical bug liên quan transfer logic.
+
+    [→ Đọc case study](/projects/nami-money-transfer)
   </Card>
 
   <Card title="Trading Calculator Feature" icon="calculator" href="/projects/nami-calculator">
-    **Bài toán research-driven.** Bắt đầu từ CS interview và competitor analysis — không phải spec từ trên xuống. Xác định đúng nhu cầu 3 nhóm trader khác nhau, define công thức tính toán chuẩn, và phối hợp Design + Dev để đảm bảo UX không mâu thuẫn với logic.
+    **Vấn đề:** Trader phải rời nền tảng để tính PnL và liquidation price — gián đoạn workflow và tạo CS ticket cao.
 
-    `Nami Innovation` · `5 tháng` · `~10 người`
+    **Đóng góp:** CS interview + competitor analysis để xác định scope đúng; define công thức tính toán chuẩn cho 3 nhóm trader khác nhau.
+
+    **Outcome:** Tính năng live; giảm CS ticket dạng "cách tính PnL".
+
+    [→ Đọc case study](/projects/nami-calculator)
   </Card>
 </CardGroup>
 
 ---
 
-<Card title="Tài liệu mẫu — Generic E-Wallet App" icon="wallet" href="/projects/ewallet/project-context">
-  Bộ tài liệu BA hoàn chỉnh theo SDLC sequence: BRD · User Stories · Use Case Spec · FRD · ERD · UAT Test Cases. Được viết như một reconstructed case study — áp dụng kinh nghiệm thực tế vào domain ví điện tử để thực hành chuẩn hóa tài liệu theo từng loại và đúng người đọc.
+<Card title="Generic E-Wallet App — Tài liệu mẫu" icon="wallet" href="/projects/ewallet/project-context">
+  Bộ tài liệu BA hoàn chỉnh theo chuỗi SDLC: BRD · User Stories · Use Case Spec · FRD · ERD · UAT Test Cases. Viết lại để thực hành cấu trúc tài liệu đúng loại và đúng người đọc — áp dụng kinh nghiệm từ dự án thực tế.
 
-  <Warning>**Practice case** — Tài liệu thực hành. Không phải dự án tại công ty.</Warning>
+  <Warning>**Reconstructed practice case** — Tài liệu thực hành. Không phải dự án tại công ty.</Warning>
 </Card>
 
 ---
@@ -72,32 +91,32 @@ Business Analyst tại Nami Innovation — một trong những nền tảng cryp
 ## Kỹ năng cốt lõi
 
 <CardGroup cols={2}>
-  <Card title="Business Analysis & Documentation" icon="file-lines">
-    Viết BRD, PRD, FRD, User Stories, Use Case Spec, User Guide — đúng audience và đúng giai đoạn SDLC. Biết tài liệu nào phục vụ ai và kích hoạt quyết định gì.
-  </Card>
-
   <Card title="Business Rules & Logic Modeling" icon="diagram-project">
-    Định nghĩa business rules có cấu trúc: conditions, exception cases, dependency giữa các rules. Kinh nghiệm với domain phức tạp: futures trading mechanics, reward campaign logic, transfer constraints.
-  </Card>
-
-  <Card title="Stakeholder Alignment" icon="people-group">
-    Làm việc cross-functional với Dev, QA, UX, Growth, CS, BI — đặc biệt trong các tình huống kỳ vọng xung đột. Biết cách tổng hợp nhiều góc nhìn thành requirements được đồng thuận.
+    Định nghĩa condition-action rules có cấu trúc, xác định exception cases và dependency giữa các rules. Có kinh nghiệm với domain phức tạp: futures trading mechanics, reward campaign trigger logic, transfer validation.
   </Card>
 
   <Card title="User Flow & Scenario Design" icon="arrows-split-up-and-left">
-    Thiết kế happy path và edge cases từ góc nhìn user, không phải từ góc nhìn hệ thống. Sử dụng BPMN, user flow diagram để làm rõ luồng trước khi viết spec chi tiết.
+    Thiết kế happy path và edge cases từ góc nhìn user. Dùng BPMN và flow diagram để align team trước khi viết spec — tránh misunderstanding xuất hiện ở giai đoạn dev hoặc QA.
   </Card>
 
-  <Card title="Data-Informed Iteration" icon="chart-bar">
-    Theo dõi funnel, drop-off và campaign metric sau launch bằng Metabase. Có kinh nghiệm điều chỉnh logic và requirements dựa trên data thực, không chỉ dừng lại ở spec ban đầu.
+  <Card title="Product Documentation" icon="file-lines">
+    Viết BRD, PRD, FRD, User Stories, Use Case Spec, User Guide — đúng audience, đúng giai đoạn SDLC. Biết tài liệu nào phục vụ ai và kích hoạt quyết định gì.
   </Card>
 
-  <Card title="Domain Knowledge — Fintech" icon="chart-candlestick">
-    Crypto futures: margin types (Isolated/Cross), liquidation mechanics, funding rate, order types, PnL. E-wallet: KYC flow, internal transfer, balance validation, transaction states.
+  <Card title="Cross-functional Delivery" icon="people-group">
+    Phối hợp Dev, QA, UX, Growth, CS, BI trong Agile. Kinh nghiệm align stakeholders với kỳ vọng xung đột — từ Growth muốn flexibility đến Engineering muốn simplicity — thành requirements được đồng thuận.
+  </Card>
+
+  <Card title="UAT & Release Support" icon="circle-check">
+    Tham gia UAT để verify logic theo business rules, phân loại bug theo business impact và hỗ trợ go/no-go decision trước release. Không chỉ ký tên vào test report.
+  </Card>
+
+  <Card title="Data-informed Improvement" icon="chart-bar">
+    Theo dõi funnel, drop-off và campaign metric sau launch bằng Metabase / BI. Điều chỉnh requirements và logic dựa trên data thực — không chỉ dừng ở spec ban đầu.
   </Card>
 </CardGroup>
 
-**Công cụ:** Jira · Confluence · Figma · Draw.io · Metabase · Excel · Mermaid
+**Tools:** Jira · Confluence · Figma · Draw.io · Excel / Google Sheets · Metabase · ChatGPT / Claude
 
 ---
 
