@@ -1,0 +1,485 @@
+---
+title: "UAT Test Scenarios"
+description: "User Acceptance Testing scenarios for VietFulfill OMS/WMS — Practice Case Study"
+---
+
+<Note>
+**Practice Case Study** — Tài liệu này được viết cho mục đích học tập và luyện tập nghiệp vụ BA. VietFulfill là công ty 3PL fictional, không tồn tại trong thực tế.
+</Note>
+
+## Overview
+
+### Scope UAT
+
+UAT cho hệ thống OMS/WMS của VietFulfill bao gồm toàn bộ luồng xử lý đơn hàng từ khi nhận order từ các sales channel đến khi đơn được giao thành công hoặc hoàn hàng về kho. UAT **không** bao gồm: kiểm thử performance/load, kiểm thử bảo mật cấp hạ tầng, và các module báo cáo tài chính.
+
+### Người Thực Hiện
+
+| Vai trò | Trách nhiệm | Đại diện |
+|---|---|---|
+| **QA Lead** | Lập kế hoạch, phân công, tổng hợp kết quả | 1 người |
+| **Business Analyst** | Verify expected result khớp với spec | 1 người |
+| **Seller Representative** | Test cases liên quan đến Seller Portal | 1–2 người |
+| **Warehouse Staff** | Test cases liên quan đến WMS (picking, packing) | 2–3 người |
+| **CS** | Test cases liên quan đến exception handling | 1 người |
+| **Operation Manager** | Verify alert, SLA breach, supervisor flow | 1 người |
+
+### Môi Trường
+
+| Thành phần | Giá trị |
+|---|---|
+| **Environment** | UAT (tách biệt hoàn toàn với Production) |
+| **OMS URL** | `https://oms-uat.vietfulfill.vn` |
+| **WMS URL** | `https://wms-uat.vietfulfill.vn` |
+| **Seller Portal URL** | `https://portal-uat.vietfulfill.vn` |
+| **Carrier Integration** | Sandbox mode (GHN Sandbox, GHTK Sandbox) |
+| **Sales Channel Webhook** | Dùng Postman Collection hoặc mock webhook server |
+| **Thời gian thực hiện** | Sprint UAT: 5 ngày làm việc |
+
+### Naming Convention — Test ID
+
+`UAT-[GROUP]-[NUMBER]` — Ví dụ: `UAT-HAPPY-01`, `UAT-OOS-03`, `UAT-CANCEL-LATE-02`
+
+---
+
+## Test Scenarios
+
+### Group 1: Happy Path — Full Order Fulfillment (`UAT-HAPPY-xx`)
+
+**[UAT-HAPPY-01] COD order từ Shopee — giao thành công lần đầu**
+
+| | |
+|---|---|
+| **Preconditions** | Seller A đã onboard. SKU `SKU-001` tồn kho ≥ 1 tại bin `BIN-A1`. GHN Sandbox hoạt động. |
+| **Steps** | 1. Gửi Shopee webhook `order_paid` — `external_order_id = SHP-20240601-001`, COD, 1x `SKU-001`, địa chỉ TPHCM. / 2. Verify OMS tạo order status `VALIDATING`. / 3. Verify sau validation, status → `ALLOCATED`, stock `SKU-001` giảm 1 unit. / 4. Verify WMS tạo Pick Task, Picker nhận task trên WMS app. / 5. Picker scan barcode `BIN-A1`, scan barcode `SKU-001`, confirm số lượng 1. / 6. Verify status → `PICKED`. / 7. Packer đóng gói, in label GHN, scan xác nhận. / 8. Verify status → `PACKED`. / 9. GHN Sandbox gửi webhook `picked_up`. / 10. Verify status → `IN_TRANSIT`. / 11. GHN Sandbox gửi webhook `delivered`. / 12. Verify OMS status → `DELIVERED`, Seller Portal hiển thị "Đã giao thành công". |
+| **Expected Result** | Order flow qua đủ status: VALIDATING → ALLOCATED → PICKED → PACKED → IN_TRANSIT → DELIVERED. Tồn kho giảm đúng 1 unit. Seller Portal hiển thị tracking đầy đủ. COD amount được ghi nhận đúng. |
+| **Priority** | High |
+
+---
+
+**[UAT-HAPPY-02] Prepaid order từ TikTok Shop — multi-SKU, giao thành công**
+
+| | |
+|---|---|
+| **Preconditions** | Seller B onboard với TikTok Shop. `SKU-A` tồn kho ≥ 2, `SKU-B` ≥ 1, `SKU-C` ≥ 3. Carrier: GHTK Sandbox. |
+| **Steps** | 1. Gửi TikTok Shop webhook `ORDER_STATUS_CHANGE` (status = `AWAITING_SHIPMENT`), prepaid, 3 line items: 2x `SKU-A`, 1x `SKU-B`, 3x `SKU-C`. / 2. Verify OMS tạo order status `VALIDATING`. / 3. Verify OMS chuyển `ALLOCATED`, lock đồng thời 3 SKU đúng số lượng. / 4. Verify WMS tạo Pick Task. / 5. Picker lần lượt scan từng bin, từng SKU. / 6. Verify status `PICKED` chỉ khi TẤT CẢ line items đã pick xong. / 7. Packer đóng gói, in label GHTK. / 8. GHTK Sandbox gửi webhook `picked_up` → `delivered`. / 9. Verify status `DELIVERED`, tồn kho 3 SKU giảm đúng số lượng. |
+| **Expected Result** | Order multi-SKU được allocate và pick đầy đủ. Tất cả SKU tồn kho giảm chính xác. GHTK tracking number hiển thị trên Seller Portal. |
+| **Priority** | High |
+
+---
+
+**[UAT-HAPPY-03] Order từ Website — 1 SKU, giao thành công qua GHTK**
+
+| | |
+|---|---|
+| **Preconditions** | Seller C onboard với Website channel. `SKU-W01` tồn kho ≥ 1. Địa chỉ: Hà Nội. |
+| **Steps** | 1. Seller C gọi OMS API `POST /orders` — `channel = WEBSITE`, 1x `SKU-W01`, COD, địa chỉ Hà Nội. / 2. Verify OMS trả về `201 Created` với `order_id`. / 3. Verify address validation pass (Hà Nội — GHTK có service). / 4. Verify OMS tự động chọn carrier GHTK. / 5. Picker thực hiện pick → packer đóng gói → in label GHTK. / 6. Simulate GHTK webhook: `picked_up` → `in_transit` → `delivered`. / 7. Verify OMS status `DELIVERED`. |
+| **Expected Result** | API `POST /orders` hoạt động đúng. OMS tự động select carrier. Luồng end-to-end thành công. |
+| **Priority** | High |
+
+---
+
+**[UAT-HAPPY-04] Seller xem tracking đơn đã giao thành công trên Seller Portal**
+
+| | |
+|---|---|
+| **Preconditions** | Order từ `UAT-HAPPY-01` đã `DELIVERED`. Seller A login Seller Portal. |
+| **Steps** | 1. Seller A login vào Seller Portal. / 2. Tìm đơn `SHP-20240601-001`. / 3. Click vào đơn, xem tab "Tracking". / 4. Verify hiển thị timeline đầy đủ. / 5. Verify Seller A KHÔNG thấy đơn của Seller B trong danh sách (data isolation). |
+| **Expected Result** | Seller Portal hiển thị đầy đủ timeline. Tracking number có thể click. Data isolation giữa các seller đảm bảo. |
+| **Priority** | Medium |
+
+---
+
+### Group 2: Out of Stock (`UAT-OOS-xx`)
+
+**[UAT-OOS-01] Order nhận vào nhưng SKU hết hàng hoàn toàn**
+
+| | |
+|---|---|
+| **Preconditions** | `SKU-OOS01` tồn kho = 0. Webhook order từ Shopee chứa 1x `SKU-OOS01`. |
+| **Steps** | 1. Gửi Shopee webhook order với 1x `SKU-OOS01`. / 2. Verify OMS attempt allocation → fail vì tồn kho = 0. / 3. Verify order chuyển sang status `EXCEPTION` với reason code `OOS_FULL`. / 4. Verify exception được tạo trong Exception Queue. / 5. Verify CS nhận notification. / 6. Verify tồn kho `SKU-OOS01` KHÔNG thay đổi (vẫn = 0). |
+| **Expected Result** | Order vào `EXCEPTION` với reason `OOS_FULL`. Tồn kho không bị trừ âm. Exception Queue có entry. |
+| **Priority** | High |
+
+---
+
+**[UAT-OOS-02] Order có 3 SKU — 2 đủ hàng, 1 hết — partial OOS handling**
+
+| | |
+|---|---|
+| **Preconditions** | `SKU-A` tồn kho = 5, `SKU-B` = 3, `SKU-OOS02` = 0. Order: 1x `SKU-A`, 1x `SKU-B`, 1x `SKU-OOS02`. |
+| **Steps** | 1. Gửi webhook order với 3 line items. / 2. Verify OMS KHÔNG partial-allocate (không pick `SKU-A` và `SKU-B` trước khi resolve OOS). / 3. Verify order vào `EXCEPTION` với reason `OOS_PARTIAL`, liệt kê SKU nào thiếu. / 4. Verify reserved stock của `SKU-A` và `SKU-B` được HOLD trong thời gian chờ xử lý. |
+| **Expected Result** | System không tự động partial-fulfil. Stock `SKU-A` và `SKU-B` được hold. Exception detail liệt kê đúng SKU thiếu. |
+| **Priority** | High |
+
+---
+
+**[UAT-OOS-03] Stock bổ sung sau khi order vào OOS — retry allocation**
+
+| | |
+|---|---|
+| **Preconditions** | Order từ `UAT-OOS-01` đang `EXCEPTION/OOS_FULL`. `SKU-OOS01` tồn kho = 0. |
+| **Steps** | 1. Warehouse nhập hàng mới: GRN cho `SKU-OOS01`, nhập 10 units vào bin `BIN-B2`. / 2. Verify WMS cập nhật tồn kho `SKU-OOS01` = 10. / 3. Verify OMS nhận stock update và tự động retry allocation. / 4. Verify order được allocate thành công, chuyển từ `EXCEPTION` → `ALLOCATED`. / 5. Verify tồn kho `SKU-OOS01` giảm từ 10 → 9. / 6. Verify Exception Queue đóng entry. |
+| **Expected Result** | Sau khi GRN, OMS retry allocation thành công. Order thoát exception và tiếp tục luồng bình thường. |
+| **Priority** | High |
+
+---
+
+### Group 3: Cancel Before Picking (`UAT-CANCEL-EARLY-xx`)
+
+**[UAT-CANCEL-EARLY-01] Seller cancel đơn khi đang VALIDATING**
+
+| | |
+|---|---|
+| **Preconditions** | Order `CANCEL-TEST-01` đang `VALIDATING`. `SKU-C01` tồn kho chưa bị lock. |
+| **Steps** | 1. Seller A click "Hủy đơn", chọn reason "Khách hàng đổi ý". / 2. Verify cancel được approve tự động (không cần Supervisor vì chưa allocate). / 3. Verify order status → `CANCELLED`. / 4. Verify tồn kho `SKU-C01` KHÔNG thay đổi. / 5. Verify Sales Channel nhận webhook `order_cancelled`. |
+| **Expected Result** | Cancel tức thì, không cần approval. Tồn kho không đổi. Audit log ghi đúng actor, reason, timestamp. |
+| **Priority** | High |
+
+---
+
+**[UAT-CANCEL-EARLY-02] CS cancel đơn khi ALLOCATED — verify stock release**
+
+| | |
+|---|---|
+| **Preconditions** | Order `CANCEL-TEST-02` đang `ALLOCATED`. `SKU-C02` đã bị lock 2 units (reserved). |
+| **Steps** | 1. CS login OMS, tìm order `CANCEL-TEST-02`, click "Cancel Order". / 2. Verify OMS release reservation: tồn kho `SKU-C02` tăng từ N-2 → N (release 2 units). / 3. Verify Pick Task liên quan bị cancel / removed khỏi WMS queue. / 4. Verify order status = `CANCELLED`. / 5. Verify tồn kho `SKU-C02` có thể allocate cho đơn khác ngay. |
+| **Expected Result** | Stock được release ngay khi cancel. Pick Task bị xóa. Tồn kho đúng và available cho đơn mới. |
+| **Priority** | High |
+
+---
+
+**[UAT-CANCEL-EARLY-03] Sales channel gửi cancel webhook khi FULFILLMENT_CREATED**
+
+| | |
+|---|---|
+| **Preconditions** | Order `CANCEL-TEST-03` đang `FULFILLMENT_CREATED`. Shopee gửi cancel webhook. |
+| **Steps** | 1. Simulate Shopee webhook `order_cancel` với `external_order_id = CANCEL-TEST-03`. / 2. Verify OMS validate webhook (signature, idempotency key). / 3. Verify OMS cancel fulfillment trong WMS và release stock reservation. / 4. Verify internal order status = `CANCELLED`, source = `SALES_CHANNEL_WEBHOOK`. |
+| **Expected Result** | Webhook cancel từ Shopee được xử lý đúng. Fulfillment bị cancel. Stock released. Source ghi nhận là `SALES_CHANNEL_WEBHOOK`. |
+| **Priority** | High |
+
+---
+
+### Group 4: Cancel After Picking (`UAT-CANCEL-LATE-xx`)
+
+**[UAT-CANCEL-LATE-01] Seller request cancel khi đang PICKING — phải qua Supervisor**
+
+| | |
+|---|---|
+| **Preconditions** | Order `LATE-CANCEL-01` đang `PICKING`. Seller A muốn cancel. |
+| **Steps** | 1. Seller A click "Hủy đơn". / 2. Verify hệ thống hiển thị warning: "Đơn đang được xử lý tại kho. Yêu cầu hủy sẽ gửi đến Supervisor để xét duyệt". / 3. Seller xác nhận. / 4. Verify OMS tạo Cancel Request với status `PENDING_SUPERVISOR`. / 5. Verify Supervisor nhận notification. / 6. Verify Picker thấy cảnh báo "Đơn hàng đang chờ xét duyệt hủy". / 7. Verify order status KHÔNG thay đổi ngay. |
+| **Expected Result** | Cancel request tạo với status `PENDING_SUPERVISOR`. Supervisor notify. Picker được cảnh báo. Order chưa bị cancel. |
+| **Priority** | High |
+
+---
+
+**[UAT-CANCEL-LATE-02] Supervisor approve cancel — hàng hoàn về đúng bin**
+
+| | |
+|---|---|
+| **Preconditions** | Cancel request từ `UAT-CANCEL-LATE-01` đang `PENDING_SUPERVISOR`. 1 unit `SKU-D01` đã lấy khỏi bin `BIN-D1`. |
+| **Steps** | 1. Supervisor login OMS, vào "Cancel Requests", click "Approve Cancel". / 2. Verify OMS tạo "Return to Stock" task trong WMS. / 3. Picker thực hiện task "Put Back": scan hàng đã pick, scan bin `BIN-D1`, confirm hoàn trả. / 4. Verify tồn kho `SKU-D01` tăng đúng 1 unit tại `BIN-D1`. / 5. Verify order status → `CANCELLED`. / 6. Verify Seller A nhận notification "Đơn đã được hủy thành công". |
+| **Expected Result** | Hàng đã pick được hoàn trả về đúng bin. Tồn kho tại `BIN-D1` chính xác. Order CANCELLED. Audit log đầy đủ. |
+| **Priority** | High |
+
+---
+
+**[UAT-CANCEL-LATE-03] Supervisor reject cancel — đơn tiếp tục PICKING**
+
+| | |
+|---|---|
+| **Preconditions** | Cancel request đang `PENDING_SUPERVISOR`. Supervisor quyết định từ chối. |
+| **Steps** | 1. Supervisor click "Reject", nhập lý do. / 2. Verify OMS cancel Cancel Request (status = `REJECTED`). / 3. Verify order status giữ nguyên (tiếp tục từ `PICKING`). / 4. Verify Picker nhận notification "Yêu cầu hủy bị từ chối — tiếp tục xử lý đơn". / 5. Verify Seller nhận notification với lý do rõ ràng. |
+| **Expected Result** | Cancel request bị reject. Order tiếp tục flow bình thường. Picker được unblock. Seller được thông báo lý do. |
+| **Priority** | Medium |
+
+---
+
+### Group 5: Pick Wrong SKU (`UAT-PICK-xx`)
+
+**[UAT-PICK-01] Picker scan SKU sai — hệ thống block, yêu cầu scan lại**
+
+| | |
+|---|---|
+| **Preconditions** | Pick Task yêu cầu `SKU-P01`. Picker cầm nhầm item có barcode `SKU-WRONG`. |
+| **Steps** | 1. Picker mở WMS app, nhận Pick Task. / 2. Picker scan barcode `SKU-WRONG`. / 3. Verify WMS hiển thị error ngay: "SKU không khớp! Yêu cầu: SKU-P01. Vừa scan: SKU-WRONG." / 4. Verify âm thanh cảnh báo. / 5. Verify Pick Task KHÔNG ghi nhận progress. / 6. Verify error được log. / 7. Picker scan đúng `SKU-P01` → Verify app chấp nhận. |
+| **Expected Result** | Scan sai SKU bị block ngay với thông báo rõ. Không có progress sai nào được lưu. Error audit log. |
+| **Priority** | High |
+
+---
+
+**[UAT-PICK-02] Picker scan đúng SKU nhưng số lượng thiếu**
+
+| | |
+|---|---|
+| **Preconditions** | Pick Task yêu cầu 3x `SKU-P02`. Picker chỉ lấy được 2 (bin chỉ còn 2). |
+| **Steps** | 1. Picker nhập số lượng = 2, confirm "Không còn hàng trong bin". / 2. Verify WMS tạo Exception: `QUANTITY_MISMATCH` — yêu cầu 3, thực tế 2, thiếu 1. / 3. Verify Supervisor/CS nhận alert exception. / 4. Verify Pick Task bị hold. / 5. Verify tồn kho `SKU-P02` tại `BIN-P2` được điều chỉnh theo thực tế. |
+| **Expected Result** | Exception `QUANTITY_MISMATCH` được tạo đúng. Hệ thống không cho pick với số lượng thiếu mà không có exception. |
+| **Priority** | High |
+
+---
+
+**[UAT-PICK-03] Barcode label hỏng — Supervisor override**
+
+| | |
+|---|---|
+| **Preconditions** | Pick Task yêu cầu `SKU-P03`. Barcode label trên item bị hỏng/mờ. |
+| **Steps** | 1. Picker cố scan barcode bị hỏng → app không nhận dạng. / 2. Picker báo cáo qua WMS app "Barcode hỏng". / 3. Verify WMS gửi alert đến Supervisor. / 4. Supervisor xác nhận item đúng là `SKU-P03`, dùng Supervisor Override, nhập thủ công. / 5. Verify WMS ghi nhận override với supervisor ID, reason = `BARCODE_DAMAGED`. / 6. Verify Pick Task tiếp tục và hoàn thành. / 7. Verify system tạo task "In lại barcode cho `SKU-P03`". |
+| **Expected Result** | Supervisor có thể override khi barcode hỏng. Override được audit. Pick Task hoàn thành. Task in lại barcode được tạo tự động. |
+| **Priority** | Medium |
+
+---
+
+### Group 6: Carrier Pickup Failed (`UAT-CARRIER-xx`)
+
+**[UAT-CARRIER-01] GHN không đến lấy hàng đúng giờ — SLA breach — alert**
+
+| | |
+|---|---|
+| **Preconditions** | Order `CARRIER-TEST-01` đang `READY_TO_SHIP`. SLA pickup = 24h sau khi `READY_TO_SHIP`. |
+| **Steps** | 1. Advance mock clock qua 24h sau `READY_TO_SHIP`. / 2. Verify SLA monitoring job phát hiện breach. / 3. Verify hệ thống tạo SLA Alert `CARRIER_PICKUP_OVERDUE`. / 4. Verify Operation Manager nhận notification (email/in-app). / 5. Verify order được đánh dấu `SLA_BREACH` flag. / 6. Verify Dashboard SLA hiển thị order trong "Overdue Pickup". |
+| **Expected Result** | Alert được tạo sau đúng 24h. OM được notify. Dashboard phản ánh đúng. |
+| **Priority** | High |
+
+---
+
+**[UAT-CARRIER-02] Carrier đến nhưng từ chối nhận — package overweight**
+
+| | |
+|---|---|
+| **Preconditions** | Order `CARRIER-TEST-02` đang `READY_TO_SHIP`. Shipper GHN từ chối nhận vì kiện hàng vượt 30kg. |
+| **Steps** | 1. Warehouse Staff ghi nhận sự kiện từ chối, click "Carrier từ chối nhận", nhập reason `OVERWEIGHT`. / 2. Verify OMS tạo exception `CARRIER_REFUSED/OVERWEIGHT`. / 3. Verify order → `EXCEPTION`. / 4. OM chọn "Đổi carrier: J&T Express". / 5. Verify OMS cancel booking GHN, tạo booking mới với J&T. / 6. Verify label mới được in với J&T tracking. |
+| **Expected Result** | Exception `CARRIER_REFUSED/OVERWEIGHT` tạo đúng. Đổi carrier thành công. |
+| **Priority** | High |
+
+---
+
+**[UAT-CARRIER-03] Thay đổi carrier sau khi đã READY_TO_SHIP**
+
+| | |
+|---|---|
+| **Preconditions** | Order đang `READY_TO_SHIP` với GHN đã assign. Chưa có pickup. OM muốn đổi sang GHTK. |
+| **Steps** | 1. OM login OMS, click "Thay đổi carrier", chọn GHTK. / 2. Verify OMS cancel booking GHN Sandbox. / 3. Verify OMS tạo booking mới với GHTK Sandbox. / 4. Verify label cũ (GHN) được đánh dấu "Void". / 5. Verify label mới (GHTK) được generate. / 6. Verify Seller Portal cập nhật carrier và tracking number mới. |
+| **Expected Result** | Đổi carrier thành công. GHN booking bị cancel. GHTK booking tạo. Label mới in được. Không mất data order. |
+| **Priority** | Medium |
+
+---
+
+### Group 7: Failed Delivery & Return (`UAT-RETURN-xx`)
+
+**[UAT-RETURN-01] Carrier giao thất bại lần 1 — retry thành công lần 2**
+
+| | |
+|---|---|
+| **Preconditions** | Order `RETURN-TEST-01` đang `IN_TRANSIT` qua GHN. |
+| **Steps** | 1. GHN Sandbox gửi webhook `delivery_failed` lần 1 với reason `RECIPIENT_NOT_AVAILABLE`. / 2. Verify OMS ghi nhận `delivery_attempt = 1`. / 3. Verify OMS gửi notification đến seller. / 4. GHN gửi webhook `delivered` lần 2. / 5. Verify OMS cập nhật status `DELIVERED`, `delivery_attempt = 2`. |
+| **Expected Result** | Giao thất bại lần 1 ghi nhận nhưng không trigger return. Retry lần 2 thành công → DELIVERED. |
+| **Priority** | High |
+
+---
+
+**[UAT-RETURN-02] Carrier giao thất bại 3 lần — trigger return**
+
+| | |
+|---|---|
+| **Preconditions** | Order đang `IN_TRANSIT`. Business rule: tối đa 3 lần giao, thất bại cả 3 → trigger return. |
+| **Steps** | 1. Simulate webhook `delivery_failed` lần 1 → `delivery_attempt = 1`. / 2. Simulate lần 2 → `delivery_attempt = 2`. / 3. Simulate lần 3. / 4. Verify OMS detect `delivery_attempt = 3` = max → trigger return flow. / 5. Verify Return Order được tạo. / 6. Verify order → `RETURNING` → `RETURNED`. / 7. Verify WMS nhận task "Nhận hàng hoàn". |
+| **Expected Result** | Sau 3 lần thất bại, return trigger tự động. Return Order tạo. WMS có task nhận hàng hoàn. |
+| **Priority** | High |
+
+---
+
+**[UAT-RETURN-03] Customer từ chối nhận — carrier return**
+
+| | |
+|---|---|
+| **Preconditions** | Order đang `IN_TRANSIT`. Shipper đến, customer từ chối nhận (COD order). |
+| **Steps** | 1. GHN gửi webhook `delivery_failed` với reason `RECIPIENT_REFUSED`. / 2. Verify OMS check business rule: từ chối nhận = trigger return ngay (không chờ 3 lần) với COD order. / 3. Verify Return Order được tạo ngay. / 4. Verify seller được notify "Khách từ chối nhận". / 5. Khi hàng về kho: Staff thực hiện inspect, ghi nhận "Hàng nguyên vẹn". / 6. Verify hàng được nhập lại kho với status `RETURNED_GOOD_CONDITION`. |
+| **Expected Result** | `RECIPIENT_REFUSED` trigger return ngay. Seller notify kịp thời. Hàng về kho được inspect và nhập lại tồn kho đúng. |
+| **Priority** | High |
+
+---
+
+**[UAT-RETURN-04] Hàng về kho — inspect thấy hỏng — quarantine**
+
+| | |
+|---|---|
+| **Preconditions** | Order đã `RETURNED`. Hàng về trong tình trạng bị hỏng (vỡ bao bì, sản phẩm hư hỏng). |
+| **Steps** | 1. Warehouse Staff thực hiện inspect, ghi nhận "Hàng hỏng". / 2. Staff chọn disposition: `QUARANTINE`. / 3. Verify WMS di chuyển hàng vào Quarantine Zone. / 4. Verify tồn kho sellable KHÔNG tăng. / 5. Verify OMS tạo ticket "Hàng hoàn hỏng" gửi đến Seller. / 6. Verify quarantine record được lưu với đầy đủ thông tin. |
+| **Expected Result** | Hàng hỏng vào quarantine bin, không nhập sellable stock. Seller được notify. Audit trail đầy đủ. |
+| **Priority** | High |
+
+---
+
+### Group 8: Duplicate Order (`UAT-DUP-xx`)
+
+**[UAT-DUP-01] Shopee retry webhook — hệ thống dedup, chỉ tạo 1 đơn**
+
+| | |
+|---|---|
+| **Preconditions** | Shopee có thể retry webhook nếu không nhận được `200 OK`. |
+| **Steps** | 1. Gửi Shopee webhook lần 1 với `external_order_id = SHP-DUP-001`. Verify OMS tạo order, trả `201 Created`. / 2. Gửi lại cùng payload lần 2 (giả lập retry). / 3. Verify OMS trả `200 OK` (idempotent response), KHÔNG tạo order mới. / 4. Gửi lại lần 3. Verify tương tự. / 5. Verify database chỉ có 1 order với `external_order_id = SHP-DUP-001`. |
+| **Expected Result** | Chỉ 1 order được tạo dù webhook gửi 3 lần. OMS trả `200 OK` (không phải `409`). Database đúng 1 record. |
+| **Priority** | High |
+
+---
+
+**[UAT-DUP-02] Seller tạo 2 đơn thủ công với cùng external_order_id — error**
+
+| | |
+|---|---|
+| **Preconditions** | Seller A đã có order với `external_order_id = MANUAL-001`. |
+| **Steps** | 1. Seller A tạo đơn thứ 2 thủ công với cùng `external_order_id = MANUAL-001`. / 2. Verify OMS trả `409 Conflict`: "external_order_id MANUAL-001 đã tồn tại". / 3. Verify đơn thứ 2 KHÔNG được tạo. |
+| **Expected Result** | `409 Conflict` khi tạo manual order trùng `external_order_id`. Khác với webhook dedup (trả `200`). |
+| **Priority** | Medium |
+
+---
+
+### Group 9: Status Sync Failed (`UAT-SYNC-xx`)
+
+**[UAT-SYNC-01] WMS cập nhật picked nhưng OMS không nhận được — retry**
+
+| | |
+|---|---|
+| **Preconditions** | Order đang `PICKING`. WMS gửi event `pick_completed` nhưng OMS không phản hồi (simulate: timeout). |
+| **Steps** | 1. WMS gửi event `pick_completed`. Simulate OMS timeout. / 2. Verify WMS ghi log `event_status = FAILED`, tự động retry sau 30 giây. / 3. Restore OMS endpoint. / 4. Verify WMS retry lần 2 → OMS nhận thành công. / 5. Verify OMS cập nhật order status `PICKED`. |
+| **Expected Result** | WMS có retry mechanism. Sau OMS recover, event được deliver thành công. Order status đúng. |
+| **Priority** | High |
+
+---
+
+**[UAT-SYNC-02] Carrier webhook đến nhưng thiếu field — OMS reject, log error**
+
+| | |
+|---|---|
+| **Preconditions** | GHN gửi webhook `delivered` nhưng payload thiếu field bắt buộc `tracking_number`. |
+| **Steps** | 1. Gửi mock GHN webhook `delivered` thiếu `tracking_number` và `delivered_at`. / 2. Verify OMS reject với `400 Bad Request`. / 3. Verify OMS KHÔNG cập nhật order status. / 4. Verify error được log vào Webhook Error Log với payload dump. / 5. Verify order vẫn ở trạng thái cũ (`IN_TRANSIT`). |
+| **Expected Result** | Invalid webhook bị reject với `400`. Order status không bị corrupt. Error log đầy đủ raw payload. |
+| **Priority** | High |
+
+---
+
+**[UAT-SYNC-03] OMS không sync được status về Sales Channel — exception**
+
+| | |
+|---|---|
+| **Preconditions** | Order vừa cập nhật status `DELIVERED`. OMS cần push về Shopee API. Shopee API đang có lỗi (`500`). |
+| **Steps** | 1. OMS attempt push status về Shopee API. / 2. Shopee trả `500`. / 3. Verify OMS log lỗi sync, enqueue retry job (exponential backoff). / 4. Verify OMS hiển thị flag "Chờ sync về Sales Channel" trên order detail. / 5. Restore Shopee API. / 6. Verify retry job thành công, flag được xóa. |
+| **Expected Result** | Retry with exponential backoff khi Sales Channel API lỗi. Order data trong OMS không bị ảnh hưởng. Sync thành công sau khi API recover. |
+| **Priority** | High |
+
+---
+
+### Group 10: Permission Denied (`UAT-PERM-xx`)
+
+**[UAT-PERM-01] Warehouse Staff cố gắng resolve exception — bị từ chối**
+
+| | |
+|---|---|
+| **Preconditions** | Exception `OOS_FULL` đang tồn tại. User `staff_01` có role `WAREHOUSE_STAFF`. |
+| **Steps** | 1. `staff_01` cố navigate đến Exception Dashboard. / 2. Verify menu không hiển thị HOẶC nếu access URL trực tiếp → nhận `403 Forbidden`. / 3. `staff_01` cố gọi API `POST /exceptions/{id}/resolve`. / 4. Verify API trả `403 Forbidden` với message "Insufficient permissions". / 5. Verify attempt được audit log. |
+| **Expected Result** | `WAREHOUSE_STAFF` không thể resolve exception. `403` ở cả UI và API. Attempt được audit. |
+| **Priority** | High |
+
+---
+
+**[UAT-PERM-02] Seller cố gắng xem đơn của seller khác — bị từ chối**
+
+| | |
+|---|---|
+| **Preconditions** | Seller A có order `SELLER-A-ORDER-001`. Seller B login Seller Portal. |
+| **Steps** | 1. Seller B navigate đến URL `https://portal-uat.vietfulfill.vn/orders/SELLER-A-ORDER-001`. / 2. Verify trả về `403 Forbidden` hoặc `404`. / 3. Seller B gọi API `GET /orders/SELLER-A-ORDER-001` với token của Seller B. / 4. Verify API trả `403 Forbidden`. / 5. Verify Seller B search theo external_order_id của Seller A → không ra kết quả. |
+| **Expected Result** | Data isolation hoàn toàn giữa các seller. Không lộ bất kỳ thông tin nào của Seller A. |
+| **Priority** | High |
+
+---
+
+**[UAT-PERM-03] CS cancel đơn đang PICKING không qua Supervisor — bị từ chối**
+
+| | |
+|---|---|
+| **Preconditions** | Order `PERM-TEST-03` đang `PICKING`. User `cs_agent_01` có role `CS`. |
+| **Steps** | 1. `cs_agent_01` click "Cancel Order". / 2. Verify OMS hiển thị "Đơn đang được xử lý tại kho. Vui lòng gửi yêu cầu hủy để Supervisor xét duyệt." / 3. `cs_agent_01` cố gọi API `POST /orders/PERM-TEST-03/cancel` trực tiếp. / 4. Verify API trả `403 Forbidden`. |
+| **Expected Result** | CS không thể bypass Supervisor flow khi đơn đang PICKING. Cả UI lẫn API đều chặn. |
+| **Priority** | High |
+
+---
+
+### Group 11: SLA Breach Alert (`UAT-SLA-xx`)
+
+**[UAT-SLA-01] Đơn chưa được pick sau 4h — alert Operation Manager**
+
+| | |
+|---|---|
+| **Preconditions** | Order `SLA-TEST-01` chuyển sang `ALLOCATED`, Pick Task tạo lúc T=0. SLA pick = 4h. Không có Picker nào nhận task trong 4h. |
+| **Steps** | 1. Advance mock clock đến T+4h01m. / 2. Verify SLA monitoring job phát hiện breach. / 3. Verify hệ thống tạo alert `PICK_SLA_BREACH`. / 4. Verify Operation Manager nhận notification (email + in-app). / 5. Verify SLA Dashboard hiển thị order trong "Pick Overdue". |
+| **Expected Result** | Alert trigger sau đúng 4h. OM được notify. Dashboard cập nhật. OM có thể action trực tiếp từ alert. |
+| **Priority** | High |
+
+---
+
+**[UAT-SLA-02] Exception chưa được resolve sau 2h — escalate**
+
+| | |
+|---|---|
+| **Preconditions** | Exception `OOS_FULL` cho order `SLA-TEST-02` được tạo lúc T=0. SLA = 2h. CS chưa resolve. |
+| **Steps** | 1. Advance mock clock đến T+2h01m. / 2. Verify SLA monitoring phát hiện exception chưa resolved. / 3. Verify hệ thống tạo escalation `EXCEPTION_SLA_BREACH`. / 4. Verify Operation Manager (cấp trên CS) được notify. / 5. Verify exception trong Dashboard được đánh dấu màu đỏ / badge "Escalated". |
+| **Expected Result** | Escalation trigger sau 2h. OM được notify. Exception vẫn thuộc CS. Dashboard reflect escalated. |
+| **Priority** | High |
+
+---
+
+**[UAT-SLA-03] Carrier chưa pickup sau 24h — alert + notify carrier**
+
+| | |
+|---|---|
+| **Preconditions** | Order `SLA-TEST-03` đang `READY_TO_SHIP` với GHN booking. SLA carrier pickup = 24h. GHN không đến. |
+| **Steps** | 1. Advance mock clock đến T+24h01m. / 2. Verify SLA monitoring phát hiện chưa có pickup event từ GHN. / 3. Verify hệ thống tạo alert `CARRIER_PICKUP_SLA_BREACH`. / 4. Verify OM nhận in-app + email alert. / 5. Verify hệ thống auto-notify đến GHN (nếu integration hỗ trợ). / 6. Verify order ghi vào Carrier Performance Report. |
+| **Expected Result** | Alert sau 24h. OM notify. Carrier được auto-notify. Order log vào Carrier Performance. |
+| **Priority** | High |
+
+---
+
+## Test Data Requirements
+
+| Loại Data | Giá trị / Mô tả | Người chuẩn bị | Ghi chú |
+|---|---|---|---|
+| **Seller accounts** | Seller A, B, C — mỗi seller có API key, portal login | QA Lead + Dev | Phân quyền đúng |
+| **User accounts (internal)** | `cs_agent_01` (CS), `staff_01` (WAREHOUSE_STAFF), `supervisor_01` (OPERATION_MANAGER), `picker_01`, `picker_02`, `packer_01` | QA Lead | Không share account |
+| **SKU master data** | `SKU-001`, `SKU-A/B/C`, `SKU-W01`, `SKU-P01/02/03`, `SKU-C01/02`, `SKU-D01`, `SKU-OOS01/02` | BA + Dev | Barcode label in sẵn; 1 barcode hỏng cho `UAT-PICK-03` |
+| **Bin locations** | `BIN-A1`, `BIN-B2`, `BIN-D1`, `BIN-P1/P2`, `BIN-QUARANTINE` | Warehouse Lead | Map bin trong WMS |
+| **Initial stock** | Theo từng scenario (xem Preconditions) | Dev | Cần script reset stock giữa các test group |
+| **Shopee/TikTok webhook payload** | Collection Postman mock webhook — COD, prepaid, cancel, retry | QA Lead | Dùng Shopee Sandbox hoặc mock server |
+| **GHN/GHTK Sandbox config** | API Key sandbox, endpoints đầy đủ | Dev | Verify sandbox hoạt động trước UAT D-1 |
+| **SLA config** | Pick SLA = 4h, Exception SLA = 2h, Carrier Pickup SLA = 24h | Dev | Confirm config với BA trước UAT |
+| **Mock time / clock** | Cơ chế advance clock cho SLA test | Dev | Không dùng real time để tránh chờ 4-24h thực |
+
+---
+
+## Go/No-Go Criteria
+
+| Nhóm | Pass Threshold | Fail Condition (Auto No-Go) |
+|---|---|---|
+| Group 1 — Happy Path | 100% (4/4) | Bất kỳ happy path nào fail → No-Go |
+| Group 2 — Out of Stock | ≥ 2/3 | UAT-OOS-01 fail → No-Go |
+| Group 3 — Cancel Early | ≥ 2/3 | UAT-CANCEL-EARLY-02 (stock release) fail → No-Go |
+| Group 4 — Cancel Late | ≥ 2/3 | UAT-CANCEL-LATE-01 (Supervisor flow) fail → No-Go |
+| Group 5 — Pick Wrong | ≥ 2/3 | UAT-PICK-01 (block wrong scan) fail → No-Go |
+| Group 6 — Carrier Pickup | ≥ 2/3 | Không có auto No-Go |
+| Group 7 — Failed Delivery | ≥ 3/4 | UAT-RETURN-02 (3 lần fail → return) fail → No-Go |
+| Group 8 — Duplicate | 2/2 | UAT-DUP-01 (webhook dedup) fail → No-Go |
+| Group 9 — Sync Failed | ≥ 2/3 | UAT-SYNC-01 (retry mechanism) fail → No-Go |
+| Group 10 — Permission | 3/3 | Bất kỳ permission test nào fail → No-Go (security-critical) |
+| Group 11 — SLA Breach | ≥ 2/3 | Không có auto No-Go |
+
+**Tổng kết:**
+- ≥ 85% scenarios pass
+- 0 Critical defect, ≤ 3 Major defect (có workaround)
+- 0 permission bypass — tất cả `UAT-PERM-xx` phải pass
+- 0 case nào tồn kho bị âm, tăng sai, hoặc bị mất sau test
+
+<Info>
+**Tổng số scenarios:** 37 test scenarios đáp ứng yêu cầu tối thiểu 35 scenarios.
+
+Practice Case Study — VietFulfill là công ty fictional.
+</Info>
