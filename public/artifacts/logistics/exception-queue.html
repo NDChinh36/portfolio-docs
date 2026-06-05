@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VietFulfill Exception Queue</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  .portfolio-label {
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 11px;
+    text-align: center;
+    padding: 6px 16px;
+    letter-spacing: 0.04em;
+  }
+  .portfolio-label span { color: #e2e8f0; font-weight: 600; }
+
+  /* Header */
+  .page-header {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 24px;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-box {
+    background: #ef4444;
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+  .header-title h1 { font-size: 18px; font-weight: 700; color: #0f172a; }
+  .header-title p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  .header-stats {
+    display: flex; align-items: center; gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    gap: 0;
+  }
+  .stat-item {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 16px;
+    border-right: 1px solid #e2e8f0;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+  .stat-label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .stat-open .stat-value { color: #ef4444; }
+  .stat-inprog .stat-value { color: #3b82f6; }
+  .stat-resolved .stat-value { color: #22c55e; }
+  .stat-breach .stat-value { color: #dc2626; }
+
+  /* Main wrapper */
+  .main-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 12px; font-weight: 600; color: #475569; }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-tag { font-size: 11px; color: #94a3b8; font-weight: 600; }
+  .filter-select {
+    font-size: 12px;
+    padding: 5px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #1e293b;
+    background: #f8fafc;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+  .filter-select:focus { border-color: #ef4444; }
+  .filter-divider { width: 1px; height: 20px; background: #e2e8f0; }
+  .btn-apply {
+    background: #ef4444; color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-apply:hover { background: #dc2626; }
+  .btn-export-all {
+    background: #f8fafc; color: #475569;
+    border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    margin-left: auto;
+  }
+  .btn-export-all:hover { background: #f1f5f9; }
+
+  /* Section heading */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .section-meta { font-size: 12px; color: #94a3b8; }
+
+  /* Table */
+  .table-wrapper {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f8fafc; }
+  thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafafa; }
+  tbody td {
+    padding: 13px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    vertical-align: middle;
+  }
+
+  /* Row highlighting */
+  tr.row-critical { background: #fff8f8; }
+  tr.row-critical:hover { background: #fef2f2; }
+  tr.row-high { background: #fffbf5; }
+  tr.row-high:hover { background: #fff7ed; }
+  tr.row-breach-border td:first-child { border-left: 3px solid #dc2626; }
+  tr.row-high-border td:first-child { border-left: 3px solid #f97316; }
+
+  .exc-id { font-family: monospace; font-size: 12px; font-weight: 800; color: #7c3aed; }
+  .order-id-ref { font-family: monospace; font-size: 12px; font-weight: 700; color: #2563eb; }
+
+  .exc-type-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600; color: #1e293b;
+  }
+  .exc-type-icon { font-size: 14px; }
+
+  .status-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .st-fulfillment { background: #f0f9ff; color: #0369a1; }
+  .st-picking { background: #faf5ff; color: #7c3aed; }
+  .st-validation { background: #fff8f8; color: #dc2626; }
+  .st-ready { background: #f0fdf4; color: #166534; }
+  .st-transit { background: #eff6ff; color: #1d4ed8; }
+  .st-returned { background: #fefce8; color: #a16207; }
+
+  /* Severity */
+  .sev-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 9px; border-radius: 10px;
+    white-space: nowrap;
+  }
+  .sev-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .sev-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .sev-critical .sev-dot { background: #dc2626; }
+  .sev-high { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .sev-high .sev-dot { background: #f97316; }
+  .sev-medium { background: #fefce8; color: #a16207; border: 1px solid #fef08a; }
+  .sev-medium .sev-dot { background: #eab308; }
+  .sev-low { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .sev-low .sev-dot { background: #3b82f6; }
+
+  /* SLA */
+  .sla-breach {
+    background: #fef2f2; color: #dc2626;
+    font-weight: 800; font-size: 11px;
+    padding: 3px 8px; border-radius: 4px;
+    border: 1px solid #fecaca;
+    letter-spacing: 0.04em;
+    display: inline-block;
+  }
+  .sla-warn { color: #ca8a04; font-weight: 700; font-size: 12px; }
+  .sla-ok { color: #16a34a; font-weight: 700; font-size: 12px; }
+
+  /* Owner */
+  .owner-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px;
+    background: #eff6ff; color: #1d4ed8;
+  }
+  .owner-unassigned {
+    font-size: 11px; color: #cbd5e1;
+  }
+
+  /* Suggested action */
+  .suggestion-cell {
+    max-width: 160px;
+  }
+  .suggestion-text {
+    font-size: 12px; color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    line-height: 1.4;
+  }
+
+  /* Resolution */
+  .res-open {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px;
+    background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+  }
+  .res-inprog {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px;
+    background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+  }
+  .res-resolved {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px;
+    background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+  }
+
+  /* Action buttons */
+  .actions { display: flex; gap: 5px; flex-wrap: wrap; }
+  .btn-sm {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px;
+    cursor: pointer; border: none; font-family: inherit;
+    white-space: nowrap; line-height: 1.4;
+  }
+  .btn-assign { background: #f0fdf4; color: #166534; }
+  .btn-assign:hover { background: #dcfce7; }
+  .btn-resolve { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  .btn-resolve:hover { background: #d1fae5; }
+  .btn-escalate { background: #fef2f2; color: #dc2626; }
+  .btn-escalate:hover { background: #fee2e2; }
+  .btn-note { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+  .btn-note:hover { background: #f1f5f9; }
+
+  /* Resolved rows */
+  tr.row-resolved td { opacity: 0.65; }
+  tr.row-resolved { background: #f8fffe; }
+
+  /* Annotations */
+  .annotations-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid #ef4444;
+  }
+  .ann-title {
+    font-size: 12px; font-weight: 700;
+    color: #dc2626; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 14px;
+  }
+  .ann-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .ann-item {
+    display: flex; gap: 10px;
+    align-items: flex-start;
+  }
+  .ann-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    background: #ef4444; color: #fff;
+    border-radius: 50%;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ann-text { font-size: 12px; color: #475569; line-height: 1.6; }
+  .ann-text strong { color: #1e293b; }
+
+  /* Resolved summary bar */
+  .resolved-bar {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px; color: #166534;
+  }
+  .resolved-bar strong { font-weight: 700; }
+  .res-icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; <span>Business Analyst — VietFulfill Exception Queue</span></div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-box">EXC</div>
+      <div class="header-title">
+        <h1>Exception Queue</h1>
+        <p>Operational Exception Management · VietFulfill OMS/WMS</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-item stat-open">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Open</div>
+      </div>
+      <div class="stat-item stat-inprog">
+        <div class="stat-value">3</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-item stat-resolved">
+        <div class="stat-value">24</div>
+        <div class="stat-label">Resolved Today</div>
+      </div>
+      <div class="stat-item stat-breach">
+        <div class="stat-value">2</div>
+        <div class="stat-label">SLA Breached</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+
+  <!-- Resolved bar -->
+  <div class="resolved-bar">
+    <span class="res-icon">&#x2705;</span>
+    <span><strong>24 exceptions resolved today</strong> — avg resolution time: 38 minutes &nbsp;|&nbsp; Breach rate: <strong>8.3%</strong> &nbsp;|&nbsp; Most common: <strong>SKU Mismatch (9)</strong>, <strong>Carrier Pickup Failed (7)</strong></span>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filters:</span>
+    <div class="filter-group">
+      <span class="filter-tag">Exception Type</span>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Out of Stock</option>
+        <option>SKU Mismatch</option>
+        <option>Invalid Address</option>
+        <option>Carrier Pickup Failed</option>
+        <option>Status Sync Failed</option>
+        <option>Return Damaged</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-tag">Severity</span>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Critical</option>
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-tag">Status</span>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Open</option>
+        <option>In Progress</option>
+        <option>Resolved</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-tag">Assigned To</span>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Warehouse A</option>
+        <option>Ops Team</option>
+        <option>CS Team</option>
+        <option>System Admin</option>
+        <option>Unassigned</option>
+      </select>
+    </div>
+    <button class="btn-apply">Apply</button>
+    <button class="btn-export-all">&#x2B07; Export</button>
+  </div>
+
+  <!-- Exception Table -->
+  <div class="section-head">
+    <span class="section-title">Active Exception Queue</span>
+    <span class="section-meta">10 items · Sorted by: Severity + SLA Remaining</span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Exception ID</th>
+          <th>Order ID</th>
+          <th>Exception Type</th>
+          <th>Current Status</th>
+          <th>Severity</th>
+          <th>SLA Remaining</th>
+          <th>Owner</th>
+          <th>Suggested Action</th>
+          <th>Resolution</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- EXC-001: Critical breach -->
+        <tr class="row-critical row-breach-border">
+          <td><span class="exc-id">EXC-001</span></td>
+          <td><span class="order-id-ref">VF-0235</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F4E6;</span>
+              Out of Stock
+            </div>
+          </td>
+          <td><span class="status-badge st-fulfillment">Fulfillment Created</span></td>
+          <td><span class="sev-badge sev-critical"><span class="sev-dot"></span>Critical</span></td>
+          <td><span class="sla-breach">BREACH</span></td>
+          <td><span class="owner-tag">Warehouse A</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Find alternative bin or substitute SKU</div></td>
+          <td><span class="res-open">Open</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXC-002: High, In Progress -->
+        <tr class="row-high row-high-border">
+          <td><span class="exc-id">EXC-002</span></td>
+          <td><span class="order-id-ref">VF-0237</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F504;</span>
+              SKU Mismatch
+            </div>
+          </td>
+          <td><span class="status-badge st-picking">Picking</span></td>
+          <td><span class="sev-badge sev-high"><span class="sev-dot"></span>High</span></td>
+          <td><span class="sla-warn">&#x1F7E1; 45m</span></td>
+          <td><span class="owner-tag">Ops Team</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Verify pick list against WMS bin location</div></td>
+          <td><span class="res-inprog">In Progress</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXC-003: Medium, Open -->
+        <tr>
+          <td><span class="exc-id">EXC-003</span></td>
+          <td><span class="order-id-ref">VF-0241</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F4CD;</span>
+              Invalid Address
+            </div>
+          </td>
+          <td><span class="status-badge st-validation">Validation Failed</span></td>
+          <td><span class="sev-badge sev-medium"><span class="sev-dot"></span>Medium</span></td>
+          <td><span class="sla-ok">&#x1F7E2; 2h 10m</span></td>
+          <td><span class="owner-tag">CS Team</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Contact sender to confirm shipping address</div></td>
+          <td><span class="res-open">Open</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXC-004: High, In Progress -->
+        <tr class="row-high row-high-border">
+          <td><span class="exc-id">EXC-004</span></td>
+          <td><span class="order-id-ref">VF-0229</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F69A;</span>
+              Carrier Pickup Failed
+            </div>
+          </td>
+          <td><span class="status-badge st-ready">Ready to Ship</span></td>
+          <td><span class="sev-badge sev-high"><span class="sev-dot"></span>High</span></td>
+          <td><span class="sla-warn">&#x1F7E1; 1h 30m</span></td>
+          <td><span class="owner-tag">Ops</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Reschedule pickup via carrier portal</div></td>
+          <td><span class="res-inprog">In Progress</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXC-005: Medium, Open -->
+        <tr>
+          <td><span class="exc-id">EXC-005</span></td>
+          <td><span class="order-id-ref">VF-0198</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F4E1;</span>
+              Status Sync Failed
+            </div>
+          </td>
+          <td><span class="status-badge st-transit">In Transit</span></td>
+          <td><span class="sev-badge sev-medium"><span class="sev-dot"></span>Medium</span></td>
+          <td><span class="sla-ok">&#x1F7E2; 4h</span></td>
+          <td><span class="owner-tag">System Admin</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Retry carrier API sync — check webhook logs</div></td>
+          <td><span class="res-open">Open</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXC-006: Low, Open -->
+        <tr>
+          <td><span class="exc-id">EXC-006</span></td>
+          <td><span class="order-id-ref">VF-0187</span></td>
+          <td>
+            <div class="exc-type-badge">
+              <span class="exc-type-icon">&#x1F4E6;</span>
+              Return Damaged
+            </div>
+          </td>
+          <td><span class="status-badge st-returned">Returned to WH</span></td>
+          <td><span class="sev-badge sev-low"><span class="sev-dot"></span>Low</span></td>
+          <td><span class="sla-ok">&#x1F7E2; 8h</span></td>
+          <td><span class="owner-tag">CS Team</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text">Inspect item and file damage report</div></td>
+          <td><span class="res-open">Open</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-assign">Assign</button>
+              <button class="btn-sm btn-resolve">Resolve</button>
+              <button class="btn-sm btn-escalate">Escalate</button>
+              <button class="btn-sm btn-note">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Resolved row example -->
+        <tr class="row-resolved">
+          <td><span class="exc-id" style="color:#94a3b8;">EXC-007</span></td>
+          <td><span class="order-id-ref" style="color:#94a3b8;">VF-0215</span></td>
+          <td>
+            <div class="exc-type-badge" style="color:#94a3b8;">
+              <span class="exc-type-icon">&#x1F517;</span>
+              Wrong Item Packed
+            </div>
+          </td>
+          <td><span class="status-badge" style="background:#f1f5f9;color:#94a3b8;">Resolved</span></td>
+          <td><span class="sev-badge" style="background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;"><span class="sev-dot" style="background:#94a3b8;"></span>High</span></td>
+          <td style="color:#94a3b8;font-size:12px;">Resolved 11:42</td>
+          <td><span style="font-size:11px;font-weight:600;color:#94a3b8;">Ops Team</span></td>
+          <td class="suggestion-cell"><div class="suggestion-text" style="color:#94a3b8;">Re-pick correct item</div></td>
+          <td><span class="res-resolved">Resolved</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-note" style="opacity:0.6;">Add Note</button>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Annotations -->
+  <div class="annotations-section">
+    <div class="ann-title">BA Design Notes &amp; Annotations</div>
+    <div class="ann-grid">
+      <div class="ann-item">
+        <div class="ann-num">1</div>
+        <div class="ann-text"><strong>Centralized exception queue:</strong> All operational issues flow into a single structured queue, replacing fragmented Zalo group messages and Excel sheets that caused resolution delays, missed items, and zero audit trail.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">2</div>
+        <div class="ann-text"><strong>SLA countdown prioritization:</strong> Displaying remaining time rather than creation time enables triage by urgency — critical and near-breach exceptions surface at the top, reducing cognitive overhead for ops staff.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">3</div>
+        <div class="ann-text"><strong>Resolution note + audit trail:</strong> Every resolved exception must include a resolution note, creating an auditable history used for root-cause analysis, SLA reporting, and carrier dispute evidence.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">4</div>
+        <div class="ann-text"><strong>Suggested action field:</strong> System-generated action guidance reduces analysis time per exception — the assignee can act immediately without consulting docs or escalating for guidance on routine exception types.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-wrapper -->
+
+</body>
+</html>
