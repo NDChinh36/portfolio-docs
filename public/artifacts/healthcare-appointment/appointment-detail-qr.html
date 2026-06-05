@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appointment Detail + QR Check-in — CityHealth</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f4f8;
+    color: #1a2b3c;
+    min-height: 100vh;
+  }
+
+  .portfolio-label {
+    background: #1a2b3c;
+    color: #a8c4d8;
+    text-align: center;
+    padding: 7px 16px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .portfolio-label strong { color: #e0edf5; }
+
+  .page-wrapper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 36px;
+    padding: 32px 24px 48px;
+  }
+
+  /* ===== MOBILE FRAME ===== */
+  .mobile-frame {
+    width: 420px;
+    flex-shrink: 0;
+    background: #f2f7f5;
+    border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07);
+    overflow: hidden;
+    border: 2px solid #dde8f0;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: #0f4c35;
+    color: rgba(255,255,255,0.88);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 20px 6px;
+    font-size: 12px; font-weight: 600;
+  }
+  .status-bar-right { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+
+  /* Top nav */
+  .top-nav {
+    background: #0f4c35;
+    padding: 4px 16px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .nav-back { color: rgba(255,255,255,0.85); font-size: 20px; cursor: pointer; }
+  .nav-title { color: #fff; font-size: 16px; font-weight: 700; flex: 1; text-align: center; }
+  .nav-menu { color: rgba(255,255,255,0.85); font-size: 18px; cursor: pointer; }
+
+  /* Main scroll area */
+  .scroll-area {
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 14px;
+    background: #f2f7f5;
+  }
+
+  /* Status badge row */
+  .status-row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .status-badge-confirmed {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #e8f5e9; color: #1b5e20;
+    font-size: 13px; font-weight: 700;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid #a5d6a7;
+    letter-spacing: 0.04em;
+  }
+  .appt-id-label {
+    font-size: 11px; color: #6b7f8e;
+    font-family: 'Courier New', monospace;
+    background: #fff; padding: 4px 10px; border-radius: 8px;
+    border: 1px solid #dde8f0;
+  }
+
+  /* Info card */
+  .info-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px;
+    border: 1.5px solid #e0ede7;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .info-card-hosp {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; padding-bottom: 12px;
+    border-bottom: 1px solid #eef2f6;
+  }
+  .hosp-logo {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, #0f4c35, #1a6b4e);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px; font-weight: 800;
+  }
+  .hosp-info-name { font-size: 14px; font-weight: 700; color: #1a2b3c; }
+  .hosp-info-dept { font-size: 12px; color: #5c6f7e; margin-top: 2px; }
+
+  .info-rows { display: flex; flex-direction: column; gap: 10px; }
+  .info-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .info-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .icon-doc { background: #e8f5ef; }
+  .icon-date { background: #e3f2fd; }
+  .icon-time { background: #f3e5f5; }
+  .icon-room { background: #fff8e1; }
+
+  .info-content-label { font-size: 10.5px; color: #8fa0ad; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .info-content-value { font-size: 13.5px; color: #1a2b3c; font-weight: 600; margin-top: 1px; }
+  .info-content-sub { font-size: 11px; color: #6b7f8e; }
+
+  /* QR section */
+  .qr-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1.5px solid #e0ede7;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .qr-title {
+    font-size: 14px; font-weight: 700; color: #1a2b3c;
+    margin-bottom: 4px;
+  }
+  .qr-subtitle {
+    font-size: 11.5px; color: #6b7f8e; margin-bottom: 16px;
+  }
+
+  /* QR Code — pure CSS realistic pattern */
+  .qr-wrapper {
+    display: inline-block;
+    position: relative;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #1a2b3c;
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .qr-grid {
+    display: grid;
+    grid-template-columns: repeat(21, 10px);
+    grid-template-rows: repeat(21, 10px);
+    gap: 0;
+  }
+  .qr-cell {
+    width: 10px; height: 10px;
+  }
+  .qr-dark { background: #1a2b3c; }
+  .qr-light { background: #fff; }
+
+  .qr-valid-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .qr-valid-time {
+    font-size: 12px; color: #1a6b4e; font-weight: 600;
+    background: #e8f5ef; padding: 4px 12px; border-radius: 20px;
+    border: 1px solid #a5d6a7;
+  }
+  .qr-onetime {
+    font-size: 11px; color: #f57f17; font-weight: 700;
+    background: #fff8e1; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid #ffe082;
+  }
+  .qr-instruction {
+    font-size: 12px; color: #5c6f7e; line-height: 1.5;
+    max-width: 280px; margin: 0 auto;
+  }
+
+  /* Action buttons */
+  .action-row {
+    display: flex; gap: 10px;
+  }
+  .btn-outline {
+    flex: 1; padding: 12px;
+    border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    border: 2px solid #d4e0d9;
+    background: #fff; color: #9baab5;
+    cursor: not-allowed;
+    position: relative;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-outline-disabled {
+    opacity: 0.7;
+  }
+  .tooltip {
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%);
+    background: #1a2b3c; color: #fff;
+    font-size: 10.5px; padding: 5px 10px;
+    border-radius: 6px; white-space: nowrap;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .btn-outline:hover .tooltip { opacity: 1; }
+  .tooltip::after {
+    content: '';
+    position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1a2b3c;
+  }
+
+  /* Bottom home indicator */
+  .home-indicator {
+    background: #f2f7f5;
+    padding: 10px;
+    display: flex; justify-content: center;
+  }
+  .home-bar {
+    width: 120px; height: 4px;
+    background: #c0cfd8; border-radius: 2px;
+  }
+
+  /* ===== ANNOTATION PANEL ===== */
+  .annotation-panel {
+    width: 320px;
+    flex-shrink: 0;
+    padding-top: 8px;
+  }
+  .annotation-header {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #0f4c35;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .annotation-header::before {
+    content: ''; display: block;
+    width: 3px; height: 14px; border-radius: 2px;
+    background: #0f4c35;
+  }
+
+  .annot-card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1.5px solid #e0ede7;
+    padding: 13px 15px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .annot-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 3px 0 0 3px;
+    background: #0f4c35;
+  }
+  .annot-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px;
+    background: #e8f5ef; color: #0f4c35;
+    border-radius: 50%; font-size: 10.5px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .annot-title {
+    font-size: 12.5px; font-weight: 700; color: #1a2b3c;
+    margin-bottom: 4px;
+  }
+  .annot-body {
+    font-size: 11.5px; color: #4a5e6e; line-height: 1.55;
+  }
+  .annot-rule {
+    display: inline-block;
+    background: #f0f7f4; color: #0f4c35;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px;
+    margin-top: 5px; font-family: 'Courier New', monospace;
+  }
+  .annot-highlight {
+    background: #fff8e1; color: #e65100;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px;
+    margin-top: 5px; display: inline-block;
+    border: 1px solid #ffe082;
+  }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; <strong>Business Analyst</strong> &mdash; Appointment Detail + QR Check-in</div>
+
+<div class="page-wrapper">
+
+  <!-- Mobile frame -->
+  <div class="mobile-frame">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>09:14</span>
+      <div class="status-bar-right">
+        <span>4G</span>
+        <span>⚡</span>
+        <span>87%</span>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div class="top-nav">
+      <span class="nav-back">&#8592;</span>
+      <span class="nav-title">Lịch hẹn của tôi</span>
+      <span class="nav-menu">&#8942;</span>
+    </div>
+
+    <!-- Scroll -->
+    <div class="scroll-area">
+
+      <!-- Status row -->
+      <div class="status-row">
+        <span class="status-badge-confirmed">&#10003; CONFIRMED</span>
+        <span class="appt-id-label">APT-20240118-0091</span>
+      </div>
+
+      <!-- Info card -->
+      <div class="info-card">
+        <div class="info-card-hosp">
+          <div class="hosp-logo">C</div>
+          <div>
+            <div class="hosp-info-name">CityHealth General Hospital</div>
+            <div class="hosp-info-dept">Tim mạch · Khoa Nội Tim</div>
+          </div>
+        </div>
+        <div class="info-rows">
+          <div class="info-row">
+            <div class="info-icon icon-doc">🩺</div>
+            <div>
+              <div class="info-content-label">Bác sĩ</div>
+              <div class="info-content-value">Dr. Trần Minh Tuấn</div>
+              <div class="info-content-sub">MD · Chuyên khoa Tim mạch</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon icon-date">📅</div>
+            <div>
+              <div class="info-content-label">Ngày khám</div>
+              <div class="info-content-value">Thứ Năm, 18/01/2024</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon icon-time">⏰</div>
+            <div>
+              <div class="info-content-label">Giờ khám</div>
+              <div class="info-content-value">09:00 – 09:30</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon icon-room">📍</div>
+            <div>
+              <div class="info-content-label">Địa điểm</div>
+              <div class="info-content-value">Tầng 3, Phòng 308</div>
+              <div class="info-content-sub">Thang máy B, rẽ phải</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Card -->
+      <div class="qr-card">
+        <div class="qr-title">Mã QR Check-in</div>
+        <div class="qr-subtitle">Quét tại kiosk hoặc quầy lễ tân</div>
+
+        <div class="qr-wrapper">
+          <!-- Realistic QR Code pattern using CSS grid -->
+          <svg width="210" height="210" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg" aria-label="QR Code for appointment APT-20240118-0091">
+            <!-- Background -->
+            <rect width="210" height="210" fill="white"/>
+
+            <!-- Top-left position detection pattern -->
+            <rect x="0" y="0" width="70" height="70" fill="#1a2b3c"/>
+            <rect x="10" y="10" width="50" height="50" fill="white"/>
+            <rect x="20" y="20" width="30" height="30" fill="#1a2b3c"/>
+
+            <!-- Top-right position detection pattern -->
+            <rect x="140" y="0" width="70" height="70" fill="#1a2b3c"/>
+            <rect x="150" y="10" width="50" height="50" fill="white"/>
+            <rect x="160" y="20" width="30" height="30" fill="#1a2b3c"/>
+
+            <!-- Bottom-left position detection pattern -->
+            <rect x="0" y="140" width="70" height="70" fill="#1a2b3c"/>
+            <rect x="10" y="150" width="50" height="50" fill="white"/>
+            <rect x="20" y="160" width="30" height="30" fill="#1a2b3c"/>
+
+            <!-- Timing patterns (horizontal) -->
+            <rect x="70" y="60" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="90" y="60" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="110" y="60" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="130" y="60" width="10" height="10" fill="#1a2b3c"/>
+
+            <!-- Timing patterns (vertical) -->
+            <rect x="60" y="70" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="60" y="90" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="60" y="110" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="60" y="130" width="10" height="10" fill="#1a2b3c"/>
+
+            <!-- Data modules — simulated pattern -->
+            <rect x="80" y="80" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="100" y="80" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="120" y="80" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="80" y="100" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="110" y="100" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="130" y="100" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="80" y="120" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="100" y="120" width="30" height="10" fill="#1a2b3c"/>
+            <rect x="90" y="90" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="120" y="90" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="100" y="110" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="120" y="110" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="90" y="130" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="120" y="130" width="10" height="10" fill="#1a2b3c"/>
+
+            <!-- Right data area -->
+            <rect x="150" y="80" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="170" y="80" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="190" y="80" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="160" y="90" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="190" y="90" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="150" y="100" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="170" y="100" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="150" y="110" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="180" y="110" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="160" y="120" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="180" y="120" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="150" y="130" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="170" y="130" width="30" height="10" fill="#1a2b3c"/>
+
+            <!-- Bottom data area -->
+            <rect x="80" y="150" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="110" y="150" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="130" y="150" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="80" y="160" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="100" y="160" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="130" y="160" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="80" y="170" width="30" height="10" fill="#1a2b3c"/>
+            <rect x="120" y="170" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="90" y="180" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="110" y="180" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="140" y="150" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="170" y="150" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="190" y="150" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="150" y="160" width="30" height="10" fill="#1a2b3c"/>
+            <rect x="190" y="160" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="140" y="170" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="160" y="170" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="180" y="170" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="150" y="180" width="20" height="10" fill="#1a2b3c"/>
+            <rect x="180" y="180" width="10" height="10" fill="#1a2b3c"/>
+            <rect x="200" y="170" width="10" height="10" fill="#1a2b3c"/>
+          </svg>
+        </div>
+
+        <div class="qr-valid-row">
+          <span class="qr-valid-time">Valid: 08:00 – 09:30</span>
+          <span class="qr-onetime">One-time use</span>
+        </div>
+        <div class="qr-instruction">
+          Check-in bằng mã QR này tại kiosk tự phục vụ hoặc quầy lễ tân tầng trệt
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row">
+        <div class="btn-outline btn-outline-disabled">
+          <span>🔄</span>
+          <span>Đổi lịch</span>
+          <div class="tooltip">Chỉ khả dụng trước 2h</div>
+        </div>
+        <div class="btn-outline btn-outline-disabled">
+          <span>✕</span>
+          <span>Hủy lịch</span>
+          <div class="tooltip">Chỉ khả dụng trước 2h</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="home-indicator">
+      <div class="home-bar"></div>
+    </div>
+
+  </div><!-- end mobile frame -->
+
+  <!-- Annotation panel -->
+  <div class="annotation-panel">
+    <div class="annotation-header">BA Design Notes</div>
+
+    <div class="annot-card">
+      <div class="annot-num">1</div>
+      <div class="annot-title">QR Valid Time Window</div>
+      <div class="annot-body">QR is only active from 60 minutes before appointment to 30 minutes after. Outside this window, scan is rejected with a clear error. Prevents patients from arriving too early or scanning stale codes.</div>
+      <div class="annot-rule">BR-CHECKIN-01</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">2</div>
+      <div class="annot-title">Cancel/Reschedule Disabled After Cut-off</div>
+      <div class="annot-body">After cut-off time (2 hours before appointment), these actions are disabled on the patient side. Only a receptionist with override permission can cancel or reschedule. Buttons remain visible to avoid confusion but are non-interactive with tooltip explanation.</div>
+      <div class="annot-rule">BR-CANCEL-01 / BR-CANCEL-02</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">3</div>
+      <div class="annot-title">Appointment Status vs Check-in Status</div>
+      <div class="annot-body">"CONFIRMED" is the appointment lifecycle state. Check-in is a separate event triggered by QR scan or manual action. These must never be merged — a patient can be Confirmed but Not Checked-in.</div>
+      <div class="annot-highlight">Key design decision</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">4</div>
+      <div class="annot-title">QR is One-Time Use Only</div>
+      <div class="annot-body">QR token is invalidated immediately after a successful scan. A second scan of the same code returns an "already used" error. This prevents duplicate check-ins and queue number assignments.</div>
+      <div class="annot-rule">BR-CHECKIN-05</div>
+    </div>
+
+    <div class="annot-card">
+      <div class="annot-num">5</div>
+      <div class="annot-title">HIS Registration Trigger</div>
+      <div class="annot-body">Successful QR scan triggers the HIS registration API call automatically — NOT the check-in button click by staff. This ensures the trigger point is unambiguous and auditable regardless of which staff member processes the queue.</div>
+      <div class="annot-rule">BR-HIS-01</div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
