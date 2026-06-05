@@ -152,11 +152,7 @@ Tôi cung cấp edge case list từ FRD kèm test data cụ thể cho từng cas
 
 ## Visual Artifacts
 
-<Note>
-Phần này ghi rõ các loại artifact BA đã produce trong dự án. Visual minh họa sẽ được bổ sung khi hoàn thiện portfolio.
-</Note>
-
-**Artifact 1 — Order Placement Flow**
+### Artifact 1 — Order Placement Flow
 
 ```mermaid
 flowchart TD
@@ -173,11 +169,11 @@ flowchart TD
     J --> K([Real-time status update\nPENDING → FILLED / PARTIALLY_FILLED])
 ```
 
-*Diagram này được dùng trong PRD review với Design và Engineering trước khi bắt đầu coding. Giúp phát hiện các inconsistency về flow và state trước giai đoạn dev.*
+*Diagram này được dùng trong PRD review với Design và Engineering — giúp phát hiện inconsistency về flow và state trước giai đoạn dev.*
 
 ---
 
-**Artifact 2 — Business Rule Table mẫu**
+### Artifact 2 — Business Rule Table mẫu
 
 | Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Edge Case |
 |---|---|---|---|---|---|
@@ -190,17 +186,54 @@ flowchart TD
 
 ---
 
-**Artifact 3 — Annotated Order Form**
+### Artifact 3 — Annotated Order Form
 
-`[Bổ sung: Annotated UI — Order Form với annotation cho: (1) Leverage selector + confirmation rule khi ≥20x, (2) Estimated liquidation price real-time, (3) Margin mode toggle Isolated/Cross, (4) Margin required preview trước khi submit, (5) Order type selector và điều kiện kích hoạt từng loại]`
+*Translating trading business rules into UI behavior and validation.*
 
-**Artifact 4 — Annotated Position Management Screen**
+<iframe
+  src="/artifacts/futures/annotated-order-form.html"
+  width="100%"
+  height="740"
+  style="border:1px solid #2d3148;border-radius:12px;background:#0f1117;"
+></iframe>
 
-`[Bổ sung: Annotated UI — Position Management với annotation cho: (1) Unrealized PnL + tần suất update, (2) Margin ratio indicator + trạng thái warning/critical, (3) Add Margin button + điều kiện khả dụng, (4) Close Position button + loại lệnh có thể dùng]`
+---
 
-**Artifact 5 — Liquidation Warning / High Leverage Confirmation Modal**
+### Artifact 4 — High Leverage Confirmation Modal
 
-`[Bổ sung: Annotated UI — Confirmation Modal với annotation cho: (1) Risk message copy, (2) Checkbox "Tôi hiểu rủi ro", (3) Dismiss behavior: 1 lần/session, (4) Leverage threshold trigger, (5) Nút Confirm vs. Cancel behavior]`
+*How the mandatory leverage risk confirmation is designed as a BA decision.*
+
+<iframe
+  src="/artifacts/futures/high-leverage-confirmation.html"
+  width="100%"
+  height="680"
+  style="border:1px solid #2d3148;border-radius:12px;background:#0f1117;"
+></iframe>
+
+---
+
+### Artifact 5 — Order Lifecycle State Machine
+
+```mermaid
+flowchart TD
+    Draft([Draft]) --> PendingVal[Pending Validation]
+    PendingVal --> Submitted[Submitted]
+    PendingVal --> Rejected([Rejected])
+    Submitted --> Open[Open]
+    Submitted --> Rejected
+    Open --> PartialFill[Partially Filled]
+    Open --> Filled[Filled]
+    Open --> Cancelled([Cancelled])
+    PartialFill --> Filled
+    PartialFill --> Cancelled
+    Filled --> PosOpened[Position Opened]
+    PosOpened --> LiqWarn[Liquidation Warning]
+    LiqWarn --> Liquidated([Liquidated])
+    PosOpened --> Closed([Closed by User])
+    PosOpened --> Liquidated
+```
+
+*Order lifecycle từ Draft đến terminal states — dùng để align Dev, QA và Risk về trạng thái hợp lệ và không hợp lệ.*
 
 ---
 
