@@ -95,14 +95,29 @@
       ]
     },
     {
-      "group": "Tài liệu mẫu — Ví điện tử (Cơ bản)",
+      "group": "Tài liệu mẫu — Digital Payment (Nâng cao)",
       "pages": [
         {
-          "group": "Generic E-Wallet App",
+          "group": "Digital Payment Case Study",
+          "icon": "credit-card",
+          "pages": [
+            "projects/ewallet/payment-case-study",
+            "projects/ewallet/transaction-state-machine",
+            "projects/ewallet/reconciliation-dashboard",
+            "projects/ewallet/exception-handling"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Tài liệu mẫu — Ví điện tử (Background System)",
+      "pages": [
+        {
+          "group": "FinPay E-Wallet — 8 Modules",
           "icon": "wallet",
           "pages": [
-            "projects/ewallet/project-context",
             "projects/ewallet/overview",
+            "projects/ewallet/project-context",
             "projects/ewallet/auth",
             "projects/ewallet/kyc",
             "projects/ewallet/wallet-core",
