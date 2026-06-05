@@ -1,0 +1,260 @@
+---
+title: "Outpatient Appointment Booking & HIS Check-in"
+description: "Healthcare Practice Case — Digital transformation of outpatient scheduling, QR check-in và HIS integration tại CityHealth General Hospital"
+icon: "hospital"
+---
+
+<Warning>
+  **Practice Case Study — Không phải dự án thương mại.** Toàn bộ nội dung trang này — bao gồm tên bệnh viện, số liệu, hệ thống, và nhân vật — là **fictional**, được xây dựng thuần túy cho mục đích học tập và trình bày năng lực BA. CityHealth General Hospital không tồn tại. MedBook là platform giả định. Không có dữ liệu bệnh nhân thật nào được sử dụng.
+</Warning>
+
+# Outpatient Appointment Booking & HIS Check-in
+
+Hệ thống đặt lịch khám ngoại trú, check-in QR/kiosk và đồng bộ HIS (Hospital Information System) tại CityHealth General Hospital — một bệnh viện đa khoa hạng I tại TP.HCM với hơn 800 giường bệnh (fictional).
+
+## Project Overview
+
+<CardGroup cols={4}>
+  <Card title="18 Chuyên Khoa" icon="stethoscope">
+    Phủ toàn bộ 18 chuyên khoa ngoại trú, từ Nội tổng quát đến Nhi, Mắt, Tai Mũi Họng, và Ung bướu
+  </Card>
+  <Card title="1.200 Lượt/Ngày" icon="calendar-check">
+    Công suất tối đa 1.200 lượt đặt lịch/ngày, phân bổ theo ca sáng (07:00–11:30) và ca chiều (13:00–16:30)
+  </Card>
+  <Card title="3 Kênh Check-in" icon="qrcode">
+    Mobile app QR, kiosk tự phục vụ tại sảnh, và quầy lễ tân — cả 3 kênh đều kết nối real-time với MedBook Backend
+  </Card>
+  <Card title="4 HIS Integration Points" icon="network-wired">
+    Patient registration, visit creation, queue assignment, và visit status update — 4 điểm tích hợp hai chiều với HIS legacy
+  </Card>
+</CardGroup>
+
+---
+
+## Business Context
+
+### As-Is: Quy trình hiện tại và pain points
+
+Trước khi triển khai MedBook, CityHealth vận hành quy trình đặt lịch khám hoàn toàn thủ công qua 5 kênh không đồng bộ: tổng đài điện thoại, quầy đăng ký trực tiếp, website tĩnh (chỉ hiển thị thông tin), Facebook Messenger, và Zalo OA. Không có hệ thống nào trong số này kết nối với HIS — mọi thông tin đặt lịch phải được nhập lại thủ công.
+
+Năm pain point cốt lõi được xác định:
+
+**1. Slot overbooking không kiểm soát.** Vì 5 kênh đặt lịch hoạt động độc lập và không share slot inventory, cùng một slot bác sĩ có thể bị book từ cả tổng đài lẫn Zalo cùng lúc. Tỷ lệ overbooking trung bình 12–18% vào giờ cao điểm.
+
+**2. Nhập liệu HIS thủ công gây sai sót.** Nhân viên lễ tân phải nhập thông tin bệnh nhân vào HIS mỗi buổi sáng trước 06:30. Sai sót nhập liệu chiếm khoảng 3–5% tổng lượt, cần được phát hiện và sửa ngay tại quầy — làm tắc nghẽn hàng đợi vào cao điểm.
+
+**3. Không có visibility về trạng thái hàng đợi.** Bệnh nhân sau khi đặt lịch không biết số thứ tự thực tế của mình, phải ngồi chờ và hỏi thủ công tại quầy.
+
+**4. No-show detection hoàn toàn thủ công.** Nhân viên phải đánh dấu từng case no-show bằng tay vào cuối buổi. Slot trống do no-show không được giải phóng kịp thời, lãng phí ~8–10% công suất mỗi ngày.
+
+**5. Dữ liệu phân mảnh, không thể báo cáo.** Lịch hẹn nằm ở tổng đài, Zalo, Facebook — không có nguồn dữ liệu thống nhất. Bệnh viện không biết tỷ lệ no-show, conversion đặt lịch → khám, hay tải trọng theo chuyên khoa.
+
+### To-Be: Vision của hệ thống mới
+
+MedBook được thiết kế để trở thành **single source of truth** cho toàn bộ quy trình đặt lịch ngoại trú — từ thời điểm bệnh nhân chọn slot đến khi bác sĩ kết thúc khám và cập nhật trạng thái vào HIS. Mọi kênh đặt lịch consume từ cùng một slot inventory, mọi trạng thái appointment phản chiếu real-time lên HIS, và mọi sự kiện (check-in, no-show, queue assignment) được ghi lại có audit trail đầy đủ.
+
+---
+
+## Problem Statement (BA Perspective)
+
+Bài toán thực sự khó của MedBook không nằm ở booking — mà nằm ở **vùng giao thoa giữa booking app và HIS legacy**. Đây là 4 bài toán cốt lõi:
+
+**Bài toán 1: State inconsistency giữa booking app và HIS.** MedBook và HIS là hai hệ thống độc lập với data model khác nhau. Một appointment trong MedBook có thể ở trạng thái `confirmed` trong khi HIS chưa có record tương ứng. Nếu không thiết kế cơ chế reconcile rõ ràng, hai hệ thống sẽ liên tục drift — dẫn đến bệnh nhân đã check-in trong app nhưng bác sĩ không thấy họ trong danh sách HIS.
+
+**Bài toán 2: Double registration khi HIS sync fail và retry.** Khi call HIS API bị lỗi (timeout, HIS quá tải), MedBook phải retry. Nếu lần call đầu thực ra đã thành công ở phía HIS nhưng response bị mất, retry sẽ tạo thêm một visit record thứ hai — cùng bệnh nhân, cùng bác sĩ, cùng ngày. Đây là lỗi nghiêm trọng vì ảnh hưởng trực tiếp đến hồ sơ bệnh án.
+
+**Bài toán 3: Check-in window và grace period.** Bệnh nhân được phép check-in trong khung giờ nào? Nếu đến sớm quá hoặc muộn quá thì xử lý như thế nào? Ai có quyền override? Đây là bài toán nghiệp vụ cần quyết định rõ ràng trước khi code.
+
+**Bài toán 4: No-show detection tự động.** Hệ thống cần tự động đánh dấu no-show sau grace period — nhưng không được làm điều này cứng nhắc. Receptionist cần có khả năng override, và khi slot được giải phóng, hệ thống có giải phóng slot đó để người khác đặt không?
+
+---
+
+## My Role as BA
+
+- **Discovery & stakeholder interviews:** Phỏng vấn trưởng phòng khám, nhân viên lễ tân, đội IT bệnh viện, đại diện bệnh nhân
+- **Process mapping:** Vẽ as-is process và thiết kế to-be flow với swimlane diagram
+- **BA decisions:** Đưa ra 5 quyết định nghiệp vụ quan trọng sau khi phân tích trade-off
+- **Requirements specification:** Viết user stories, acceptance criteria, và 37 business rules
+- **HIS integration spec:** Làm việc với đội IT bệnh viện để định nghĩa 4 integration points, idempotency rules, và error handling
+- **Exception handling design:** Xác định 15 exception paths và owner của từng path
+
+Scope không bao gồm: thiết kế UI/UX, database schema, API design, hoặc kiến trúc hệ thống kỹ thuật.
+
+---
+
+## Why This Case Is Challenging
+
+**1. Multi-system orchestration với eventual consistency.** MedBook là orchestrator giữa patient app, HIS legacy, reception portal, notification service, và kiosk hardware. Mỗi hệ thống có SLA khác nhau, failure mode khác nhau, và data model khác nhau.
+
+**2. HIS legacy với constraint cứng không thể thay đổi.** HIS của CityHealth là hệ thống on-premise, được vận hành từ 2015, vendor cung cấp API nhưng không hỗ trợ webhook. MedBook không thể nhận thông báo real-time từ HIS — phải dùng request-response đồng bộ. BA phải thiết kế flow phù hợp với constraint này.
+
+**3. Patient safety requirements.** Trong môi trường y tế, một số lỗi không thể chấp nhận: duplicate visit record trong HIS có thể ảnh hưởng đến hồ sơ bệnh án và kê đơn thuốc; check-in sai bệnh nhân có thể dẫn đến nhầm lẫn trong điều trị. BA phải thiết kế các safeguard nghiệp vụ (idempotency, identity verification, audit trail) ngay từ bước phân tích.
+
+---
+
+## Core Flow Summary
+
+Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
+
+**Giai đoạn 1 — Booking:** Bệnh nhân chọn chuyên khoa, bác sĩ, và slot thời gian. MedBook giữ slot (hold) trong khi bệnh nhân điền form, sau đó xác nhận appointment và phát sinh QR code. Một số chuyên khoa yêu cầu manual confirm từ phòng khám trước khi QR được gửi.
+
+**Giai đoạn 2 — Check-in:** Đến ngày khám, bệnh nhân check-in qua mobile QR, kiosk, hoặc lễ tân. MedBook validate time window, facility, và appointment status. Ngay khi check-in hợp lệ, MedBook call HIS API để tạo visit record và nhận queue number. Chỉ khi HIS sync thành công, queue number mới được hiển thị.
+
+**Giai đoạn 3 — Visit & Completion:** Bệnh nhân ngồi chờ theo số thứ tự. Sau khi khám xong, bác sĩ cập nhật visit status trong HIS. MedBook polling HIS mỗi 10 phút để sync. Nếu đến hết grace period mà bệnh nhân chưa check-in, hệ thống tự động set `appointment_status = no_show`.
+
+→ [Xem chi tiết 18 bước flow](/projects/healthcare-appointment/booking-flow)
+
+---
+
+## 5 Key BA Decisions
+
+<AccordionGroup>
+
+<Accordion title="Decision 1 — Tách thành 3 status fields riêng biệt">
+
+| | |
+|---|---|
+| **Context** | Ban đầu team Dev đề xuất dùng một field `status` duy nhất để biểu diễn toàn bộ trạng thái appointment. |
+| **Problem / Risk** | Một appointment có thể ở trạng thái "đã check-in" nhưng HIS sync chưa thành công — hoặc ngược lại. Dùng một field đơn không thể biểu diễn đủ các combination này, dẫn đến logic xử lý phức tạp và dễ bug. |
+| **BA Recommendation** | Tách thành 3 fields độc lập: `appointment_status` (pending → confirmed → completed/no_show/cancelled), `checkin_status` (not_checked_in → checked_in → failed), và `his_sync_status` (pending → synced → failed → in_exception_queue). |
+| **Trade-off** | Phức tạp hơn cho Dev khi query và update. Cần có business rule rõ ràng về combination nào là valid và invalid. |
+| **Expected Impact** | Hệ thống có thể xử lý chính xác trường hợp HIS sync fail sau check-in. Reception thấy ngay "bệnh nhân đã ở đây nhưng HIS chưa sync" thay vì nhìn thấy một status mơ hồ. |
+
+</Accordion>
+
+<Accordion title="Decision 2 — Check-in không hoàn tất nếu HIS sync chưa thành công">
+
+| | |
+|---|---|
+| **Context** | Sau khi bệnh nhân scan QR, MedBook gọi HIS API để tạo visit record. HIS có thể trả về lỗi hoặc timeout, đặc biệt vào giờ cao điểm 07:00–08:00. |
+| **Problem / Risk** | Nếu cho phép check-in hoàn tất mà không cần HIS sync thành công, bệnh nhân sẽ ngồi chờ nhưng bác sĩ không thấy họ trong danh sách HIS. Điều này nguy hiểm hơn so với việc check-in bị từ chối. |
+| **BA Recommendation** | Queue number chỉ được cấp và hiển thị cho bệnh nhân sau khi HIS sync trả về success. Nếu HIS sync fail, `checkin_status = checked_in` (bệnh nhân đã đến) nhưng queue number không được cấp, case đưa vào exception queue để receptionist xử lý thủ công. |
+| **Trade-off** | Bệnh nhân bị giữ tại kiosk/quầy trong khi chờ HIS sync (thường < 3 giây, worst case 10–15 giây). Cần hiển thị loading state rõ ràng và có fallback UX. |
+| **Expected Impact** | Đảm bảo bác sĩ luôn có đủ danh sách bệnh nhân trong HIS trước khi bắt đầu khám. Loại bỏ tình huống bệnh nhân "vô hình" trong hệ thống bác sĩ. |
+
+</Accordion>
+
+<Accordion title="Decision 3 — QR code chỉ valid trong time window cụ thể">
+
+| | |
+|---|---|
+| **Context** | QR code được sinh ra khi appointment được confirmed. Nếu không có time window, bệnh nhân có thể scan QR để check-in bất kỳ lúc nào — kể cả ngày hôm sau hoặc 3 tiếng trước giờ hẹn. |
+| **Problem / Risk** | Check-in sớm quá sẽ chiếm slot queue của buổi khám chưa bắt đầu. Check-in muộn quá có thể dẫn đến bệnh nhân được cấp queue number nhưng bác sĩ đã kết thúc buổi khám. |
+| **BA Recommendation** | QR code chỉ valid trong window: **60 phút trước giờ hẹn đến 30 phút sau giờ hẹn**. Ngoài window này, scan QR trả về lỗi với thông báo rõ ràng. Receptionist có quyền override bằng cách check-in thủ công qua reception portal khi có lý do chính đáng. |
+| **Trade-off** | Bệnh nhân đến sớm hơn 60 phút không check-in được qua app — phải qua lễ tân. Cần communicate rõ rule này cho bệnh nhân. |
+| **Expected Impact** | Queue management trở nên predictable. Bác sĩ biết chắc danh sách queue phản chiếu đúng bệnh nhân đang thực sự có mặt tại khoa. |
+
+</Accordion>
+
+<Accordion title="Decision 4 — Idempotency key bắt buộc khi call HIS registration API">
+
+| | |
+|---|---|
+| **Context** | MedBook gọi HIS API để tạo visit record. Do HIS không hỗ trợ webhook, MedBook dùng synchronous call với retry logic khi timeout. |
+| **Problem / Risk** | Nếu HIS đã tạo visit record thành công nhưng response bị mất (network timeout), MedBook retry sẽ call lại — và HIS sẽ tạo thêm một record thứ hai. Kết quả: cùng một bệnh nhân có 2 visit record trong HIS cùng ngày — vi phạm data integrity của hồ sơ bệnh án. |
+| **BA Recommendation** | Mỗi request tạo HIS visit phải kèm `idempotency_key = medbook_appointment_{appointment_id}_{date}`. HIS API sẽ kiểm tra key này và trả về record đã tồn tại thay vì tạo mới nếu key đã được dùng. Cần làm việc với vendor HIS để confirm hỗ trợ idempotency pattern. |
+| **Trade-off** | Yêu cầu HIS vendor implement thêm một layer validation. Nếu HIS không hỗ trợ, phải thiết kế workaround ở phía MedBook (check existence trước khi create). |
+| **Expected Impact** | Loại bỏ hoàn toàn nguy cơ duplicate visit record do retry. Đây là safeguard quan trọng nhất trong toàn bộ integration. |
+
+</Accordion>
+
+<Accordion title="Decision 5 — No-show tự động nhưng receptionist có thể override">
+
+| | |
+|---|---|
+| **Context** | Nếu bệnh nhân không check-in trước khi grace period kết thúc (30 phút sau giờ hẹn), hệ thống cần xác định appointment này là no-show. |
+| **Problem / Risk** | No-show tự động hoàn toàn sẽ gây vấn đề khi bệnh nhân có lý do hợp lý (đang ở bãi đỗ xe, đang lấy số thứ tự tại kiosk khác). No-show thủ công hoàn toàn thì không scalable với 1.200 lượt/ngày. |
+| **BA Recommendation** | Hệ thống tự động set `appointment_status = no_show` sau grace period (30 phút sau giờ hẹn). Slot được đánh dấu là có thể giải phóng nhưng **chưa giải phóng ngay** — giữ thêm 15 phút để receptionist có thể override nếu bệnh nhân xuất hiện muộn với lý do. Sau 15 phút buffer, slot mới thực sự được giải phóng. |
+| **Trade-off** | Slot bị giữ thêm 15 phút sau grace period, giảm nhẹ cơ hội tái sử dụng. Đây là trade-off chấp nhận được để tránh oan cho bệnh nhân đến muộn chính đáng. |
+| **Expected Impact** | Giảm ~8–10% công suất bị lãng phí do no-show không được xử lý kịp. Receptionist không phải manual review 1.200 records mỗi ngày mà chỉ cần xử lý các case exception. |
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Main Artifacts / Deliverables
+
+| Artifact | Nội dung | Người đọc chính |
+|---|---|---|
+| **overview.mdx** (file này) | Project context, BA decisions, lessons learned | PM, Stakeholder, BA junior |
+| **booking-flow.mdx** | Business flow 18 bước, swimlane, sequence diagram | Dev, QA, BA |
+| **state-machine.mdx** | 15 appointment states đầy đủ với transitions và cancellation rules | Dev, QA |
+| **business-rules.mdx** | 37 business rules phân 6 nhóm | Dev, QA |
+| **data-mapping.mdx** | 25 fields × 5 hệ thống, patient identity matching, status mapping | Dev Backend |
+| **source-of-truth.mdx** | 13 data objects, owner, sync target, design principles | BA, Architect |
+| **rbac.mdx** | 7 roles × 20 permissions, conditional permissions, audit requirements | Dev, Security |
+| **api-integration.mdx** | 16 APIs, HIS integration pattern, QR code design | Dev Backend, HIS Vendor |
+| **exception-handling.mdx** | 15 exception types, SLA, escalation path | Ops, Receptionist, Dev |
+| **uat-scenarios.mdx** | 38+ UAT scenarios, 20 nhóm, Go/No-Go criteria | QA, BA |
+| **wireframe-plan.mdx** | 4 dashboard wireframe suggestions với annotation plan | UX, Dev Frontend |
+
+---
+
+## What This Case Demonstrates
+
+- Khả năng xác định và phân tích **bài toán integration phức tạp** giữa hệ thống hiện đại và HIS legacy, không chỉ dừng ở mô tả UI/UX flow
+- Tư duy **defensive BA** — thiết kế cho failure cases (HIS timeout, duplicate registration, QR scan ngoài window) từ đầu thay vì xử lý sau
+- Kỹ năng **BA decision-making** với format rõ ràng: Context → Problem → Recommendation → Trade-off → Impact
+- Hiểu biết về **idempotency và eventual consistency** ở mức nghiệp vụ — đủ để định nghĩa yêu cầu cho Dev
+- Khả năng thiết kế **multi-status data model** phản chiếu đúng business reality phức tạp
+- Kinh nghiệm làm việc với **constraint hệ thống legacy** trong domain healthcare
+
+---
+
+## Lessons Learned
+
+<CardGroup cols={3}>
+  <Card title="HIS constraint phát sinh muộn" icon="triangle-exclamation">
+    **Underestimated:** Tôi giả định HIS vendor hỗ trợ idempotency key từ đầu. Thực ra phải mất 2 tuần làm việc với vendor mới confirm.
+
+    **Changed:** Từ sau, tôi đưa việc confirm technical capability của external system vào checklist discovery sprint 1.
+
+    **Would do earlier:** Gặp trực tiếp HIS vendor ngay trong sprint 1.
+  </Card>
+  <Card title="Grace period là bài toán chính trị" icon="people-group">
+    **Underestimated:** Tôi nghĩ chọn 30 hay 45 phút grace period là quyết định kỹ thuật đơn giản.
+
+    **Changed:** Tổ chức workshop riêng với 3 bên (bác sĩ, lễ tân, đại diện bệnh nhân) để align trước khi quyết định.
+
+    **Would do earlier:** Đưa grace period vào agenda buổi stakeholder interview đầu tiên.
+  </Card>
+  <Card title="3 status fields cần giải thích liên tục" icon="lightbulb">
+    **Underestimated:** Quyết định tách 3 status fields gây nhầm lẫn dai dẳng cho cả Dev lẫn QA về field nào là "trạng thái chính".
+
+    **Changed:** Viết thêm "status combination reference table" liệt kê mọi combination valid/invalid.
+
+    **Would do earlier:** Giao reference table ngay khi handoff requirements.
+  </Card>
+</CardGroup>
+
+---
+
+## Supporting Documents
+
+<CardGroup cols={2}>
+
+<Card title="Appointment Booking & Check-in Flow" icon="arrows-split-up-and-left" href="/projects/healthcare-appointment/booking-flow">
+  Business flow 18 bước, swimlane diagram, sequence diagram, và 5 exception paths
+</Card>
+
+<Card title="Appointment State Machine" icon="diagram-project" href="/projects/healthcare-appointment/state-machine">
+  15 states đầy đủ với transitions, cancellation rules, và HIS sync detail
+</Card>
+
+<Card title="Business Rules" icon="book" href="/projects/healthcare-appointment/business-rules">
+  37 business rules đánh số theo 6 nhóm: Booking, Confirmation, Check-in, HIS Sync, Cancel, Queue
+</Card>
+
+<Card title="Data Mapping & Source of Truth" icon="database" href="/projects/healthcare-appointment/data-mapping">
+  25 fields × 5 hệ thống, patient identity matching, source of truth matrix
+</Card>
+
+</CardGroup>
+
+---
+
+<Note>
+  **Practice Case Study — Built to demonstrate BA capability in healthcare / hospital digital transformation domain.** This is not a commercial project. All workflows, data fields and assumptions are created for portfolio demonstration. All company names, patient data and system configurations are fictional.
+</Note>
