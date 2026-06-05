@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VietFulfill OMS/WMS Fulfillment Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  .portfolio-label {
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 11px;
+    text-align: center;
+    padding: 6px 16px;
+    letter-spacing: 0.04em;
+  }
+  .portfolio-label span { color: #e2e8f0; font-weight: 600; }
+
+  /* Header */
+  .dashboard-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff;
+    padding: 0 24px;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-box {
+    background: #3b82f6;
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+  .header-title h1 { font-size: 18px; font-weight: 700; color: #f1f5f9; }
+  .header-title p { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid rgba(74,222,128,0.3);
+  }
+  .live-dot {
+    width: 7px; height: 7px;
+    background: #4ade80; border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .header-time { font-size: 12px; color: #64748b; }
+
+  /* Main content wrapper */
+  .main-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px;
+  }
+
+  /* KPI Row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-top: 3px solid transparent;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); }
+  .kpi-card.blue { border-top-color: #3b82f6; }
+  .kpi-card.orange { border-top-color: #f97316; }
+  .kpi-card.yellow { border-top-color: #eab308; }
+  .kpi-card.green { border-top-color: #22c55e; }
+  .kpi-card.red { border-top-color: #ef4444; }
+  .kpi-card.purple { border-top-color: #a855f7; }
+
+  .kpi-label { font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .kpi-value { font-size: 30px; font-weight: 800; line-height: 1; }
+  .kpi-card.blue .kpi-value { color: #2563eb; }
+  .kpi-card.orange .kpi-value { color: #ea580c; }
+  .kpi-card.yellow .kpi-value { color: #ca8a04; }
+  .kpi-card.green .kpi-value { color: #16a34a; }
+  .kpi-card.red .kpi-value { color: #dc2626; }
+  .kpi-card.purple .kpi-value { color: #9333ea; }
+
+  .kpi-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    margin-top: 6px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .kpi-badge.warning { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .kpi-badge.urgent { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+  .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+
+  /* Filter bar */
+  .filter-bar {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 12px; font-weight: 600; color: #475569; margin-right: 4px; }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-select {
+    font-size: 12px;
+    padding: 5px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #1e293b;
+    background: #f8fafc;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+  .filter-select:focus { border-color: #3b82f6; }
+  .filter-divider { width: 1px; height: 20px; background: #e2e8f0; }
+  .btn-apply {
+    background: #3b82f6; color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 16px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-apply:hover { background: #2563eb; }
+
+  /* Section heading */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .section-meta { font-size: 12px; color: #94a3b8; }
+
+  /* Main table */
+  .table-wrapper {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f8fafc; }
+  thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    vertical-align: middle;
+  }
+
+  .order-id { font-weight: 700; color: #2563eb; font-family: monospace; font-size: 12px; }
+  .channel-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .ch-shopee { background: #fff1e6; color: #c2410c; }
+  .ch-tiktok { background: #fce7f3; color: #be185d; }
+  .ch-lazada { background: #ede9fe; color: #7c3aed; }
+  .ch-website { background: #ecfdf5; color: #065f46; }
+
+  .wh-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px;
+    background: #f1f5f9; color: #475569;
+    display: inline-block;
+  }
+
+  .ful-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600;
+  }
+  .ship-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: #475569;
+  }
+
+  .sla-good { color: #16a34a; font-weight: 700; font-size: 12px; }
+  .sla-warn { color: #ca8a04; font-weight: 700; font-size: 12px; }
+  .sla-breach {
+    background: #fef2f2; color: #dc2626;
+    font-weight: 800; font-size: 11px;
+    padding: 3px 8px; border-radius: 4px;
+    border: 1px solid #fecaca;
+    letter-spacing: 0.05em;
+  }
+  .sla-na { color: #cbd5e1; font-size: 12px; }
+
+  .exc-tag {
+    display: inline-block;
+    background: #fef3c7; color: #92400e;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px;
+    border: 1px solid #fde68a;
+  }
+  .exc-none { color: #cbd5e1; font-size: 13px; }
+
+  .owner-tag {
+    display: inline-block;
+    background: #eff6ff; color: #1d4ed8;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px;
+  }
+
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-sm {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 5px;
+    cursor: pointer; border: none; font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-view { background: #eff6ff; color: #1d4ed8; }
+  .btn-view:hover { background: #dbeafe; }
+  .btn-assign { background: #f0fdf4; color: #166534; }
+  .btn-assign:hover { background: #dcfce7; }
+  .btn-resolve { background: #fff7ed; color: #9a3412; }
+  .btn-resolve:hover { background: #ffedd5; }
+  .btn-export { background: #f8fafc; color: #475569; }
+  .btn-export:hover { background: #f1f5f9; }
+
+  /* Bottom panels */
+  .bottom-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+  .panel-count {
+    font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 10px;
+    background: #f1f5f9; color: #64748b;
+  }
+  .panel-body { padding: 12px 16px; }
+
+  /* Carrier panel */
+  .carrier-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8fafc;
+  }
+  .carrier-row:last-child { border-bottom: none; }
+  .carrier-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+  .carrier-meta { font-size: 11px; color: #94a3b8; }
+  .carrier-pending {
+    font-size: 20px; font-weight: 800; color: #f97316;
+  }
+  .carrier-bar-wrap { flex: 1; margin: 0 12px; }
+  .carrier-bar-bg { background: #f1f5f9; border-radius: 4px; height: 6px; }
+  .carrier-bar-fill { height: 6px; border-radius: 4px; background: #f97316; }
+
+  /* SLA breach panel */
+  .breach-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f8fafc;
+  }
+  .breach-row:last-child { border-bottom: none; }
+  .breach-id { font-family: monospace; font-size: 12px; font-weight: 700; color: #dc2626; }
+  .breach-channel { font-size: 11px; color: #94a3b8; }
+  .breach-time {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    background: #fef2f2; color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  /* Exception panel */
+  .exc-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f8fafc;
+  }
+  .exc-row:last-child { border-bottom: none; }
+  .exc-type-label { font-size: 12px; font-weight: 600; color: #1e293b; }
+  .exc-order-ref { font-size: 11px; color: #94a3b8; font-family: monospace; }
+  .exc-sev {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    display: inline-block;
+  }
+  .sev-crit { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .sev-high { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .sev-med { background: #fefce8; color: #a16207; border: 1px solid #fef08a; }
+  .sev-low { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+  /* Annotations */
+  .annotations-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid #3b82f6;
+  }
+  .ann-title {
+    font-size: 12px; font-weight: 700;
+    color: #2563eb; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 14px;
+  }
+  .ann-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .ann-item {
+    display: flex; gap: 10px;
+    align-items: flex-start;
+  }
+  .ann-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    background: #3b82f6; color: #fff;
+    border-radius: 50%;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ann-text { font-size: 12px; color: #475569; line-height: 1.6; }
+  .ann-text strong { color: #1e293b; }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">Portfolio Artifact &nbsp;·&nbsp; <span>Business Analyst — VietFulfill OMS/WMS Fulfillment Dashboard</span></div>
+
+<!-- Header -->
+<div class="dashboard-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-box">VF</div>
+      <div class="header-title">
+        <h1>Fulfillment Operations Dashboard</h1>
+        <p>OMS / WMS / Carrier Integration · Real-time View</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+      <div class="header-time">Updated: 06 Jun 2026, 14:37 ICT</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Orders Today</div>
+      <div class="kpi-value">1,243</div>
+      <div class="kpi-sub">+12% vs yesterday</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Picking Backlog</div>
+      <div class="kpi-value">87</div>
+      <div class="kpi-badge warning">Warning</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Packing Backlog</div>
+      <div class="kpi-value">34</div>
+      <div class="kpi-sub">Avg wait: 18m</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Ready to Ship</div>
+      <div class="kpi-value">156</div>
+      <div class="kpi-sub">Awaiting pickup</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">SLA Breach</div>
+      <div class="kpi-value">12</div>
+      <div class="kpi-badge urgent">Urgent</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Exceptions</div>
+      <div class="kpi-value">7</div>
+      <div class="kpi-sub">Need attention</div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filters:</span>
+    <div class="filter-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;">Date</span>
+      <select class="filter-select"><option>Today</option><option>Yesterday</option><option>Last 7 days</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;">Warehouse</span>
+      <select class="filter-select"><option>HCM-001</option><option>HAN-001</option><option>All</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;">Channel</span>
+      <select class="filter-select"><option>All</option><option>Shopee</option><option>TikTok</option><option>Lazada</option><option>Website</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;">Status</span>
+      <select class="filter-select"><option>All</option><option>Picking</option><option>Packing</option><option>Ready Ship</option><option>Exception</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;">Carrier</span>
+      <select class="filter-select"><option>All</option><option>GHN</option><option>GHTK</option><option>J&amp;T</option></select>
+    </div>
+    <button class="btn-apply">Apply</button>
+  </div>
+
+  <!-- Main Table -->
+  <div class="section-head">
+    <span class="section-title">Order Fulfillment List</span>
+    <span class="section-meta">Showing 5 of 1,243 orders</span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Channel</th>
+          <th>Warehouse</th>
+          <th>Fulfillment Status</th>
+          <th>Shipment Status</th>
+          <th>SLA Remaining</th>
+          <th>Exception</th>
+          <th>Owner</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="order-id">VF-2026-000234</span></td>
+          <td><span class="channel-badge ch-shopee">Shopee</span></td>
+          <td><span class="wh-badge">HCM-001</span></td>
+          <td><span class="ful-status">&#x1F4E6; Packed</span></td>
+          <td><span class="ship-status">&#x23F3; Awaiting Pickup</span></td>
+          <td><span class="sla-good">&#x1F7E2; 4h 20m</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-view">View Order</button>
+              <button class="btn-sm btn-assign">Assign Owner</button>
+              <button class="btn-sm btn-export">Export</button>
+            </div>
+          </td>
+        </tr>
+        <tr style="background:#fffbf0;">
+          <td><span class="order-id">VF-2026-000235</span></td>
+          <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+          <td><span class="wh-badge">HCM-001</span></td>
+          <td><span class="ful-status">&#x1F504; Picking</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td><span class="sla-breach">BREACH</span></td>
+          <td><span class="exc-tag">Out of Stock</span></td>
+          <td><span class="owner-tag">Warehouse A</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-view">View Order</button>
+              <button class="btn-sm btn-resolve">Resolve Exception</button>
+              <button class="btn-sm btn-export">Export</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="order-id">VF-2026-000236</span></td>
+          <td><span class="channel-badge ch-lazada">Lazada</span></td>
+          <td><span class="wh-badge">HAN-001</span></td>
+          <td><span class="ful-status">&#x2705; Handed Over</span></td>
+          <td><span class="ship-status">&#x1F69A; In Transit</span></td>
+          <td><span class="sla-na">—</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-view">View Order</button>
+              <button class="btn-sm btn-export">Export</button>
+            </div>
+          </td>
+        </tr>
+        <tr style="background:#fffbf0;">
+          <td><span class="order-id">VF-2026-000237</span></td>
+          <td><span class="channel-badge ch-website">Website</span></td>
+          <td><span class="wh-badge">HCM-001</span></td>
+          <td><span class="ful-status">&#x274C; Exception</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td><span class="sla-warn">&#x1F7E1; 45m</span></td>
+          <td><span class="exc-tag">SKU Mismatch</span></td>
+          <td><span class="owner-tag">Ops Team</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-view">View Order</button>
+              <button class="btn-sm btn-resolve">Resolve Exception</button>
+              <button class="btn-sm btn-export">Export</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="order-id">VF-2026-000238</span></td>
+          <td><span class="channel-badge ch-shopee">Shopee</span></td>
+          <td><span class="wh-badge">HAN-001</span></td>
+          <td><span class="ful-status">&#x1F4E4; Ready Ship</span></td>
+          <td><span class="ship-status">&#x23F3; Pending</span></td>
+          <td><span class="sla-good">&#x1F7E2; 2h 10m</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td><span class="exc-none">—</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-sm btn-view">View Order</button>
+              <button class="btn-sm btn-assign">Assign Owner</button>
+              <button class="btn-sm btn-export">Export</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom Panels -->
+  <div class="bottom-panels">
+
+    <!-- Carrier Pickup Queue -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Carrier Pickup Queue</span>
+        <span class="panel-count">26 total</span>
+      </div>
+      <div class="panel-body">
+        <div class="carrier-row">
+          <div>
+            <div class="carrier-name">GHN</div>
+            <div class="carrier-meta">Pickup: 15:00 today</div>
+          </div>
+          <div class="carrier-bar-wrap">
+            <div class="carrier-bar-bg">
+              <div class="carrier-bar-fill" style="width:92%;background:#ef4444;"></div>
+            </div>
+          </div>
+          <div class="carrier-pending" style="color:#ef4444;">12</div>
+        </div>
+        <div class="carrier-row">
+          <div>
+            <div class="carrier-name">GHTK</div>
+            <div class="carrier-meta">Pickup: 16:30 today</div>
+          </div>
+          <div class="carrier-bar-wrap">
+            <div class="carrier-bar-bg">
+              <div class="carrier-bar-fill" style="width:62%;background:#f97316;"></div>
+            </div>
+          </div>
+          <div class="carrier-pending" style="color:#f97316;">8</div>
+        </div>
+        <div class="carrier-row">
+          <div>
+            <div class="carrier-name">J&amp;T Express</div>
+            <div class="carrier-meta">Pickup: 17:00 today</div>
+          </div>
+          <div class="carrier-bar-wrap">
+            <div class="carrier-bar-bg">
+              <div class="carrier-bar-fill" style="width:46%;background:#eab308;"></div>
+            </div>
+          </div>
+          <div class="carrier-pending" style="color:#eab308;">6</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;">
+          <div style="font-size:11px;color:#94a3b8;">Next cut-off in <strong style="color:#dc2626;">22 minutes</strong> — GHN HCM-001</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLA Breach List -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">SLA Breach List</span>
+        <span class="panel-count" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;">12 breached</span>
+      </div>
+      <div class="panel-body">
+        <div class="breach-row">
+          <div>
+            <div class="breach-id">VF-2026-000235</div>
+            <div class="breach-channel">TikTok · HCM-001 · Picking</div>
+          </div>
+          <div class="breach-time">+1h 23m over</div>
+        </div>
+        <div class="breach-row">
+          <div>
+            <div class="breach-id">VF-2026-000221</div>
+            <div class="breach-channel">Shopee · HCM-001 · Packing</div>
+          </div>
+          <div class="breach-time">+45m over</div>
+        </div>
+        <div class="breach-row">
+          <div>
+            <div class="breach-id">VF-2026-000198</div>
+            <div class="breach-channel">Website · HAN-001 · Exception</div>
+          </div>
+          <div class="breach-time">+2h 10m over</div>
+        </div>
+        <div class="breach-row">
+          <div>
+            <div class="breach-id">VF-2026-000174</div>
+            <div class="breach-channel">Lazada · HCM-001 · Picking</div>
+          </div>
+          <div class="breach-time">+30m over</div>
+        </div>
+        <div class="breach-row">
+          <div>
+            <div class="breach-id">VF-2026-000162</div>
+            <div class="breach-channel">Shopee · HAN-001 · Packing</div>
+          </div>
+          <div class="breach-time">+55m over</div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#94a3b8;">+7 more breaches · <a href="#" style="color:#3b82f6;text-decoration:none;">View all</a></div>
+      </div>
+    </div>
+
+    <!-- Exception Queue -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Exception Queue</span>
+        <span class="panel-count" style="background:#faf5ff;color:#9333ea;border:1px solid #e9d5ff;">7 open</span>
+      </div>
+      <div class="panel-body">
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">Out of Stock</div>
+            <div class="exc-order-ref">VF-2026-000235</div>
+          </div>
+          <span class="exc-sev sev-crit">Critical</span>
+        </div>
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">SKU Mismatch</div>
+            <div class="exc-order-ref">VF-2026-000237</div>
+          </div>
+          <span class="exc-sev sev-high">High</span>
+        </div>
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">Invalid Address</div>
+            <div class="exc-order-ref">VF-2026-000241</div>
+          </div>
+          <span class="exc-sev sev-med">Medium</span>
+        </div>
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">Carrier Pickup Failed</div>
+            <div class="exc-order-ref">VF-2026-000229</div>
+          </div>
+          <span class="exc-sev sev-high">High</span>
+        </div>
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">Status Sync Failed</div>
+            <div class="exc-order-ref">VF-2026-000198</div>
+          </div>
+          <span class="exc-sev sev-med">Medium</span>
+        </div>
+        <div class="exc-row">
+          <div>
+            <div class="exc-type-label">Return Damaged</div>
+            <div class="exc-order-ref">VF-2026-000187</div>
+          </div>
+          <span class="exc-sev sev-low">Low</span>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#94a3b8;">+1 more · <a href="#" style="color:#3b82f6;text-decoration:none;">Open exception queue</a></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Annotations -->
+  <div class="annotations-section">
+    <div class="ann-title">BA Design Notes &amp; Annotations</div>
+    <div class="ann-grid">
+      <div class="ann-item">
+        <div class="ann-num">1</div>
+        <div class="ann-text"><strong>Separate status tracking:</strong> OMS order status, WMS fulfillment status, and carrier shipment status are tracked as independent state machines — this is a core design decision enabling each system to evolve without coupling.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">2</div>
+        <div class="ann-text"><strong>SLA breach column:</strong> Surfaces real-time SLA remaining per order so operations managers can detect bottlenecks and prioritize intervention before customer impact occurs.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">3</div>
+        <div class="ann-text"><strong>Exception queue:</strong> Centralizes all operational issues in a structured queue, replacing ad-hoc Zalo group messages and manual Excel tracking that caused resolution delays and no audit trail.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-num">4</div>
+        <div class="ann-text"><strong>Carrier pickup queue:</strong> Aggregates pending handover volumes by carrier with cut-off time visibility, directly supporting daily dispatch planning and preventing missed pickups.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-wrapper -->
+
+</body>
+</html>
