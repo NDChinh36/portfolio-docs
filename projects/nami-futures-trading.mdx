@@ -12,75 +12,48 @@ icon: "chart-line"
 
 ---
 
-## Kết quả
+## Kết quả — Early Rollout
 
 <CardGroup cols={2}>
   <Card title="6,000+" icon="users">
-    Active users sau khi ra mắt
+    Active users trong giai đoạn early rollout sau launch
   </Card>
   <Card title="~$10M" icon="dollar-sign">
-    Trading volume trong giai đoạn đầu
+    Trading volume trong những tháng đầu vận hành
   </Card>
 </CardGroup>
 
----
-
-## Bối cảnh kinh doanh
-
-Nami Innovation đã vận hành nền tảng spot trading khi quyết định mở rộng sang **futures trading** — một bước nhảy lớn về độ phức tạp cả kỹ thuật lẫn nghiệp vụ. Futures trading yêu cầu hệ thống xử lý real-time cho margin management, leverage tối đa 5x–125x, automated liquidation engine và risk control đa tầng. Không đơn giản là thêm một feature — đây là một product domain hoàn toàn mới, với logic riêng, rủi ro riêng và user expectation riêng.
-
-**Tại sao đây là thách thức đặc biệt với BA:**  
-Futures trading đòi hỏi độ chính xác rất cao. Một business rule sai — ví dụ: công thức tính liquidation price sai hoặc điều kiện kích hoạt thanh lý không chính xác — không chỉ là bug về UX, mà có thể dẫn đến tổn thất tài chính thực sự cho người dùng. Không có chỗ cho "define thêm sau khi dev đã xong".
+<Note>
+Số liệu phản ánh giai đoạn đầu sau launch. BA đóng góp vào spec, alignment và delivery — không đứng tên đơn lẻ về kết quả kỹ thuật hay business metrics.
+</Note>
 
 ---
 
-## Bài toán BA cần giải quyết
+## Bối cảnh
 
-Thách thức không phải là thiếu tính năng để xây — mà là **giúp toàn bộ team hiểu nhất quán một bộ business rules phức tạp, trước khi bất kỳ ai bắt đầu code**.
+Nami Innovation mở rộng từ spot trading sang **futures trading** — một bước nhảy lớn về độ phức tạp cả nghiệp vụ lẫn kỹ thuật. Futures yêu cầu xử lý real-time cho margin management, leverage 5x–125x, automated liquidation engine và risk control đa tầng.
 
-Ba bài toán cụ thể tôi phải xử lý song song:
-
-**1. Domain ambiguity** — Futures trading có nhiều khái niệm đa nghĩa: isolated vs. cross margin, partial fill, mark price vs. last price, funding rate direction. Nếu BA, Dev và QA hiểu khác nhau về cùng một khái niệm, bug sẽ xuất hiện ở production — và domain này không có "undo".
-
-**2. Edge case density** — Số lượng edge case trong trading platform gấp nhiều lần feature thông thường. Mỗi order type × margin mode × position state tạo ra một ma trận kịch bản cần được xác định rõ, không phải để Engineering tự suy luận.
-
-**3. Stakeholder alignment** — Product muốn UX đơn giản cho trader mới; Engineering lo ngại về performance và complexity; Risk team cần guardrail chặt chẽ. BA phải tìm ra phương án mà cả ba bên có thể làm việc được với nhau.
+**Thách thức đặc thù với BA:** Futures là domain mà một business rule sai không chỉ là bug UX — nó có thể dẫn đến tổn thất tài chính thực cho user. Không có chỗ cho "define thêm sau khi dev xong".
 
 ---
 
-## Vai trò & Phạm vi
+## Bài toán BA phải giải quyết
 
-Trong dự án này, tôi đảm nhận end-to-end phần BA:
-
-- **Business rule definition**: toàn bộ trading mechanics — margin calculation, liquidation conditions, funding rate, order types và behaviors
-- **Documentation**: BRS, PRD, Functional Specifications, User Guide, Business Rule Register
-- **User flow design**: order placement và position management trên web và mobile
-- **Engineering collaboration**: giải quyết edge cases, clarify spec khi dev gặp ambiguity
-- **UAT support**: verify trading logic và behavior trước từng release milestone
-
-Tôi không viết code hay design UI — nhưng tôi là người đảm bảo spec đủ rõ để Dev và QA không phải đoán.
+| Bài toán | Mô tả |
+|---|---|
+| **Domain ambiguity** | Nhiều khái niệm đa nghĩa: isolated vs. cross margin, mark price vs. last price, funding rate direction. Nếu BA–Dev–QA hiểu khác nhau, bug xuất hiện ở production — và domain này không có "undo". |
+| **Edge case density** | Mỗi order type × margin mode × position state tạo ra một ma trận kịch bản. Không thể để Engineering tự suy luận từng trường hợp. |
+| **Stakeholder alignment** | Product muốn UX đơn giản cho trader mới; Engineering lo ngại complexity và performance; Risk cần guardrail chặt. BA phải tìm phương án cả ba bên làm việc được. |
 
 ---
 
 ## Cách tiếp cận
 
-### Xây Business Rule Register để tracking dependency
+**Business Rule Register từ đầu —** Khi nhận ra futures có hàng chục rules phụ thuộc nhau, tôi đề xuất xây register tập trung thay vì scatter trong nhiều tài liệu. Mỗi rule có: ID, mô tả, formula, danh sách dependency và ví dụ numeric. Engineering dùng để track: *nếu rule này thay đổi, cần update gì tiếp theo*.
 
-Khi tôi nhận ra rằng futures trading có hàng chục rules phụ thuộc nhau — ví dụ: thay đổi MM Rate kéo theo phải cập nhật Liquidation Price formula, Margin Tier table và Warning thresholds cùng lúc — tôi đề xuất xây một **business rule register tập trung** thay vì scatter rules trong nhiều tài liệu riêng lẻ.
+**User story trước, technical spec sau —** Viết user story cho từng loại trader trước, sau đó mới define business rules cần có để support từng story. Tránh team bị lạc vào technical details trước khi đồng thuận về value thực sự.
 
-Mỗi rule có: ID định danh, mô tả, formula (nếu có), danh sách dependency với rules khác và ví dụ numeric cụ thể. Điều này giúp Engineering và QA biết: nếu rule này thay đổi, những gì cần được update.
-
-### User story trước, technical spec sau
-
-Thay vì bắt đầu từ technical architecture, tôi propose cách tiếp cận: *viết user story cho từng loại trader trước, sau đó mới xác định business rules cần có để support story đó.*
-
-Ví dụ: "Trader mới muốn biết mình sẽ bị thanh lý tại giá nào trước khi đặt lệnh" → yêu cầu hiển thị estimated liquidation price ngay trên order form (không chỉ ở position management sau khi đã đặt lệnh) → kéo theo spec cụ thể về công thức, thời điểm update và edge case khi leverage = 1.
-
-Cách này giúp team không bị lạc vào technical details sớm và giữ focus vào value thực sự của feature với người dùng.
-
-### Prototype review trước khi viết PRD
-
-Với prototype Figma của UI/UX team, tôi cùng Design review toàn bộ flow trước khi viết PRD chi tiết. Điều này giúp phát hiện inconsistency sớm: "Leverage adjustment mid-position có update lại liquidation price hiển thị không?", "Close Position button available trong trạng thái nào?" — đây là những câu hỏi nên xuất hiện khi review prototype, không phải sau khi dev đã code.
+**Prototype review trước PRD —** Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần lớn inconsistency giữa UX và business rule được phát hiện ở bước này — không phải sau khi dev đã code.
 
 ---
 
@@ -88,144 +61,212 @@ Với prototype Figma của UI/UX team, tôi cùng Design review toàn bộ flow
 
 <AccordionGroup>
   <Accordion title="Margin Calculation" icon="calculator">
-    | Loại Margin | Mô tả | Ghi chú |
+    | Loại | Mô tả | Công thức |
     |---|---|---|
-    | **Initial Margin** | Số tiền ký quỹ ban đầu bắt buộc | `= Position Size / Leverage` |
-    | **Maintenance Margin** | Ngưỡng tối thiểu để duy trì position | `= Position Size × MM Rate`; thường 0.5–1% |
-    | **Margin Ratio** | Chỉ số theo dõi sức khỏe tài khoản | `= Maintenance Margin / Account Equity`; kích hoạt liq khi ≥ 100% |
+    | **Initial Margin** | Ký quỹ ban đầu bắt buộc | `Position Size / Leverage` |
+    | **Maintenance Margin** | Ngưỡng tối thiểu duy trì position | `Position Size × MM Rate` |
+    | **Margin Ratio** | Chỉ số sức khỏe tài khoản; liq khi ≥ 100% | `Maintenance Margin / Account Equity` |
 
-    **Lưu ý quan trọng:** MM Rate không phải là hằng số — thay đổi theo Position Tier (position càng lớn thì MM Rate càng cao). Phải xây dựng lookup table riêng, không được hardcode.
+    **Lưu ý:** MM Rate thay đổi theo Position Tier — phải xây lookup table, không được hardcode.
   </Accordion>
 
-  <Accordion title="Liquidation Conditions & Cảnh báo" icon="triangle-exclamation">
-    **Khi nào hệ thống tự động liquidate:**
-    - `Margin Ratio ≥ 100%`: auto-liquidate toàn bộ position; không thể cancel sau khi đã trigger
-    - Warning email + in-app alert khi `Margin Ratio ≥ 80%`
+  <Accordion title="Liquidation Conditions" icon="triangle-exclamation">
+    - `Margin Ratio ≥ 100%` → auto-liquidate; không cancel được sau khi trigger
+    - `Margin Ratio ≥ 80%` → warning in-app + email
+    
+    **Isolated vs. Cross (phân biệt cốt lõi):**
+    - **Isolated:** chỉ margin của position đó bị ảnh hưởng; tổn thất tối đa = margin đã ký quỹ
+    - **Cross:** toàn account equity làm margin; ít liq hơn nhưng rủi ro lan toàn tài khoản
 
-    **Isolated vs. Cross Margin — khác biệt cốt lõi:**
-    - **Isolated**: chỉ margin của position đó bị ảnh hưởng; tổn thất tối đa = phần margin đã ký quỹ
-    - **Cross**: toàn bộ account equity làm margin; ít bị liquidate hơn ở cùng leverage nhưng rủi ro lan sang toàn tài khoản
-
-    **Quyết định scope:** MVP chỉ hỗ trợ Isolated Margin. Cross Margin có formula và edge case phức tạp hơn đáng kể — được document rõ trong Out of Scope và lên kế hoạch cho v2.
-  </Accordion>
-
-  <Accordion title="Funding Rate — Khái niệm khó align nhất" icon="rotate">
-    Funding rate là cơ chế thu/trả mỗi 8 giờ giữa long và short holders để giữ giá futures gần với spot. Rate dương → long trả cho short; rate âm → short trả cho long.
-
-    **Tại sao đây là phần khó nhất với BA:**  
-    Không phải vì công thức phức tạp, mà vì *khó đảm bảo Engineering, UX và CS đều hiểu nhất quán*. Ai trả, ai nhận, countdown hiển thị ở đâu, rate âm nghĩa là gì với từng phía — tôi phải viết một internal explainer document riêng cho funding rate, tách khỏi PRD, để mọi người có cùng mental model trước khi design và implement.
+    **MVP scope:** Chỉ hỗ trợ Isolated — xem quyết định bên dưới.
   </Accordion>
 
   <Accordion title="Order Types & Edge Cases" icon="list-check">
-    **Order types được định nghĩa:** Limit · Market · Stop-Limit · Take Profit/Stop Loss
+    **Order types:** Limit · Market · Stop-Limit · Take Profit / Stop Loss
 
-    **Edge cases phức tạp nhất:**
-
-    | Edge Case | Vấn đề | Giải pháp được define |
+    | Edge Case | Vấn đề | Giải pháp |
     |---|---|---|
-    | **Partial fill** | Order khớp một phần; user muốn cancel phần còn lại | Cho phép cancel remainder; trạng thái PARTIALLY_FILLED hiển thị rõ trên UI |
-    | **Liquidation cascade** | Nhiều account bị liq cùng lúc → áp lực lên order book | Insurance fund absorb trước; auto-deleveraging (ADL) nếu fund cạn |
-    | **Leverage ≥ 20x** | User dễ bị liq nếu không hiểu rủi ro đòn bẩy cao | Mandatory confirmation popup; không chỉ warning text |
-    | **Mark price vs. last price** | Liquidation phải trigger theo mark price, không phải giá last trade | Phải spec rõ trong toàn bộ tài liệu để tránh confusion giữa Dev và QA |
+    | Partial fill | Order khớp một phần | PARTIALLY_FILLED state + allow cancel remainder |
+    | Liquidation cascade | Nhiều account liq cùng lúc | Insurance fund absorb; ADL nếu fund cạn |
+    | Leverage ≥ 20x | User không hiểu rủi ro đòn bẩy cao | Mandatory confirmation popup |
+    | Mark vs. last price | Liq trigger theo mark price | Spec rõ để tránh confusion Dev–QA |
+  </Accordion>
+
+  <Accordion title="Funding Rate — Khái niệm khó align nhất" icon="rotate">
+    Cơ chế thu/trả mỗi 8 giờ giữa long và short. Rate dương → long trả short; âm → short trả long.
+
+    Không phức tạp về công thức — nhưng rất khó để Engineering, UX và CS hiểu nhất quán về *ai trả, ai nhận, countdown hiển thị thế nào*. Tôi viết internal explainer document riêng tách khỏi PRD và tổ chức walkthrough session trước khi Design bắt đầu.
   </Accordion>
 </AccordionGroup>
 
 ---
 
-## Các quyết định BA quan trọng
+## Các Quyết định BA Quan Trọng
 
 <AccordionGroup>
-  <Accordion title="1. Isolated Margin MVP, Cross Margin v2" icon="scissors">
-    **Bối cảnh:** Product ban đầu muốn hỗ trợ cả Isolated và Cross Margin trong phiên bản đầu tiên.
-
-    **Phân tích:** Cross Margin có liquidation formula phức tạp hơn đáng kể — phụ thuộc toàn bộ account equity, không phải từng position riêng lẻ. Số lượng edge case cần define và test tăng gấp đôi. Timeline MVP không đủ để spec và test đúng cả hai.
-
-    **Đề xuất:** MVP chỉ hỗ trợ Isolated Margin — vẫn phục vụ được phần lớn nhu cầu trader, giảm rủi ro launch. Cross Margin được document rõ trong Out of Scope với lý do cụ thể và kế hoạch cho v2.
-
-    **Kết quả:** Engineering confirm estimate giảm đáng kể so với scope ban đầu; timeline được giữ nguyên.
+  <Accordion title="Decision 1 — MVP chỉ hỗ trợ Isolated Margin">
+    | | |
+    |---|---|
+    | **Context** | Product muốn cả Isolated và Cross Margin trong phiên bản đầu. |
+    | **Problem / Risk** | Cross Margin có formula liquidation phức tạp hơn đáng kể; số edge case tăng gấp đôi; timeline MVP không đủ để spec và test đúng — rủi ro ship sai logic cao. |
+    | **BA recommendation** | MVP chỉ hỗ trợ Isolated. Cross Margin document rõ trong Out of Scope với kế hoạch và rationale cho v2. |
+    | **Trade-off** | User muốn Cross Margin phải chờ. Nhưng Isolated đã phục vụ được phần lớn nhu cầu trader và giảm rủi ro launch đáng kể. |
+    | **Result** | Engineering confirm estimate giảm đáng kể; timeline MVP được giữ nguyên. Không có scope conflict sau khi Out of Scope được document rõ. |
   </Accordion>
 
-  <Accordion title="2. Hiển thị Estimated Liquidation Price ngay trên Order Form" icon="eye">
-    **Bối cảnh:** Bản design ban đầu chỉ hiển thị liquidation price trong Position Management — tức là sau khi user đã đặt lệnh và lệnh đã khớp.
-
-    **Vấn đề phát hiện:** Trader mới thường không vào Position Management ngay sau khi đặt lệnh. Họ thấy liquidation price lần đầu tiên khi account đã gần bị thanh lý, hoặc sau khi đã bị liq. CS ticket "tại sao tôi bị thanh lý bất ngờ" là vấn đề thực tế, có thể giải quyết từ UX.
-
-    **Đề xuất:** Hiển thị estimated liquidation price ngay trên Order Form, update real-time khi user thay đổi leverage hoặc quantity — giúp trader thấy rủi ro *trước khi* confirm lệnh.
-
-    **Trade-off:** Thêm computation và UI complexity. Engineering confirm feasible với client-side calculation trong scope của dự án.
+  <Accordion title="Decision 2 — Hiển thị Estimated Liquidation Price ngay trên Order Form">
+    | | |
+    |---|---|
+    | **Context** | Design ban đầu chỉ hiển thị liquidation price trong Position Management — sau khi lệnh đã đặt và khớp. |
+    | **Problem / Risk** | Trader mới thường không vào Position Management ngay sau khi đặt lệnh. Họ thấy liquidation price lần đầu khi margin ratio đã gần 100%. CS ticket "tại sao tôi bị liq bất ngờ" là vấn đề có thể giải quyết từ UX. |
+    | **BA recommendation** | Hiển thị estimated liquidation price real-time ngay trên Order Form, update khi user thay leverage hoặc quantity. |
+    | **Trade-off** | Thêm computation và UI complexity. Engineering confirm feasible với client-side calculation trong scope dự án. |
+    | **Result** | Trader mới có risk information trước khi confirm lệnh — trực tiếp giải quyết một trong những nguyên nhân phổ biến nhất của CS ticket. |
   </Accordion>
 
-  <Accordion title="3. Mandatory Confirmation cho Leverage ≥ 20x" icon="shield">
-    **Bối cảnh:** Các sàn lớn như Binance và Bybit đều có confirmation bắt buộc khi chọn leverage cao. Nami chưa có cơ chế này.
-
-    **Phân tích:** Sau khi review CS feedback về các incident liên quan đến user không hiểu rủi ro đòn bẩy cao, tôi đề xuất implement mandatory confirmation popup cho ≥ 20x — không phải chỉ warning text có thể bị bỏ qua.
-
-    **Trade-off đã cân nhắc:** Popup có thể tạo friction với trader pro vốn biết mình đang làm gì. Giải pháp: popup chỉ xuất hiện một lần per session (không repeat mỗi lần chỉnh leverage trong cùng phiên), user dismiss được sau khi đã tick "Tôi hiểu rủi ro".
+  <Accordion title="Decision 3 — Mandatory Confirmation cho Leverage ≥ 20x">
+    | | |
+    |---|---|
+    | **Context** | Nami chưa có cơ chế confirmation khi chọn leverage cao. Binance và Bybit đều đã có. |
+    | **Problem / Risk** | User chọn leverage cao mà không hiểu rủi ro → bị liq sớm → CS complaint và churn. Warning text bị bỏ qua không hiệu quả. |
+    | **BA recommendation** | Mandatory popup confirmation cho ≥ 20x. User phải tick "Tôi hiểu rủi ro" mới tiếp tục được. |
+    | **Trade-off** | Friction với trader pro vốn biết mình đang làm gì. Giải pháp: popup chỉ xuất hiện 1 lần per session — không repeat mỗi lần chỉnh leverage. |
+    | **Result** | Cân bằng giữa bảo vệ trader mới và không làm phiền trader pro quá mức. Đây cũng là approach đang được dùng bởi các sàn lớn. |
   </Accordion>
 </AccordionGroup>
 
 ---
 
-## Phối hợp với Dev / QA / UX
+## Phối hợp Dev / QA / UX
 
-**Với Engineering:**
-- Tổ chức business rule walkthrough sessions định kỳ: tôi present rule, Engineering hỏi về technical implication, tôi update spec dựa trên constraints thực tế — không phải chờ đến khi dev gặp vấn đề mới clarify
-- Khi có conflict giữa "đúng về nghiệp vụ" và "khả thi trong timeline", tôi propose workaround rõ ràng kèm trade-off thay vì để Engineering tự quyết định
+**Điểm khó nhất khi align với Dev — Funding Rate:**  
+Funding rate là khái niệm mà mỗi người có mental model khác nhau. Dev hỏi: "Tiền bị trừ đúng vào 8h hay theo event trigger?" UX hỏi: "Countdown hiển thị theo múi giờ nào?" CS lo: "Nếu user complain bị trừ sai, mình giải thích thế nào?" Câu trả lời khác nhau từ mỗi góc — BA phải viết explainer riêng và tổ chức walkthrough trước khi bất kỳ ai bắt đầu.
 
-**Với QA:**
-- Cung cấp edge case list cùng với test case template từ FRD — QA mở rộng thêm test scenario, không phải build từ đầu
-- Tham gia UAT sessions để verify trading logic accuracy: một số inconsistency tôi phát hiện được vì hiểu domain, không phải vì test script chỉ ra
+**Trade-off UX và Risk Control:**  
+UX muốn Order Form sạch và tối giản. Risk yêu cầu phải visible: margin required, estimated liquidation price, leverage warning. Thỏa hiệp: các field cốt yếu về risk luôn visible — secondary info (funding rate countdown, fee detail) dùng expand/tooltip. Không ẩn hoàn toàn, không làm rối màn hình chính.
 
-**Với UI/UX:**
-- 3 vòng review prototype Figma trước khi viết PRD chi tiết
-- Chủ động raise vấn đề khi flow UX mâu thuẫn với business rule — ví dụ: nút "Add Margin" có khả dụng khi position đang bị liquidate không?
+**BA giúp giảm ambiguity ở đâu:**  
+Tôi cung cấp edge case list từ FRD kèm test data cụ thể cho từng case — ví dụ leverage = 1 → không có liquidation price; margin ratio = 99.9% → warning state, chưa liquidate. QA dùng để build test scenario, không cần tự suy luận. Một số inconsistency trong behavior tôi phát hiện trực tiếp trong UAT vì hiểu domain — không phải vì test script chỉ ra.
 
 ---
 
-## Tài liệu & Deliverables
+## Visual Artifacts
+
+<Note>
+Phần này ghi rõ các loại artifact BA đã produce trong dự án. Visual minh họa sẽ được bổ sung khi hoàn thiện portfolio.
+</Note>
+
+**Artifact 1 — Order Placement Flow**
+
+```mermaid
+flowchart TD
+    A([Trader vào màn Futures]) --> B[Chọn cặp coin]
+    B --> C[Chọn Margin Mode\nIsolated / Cross]
+    C --> D[Chọn Leverage\nSlider + input]
+    D --> E[Chọn Order Type\nLimit / Market / Stop-Limit]
+    E --> F[Nhập giá + quantity\nhoặc % balance]
+    F --> G[Preview real-time:\nMargin required · Est. Liq. Price · Fee]
+    G --> H{Leverage ≥ 20x?}
+    H -- Có --> I[Mandatory confirmation popup\nCheckbox: Tôi hiểu rủi ro]
+    I --> J[Confirm & Submit]
+    H -- Không --> J
+    J --> K([Real-time status update\nPENDING → FILLED / PARTIALLY_FILLED])
+```
+
+*Diagram này được dùng trong PRD review với Design và Engineering trước khi bắt đầu coding. Giúp phát hiện các inconsistency về flow và state trước giai đoạn dev.*
+
+---
+
+**Artifact 2 — Business Rule Table mẫu**
+
+| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Edge Case |
+|---|---|---|---|---|---|
+| BR-LIQ-01 | Auto Liquidation | Margin Ratio update | Ratio ≥ 100% | Đóng toàn bộ position; không cho cancel | Nếu insurance fund không đủ → ADL activation |
+| BR-WARN-01 | Margin Warning | Margin Ratio update | Ratio ≥ 80% | Push notification + in-app alert | Nếu đã warn trong vòng 1h → không warn lại |
+| BR-LEV-01 | High Leverage Confirm | User chọn leverage | Leverage ≥ 20x | Mandatory popup confirmation | Lần 2+ trong cùng session → bỏ qua popup |
+| BR-FUND-01 | Funding Rate Settlement | Cron job mỗi 8h | Long/Short có open position | Long pays Short nếu rate dương | Nếu position bị close trước lúc settle → không tính |
+
+*Business Rule Register là tài liệu BA maintain xuyên suốt dự án — không chỉ dùng một lần.*
+
+---
+
+**Artifact 3 — Annotated Order Form**
+
+`[Bổ sung: Annotated UI — Order Form với annotation cho: (1) Leverage selector + confirmation rule khi ≥20x, (2) Estimated liquidation price real-time, (3) Margin mode toggle Isolated/Cross, (4) Margin required preview trước khi submit, (5) Order type selector và điều kiện kích hoạt từng loại]`
+
+**Artifact 4 — Annotated Position Management Screen**
+
+`[Bổ sung: Annotated UI — Position Management với annotation cho: (1) Unrealized PnL + tần suất update, (2) Margin ratio indicator + trạng thái warning/critical, (3) Add Margin button + điều kiện khả dụng, (4) Close Position button + loại lệnh có thể dùng]`
+
+**Artifact 5 — Liquidation Warning / High Leverage Confirmation Modal**
+
+`[Bổ sung: Annotated UI — Confirmation Modal với annotation cho: (1) Risk message copy, (2) Checkbox "Tôi hiểu rủi ro", (3) Dismiss behavior: 1 lần/session, (4) Leverage threshold trigger, (5) Nút Confirm vs. Cancel behavior]`
+
+---
+
+## Deliverables
 
 | Tài liệu | Mục đích | Người nhận |
 |---|---|---|
-| **BRS** — Business Requirements Spec | Scope và business rules tổng thể | Product Lead, Engineering Lead |
-| **PRD** — Product Requirements Doc | User flows, screen specs, edge cases | Dev, QA, UI/UX |
-| **Functional Specifications** | Chi tiết behavior từng màn hình và API | Developer |
-| **Business Rule Register** | Tracking rules, formulas và dependencies | BA, Dev, QA (dùng suốt dự án) |
-| **User Guide** | Hướng dẫn sử dụng bằng ngôn ngữ user | CS Team, Marketing |
+| BRS | Scope và business rules tổng thể | Product Lead, Engineering Lead |
+| PRD | User flows, screen specs, edge cases | Dev, QA, UI/UX |
+| Business Rule Register | Tracking rules, formulas, dependencies | BA, Dev, QA — dùng xuyên suốt dự án |
+| Functional Specifications | Behavior chi tiết từng màn hình và API | Developer |
+| User Guide | Hướng dẫn cho end user | CS, Marketing |
 
 ---
 
 ## Validation trước Release
 
-Trước mỗi release milestone, tôi phối hợp cùng QA để:
+Phối hợp cùng QA và Engineering để:
 
-- **Verify trading logic accuracy** — chạy test case với số liệu cụ thể, so sánh kết quả tính toán (margin, PnL, liquidation price) với expected values từ formula trong FRD
-- **Review edge case coverage** — xác nhận toàn bộ edge case list trong FRD đã có test case tương ứng; không để gap
-- **UAT sign-off** — duyệt từng màn hình theo flow đã define trong PRD, focus đặc biệt vào warning states, error messages và các trường hợp bất thường
-- **Business rule consistency check** — verify rằng behavior thực tế của hệ thống nhất quán với business rule register, không có rule nào bị implement lệch
+- **Verify trading logic** — chạy test case với số liệu cụ thể; đối chiếu kết quả tính toán thực tế với expected values từ formula trong Business Rule Register
+- **Review edge case coverage** — xác nhận toàn bộ edge case list trong FRD có test case tương ứng; không để gap
+- **UAT sign-off** — duyệt từng màn theo flow trong PRD; tập trung vào warning states, error messages và các trường hợp ngoại lệ
+- **Consistency check** — hỗ trợ đối chiếu behavior hệ thống với Business Rule Register trước khi release
 
-Platform ra mắt không có critical bug liên quan đến trading logic — kết quả của quá trình define và review kỹ trước launch, không phải ngẫu nhiên.
+Platform ra mắt không phát sinh critical bug liên quan trading logic — kết quả chung của cả BA, Engineering và QA trong quá trình spec, review và test.
 
 ---
 
-## Thách thức & Bài học
+## Bài học
 
 <CardGroup cols={2}>
-  <Card title="Domain phức tạp, không có precedent nội bộ" icon="triangle-exclamation">
-    Không ai trong team trước đây đã build futures platform. Tôi phải tự nghiên cứu domain — whitepaper, competitor analysis, tài liệu kỹ thuật từ các sàn lớn — trước khi có thể viết spec. Hiểu domain là prerequisite của viết rule đúng; không thể delegate việc này cho Engineering.
+  <Card title="Domain không thể học nhanh" icon="triangle-exclamation">
+    **Tôi đã underestimate:** Thời gian cần thiết để nắm đủ futures domain trước khi có thể viết spec đúng.
+
+    **Tôi đã thay đổi:** Dành 2 tuần đầu chỉ nghiên cứu domain — whitepaper, competitor, tài liệu kỹ thuật — trước khi viết bất kỳ requirement nào.
+
+    **Lần sau làm sớm hơn:** Tổ chức domain study session với cả team Engineering từ tuần đầu để cùng xây shared vocabulary và mental model.
   </Card>
-  <Card title="Rule dependency không lường trước" icon="link">
-    Futures có hàng chục rule liên kết nhau. Thay đổi một giả định nhỏ kéo theo update nhiều chỗ. Business rule register giải quyết vấn đề này, nhưng cần đầu tư upfront — không phải PM nào cũng thấy giá trị ngay từ đầu. Cần biết cách explain tại sao nó cần thiết.
+
+  <Card title="Rule dependency cần map từ sớm" icon="link">
+    **Tôi đã underestimate:** Tác động lan rộng khi thay đổi một assumption nhỏ (ví dụ: MM Rate) kéo theo update ở nhiều chỗ khác nhau.
+
+    **Tôi đã thay đổi:** Xây Business Rule Register với dependency mapping rõ ràng ngay từ đầu dự án.
+
+    **Lần sau làm sớm hơn:** Propose register ngay trong kickoff — không chờ đến khi conflict xảy ra.
   </Card>
-  <Card title="Prototype flow trước, viết PRD sau" icon="lightbulb">
-    Với domain phức tạp, review prototype Figma giúp phát hiện inconsistency giữa UX và business rule sớm hơn nhiều. PRD viết sau prototype có ít revision cycle hơn PRD viết từ spec abstract. Đây là bài học tôi mang sang tất cả dự án sau.
+
+  <Card title="Prototype review trước PRD" icon="lightbulb">
+    **Tôi đã underestimate:** Số lượng inconsistency giữa UX và business rule có thể phát hiện qua prototype review.
+
+    **Tôi đã thay đổi:** Đưa prototype review session vào quy trình bắt buộc trước khi viết PRD chi tiết.
+
+    **Lần sau làm sớm hơn:** Schedule prototype review ngay sau khi có wireframe đầu tiên — không chờ design "hoàn chỉnh".
   </Card>
-  <Card title="Funding rate: kỹ năng alignment quan trọng hơn kỹ năng viết" icon="people-group">
-    Funding rate không phức tạp về công thức, nhưng rất khó để mọi người trong team — Engineering, UX, CS — hiểu nhất quán. Bài học: với những khái niệm dễ bị hiểu nhiều nghĩa, viết internal explainer riêng (không chỉ nhét vào PRD) và tổ chức walkthrough session giúp tiết kiệm rất nhiều miscommunication về sau.
+
+  <Card title="Edge cases vào AC sớm hơn" icon="clipboard-check">
+    **Tôi đã underestimate:** Edge case để cuối — trong FRD appendix — thường không được test kỹ vì QA không đọc kỹ phần phụ lục.
+
+    **Tôi đã thay đổi:** Đưa critical edge cases trực tiếp vào Acceptance Criteria của từng user story.
+
+    **Lần sau làm sớm hơn:** Raise edge cases trong sprint planning và đưa vào Definition of Done — không phải trong UAT phase.
   </Card>
 </CardGroup>
 
 ---
 
 <Note>
-  **Dự án thực tế tại Nami Innovation.** Các chi tiết về business rules cụ thể, số liệu nội bộ và tài liệu kỹ thuật không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp case study.
+  **Dự án thực tế tại Nami Innovation.** Business rules cụ thể, số liệu nội bộ và tài liệu kỹ thuật không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp case study.
 </Note>
