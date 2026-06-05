@@ -1,0 +1,312 @@
+---
+title: "Exception Handling"
+description: "15 exception types, SLA, ownership, escalation path và exception queue UI cho MedBook platform"
+icon: "triangle-exclamation"
+---
+
+<Note>
+  **Practice Case Study** — MedBook tại CityHealth General Hospital (fictional). SLA và threshold là fictional assumptions.
+</Note>
+
+## Tổng quan Exception Queue
+
+Trong môi trường bệnh viện xử lý 1.200 lượt/ngày, ngay cả tỷ lệ exception 0.5% cũng tạo ra 6 exception mỗi ngày cần xử lý. Không có exception queue tập trung, mỗi team sẽ xử lý theo cách riêng qua Zalo/phone, không có audit trail, và SLA resolution bị bỏ qua.
+
+**3 nguyên tắc thiết kế:**
+1. **Phát hiện tự động** — hệ thống detect exception, không chờ bệnh nhân hoặc nhân viên báo
+2. **Phân loại theo severity** — Critical/High/Medium/Low để ưu tiên xử lý đúng
+3. **Audit trail bắt buộc** — mọi action trên exception đều được ghi log với actor và timestamp
+
+---
+
+## 15 Exception Types
+
+### EXC-MED-01: SLOT_UNAVAILABLE
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-01 |
+| **Tên** | Slot No Longer Available |
+| **Trigger** | Patient submit form booking nhưng slot đã bị người khác lấy trong khi patient đang điền form (race condition) |
+| **Severity** | Medium |
+| **Owner** | MedBook System (auto-handle) → Patient (retry) |
+| **User-facing Message** | "Rất tiếc, khung giờ bạn chọn vừa được đặt bởi người khác. Vui lòng chọn khung giờ khác." |
+| **Internal Handling** | Release soft lock (TTL đã hết hoặc slot bị race-condition). Trả về 409 Conflict với danh sách slot còn trống của cùng bác sĩ. |
+| **Suggested Action** | Redirect patient về màn hình chọn slot với message friendly và slot alternatives được suggest |
+| **SLA** | Tự động — không cần human intervention |
+| **Audit Log** | Yes — log `appointment_id`, `slot_id`, `race_condition_detected_at` |
+
+---
+
+### EXC-MED-02: DUPLICATE_APPOINTMENT
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-02 |
+| **Tên** | Duplicate Appointment Detected |
+| **Trigger** | Patient cố đặt lịch cùng specialty/ngày khi đã có appointment active |
+| **Severity** | Low |
+| **Owner** | MedBook System (auto-block) → Patient |
+| **User-facing Message** | "Bạn đã có lịch hẹn [specialty] vào ngày [date] lúc [time]. Vui lòng hủy lịch cũ trước khi đặt mới." |
+| **Internal Handling** | Block submit, trả về 409 với `existing_appointment_id` và link đến appointment hiện có |
+| **Suggested Action** | Show existing appointment trong overlay, cho phép patient chọn: "Giữ lịch cũ" hoặc "Hủy lịch cũ và đặt mới" |
+| **SLA** | Tự động |
+| **Audit Log** | Yes |
+
+---
+
+### EXC-MED-03: MISSING_PATIENT_INFO
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-03 |
+| **Tên** | Missing Required Patient Information |
+| **Trigger** | Patient submit form thiếu field bắt buộc (họ tên, CCCD, ngày sinh, lý do khám) |
+| **Severity** | Low |
+| **Owner** | MedBook System (auto-handle) → Patient |
+| **User-facing Message** | "Vui lòng điền đầy đủ thông tin bắt buộc: [danh sách field còn thiếu]." |
+| **Internal Handling** | Client-side và server-side validation. Block submit. Highlight field thiếu màu đỏ với message inline |
+| **Suggested Action** | Focus vào field đầu tiên bị thiếu để patient dễ điền |
+| **SLA** | Tự động |
+| **Audit Log** | No (chỉ log nếu patient cố bypass client-side validation) |
+
+---
+
+### EXC-MED-04: DOCTOR_SCHEDULE_CHANGED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-04 |
+| **Tên** | Doctor Schedule Changed After Booking |
+| **Trigger** | Bác sĩ hủy lịch hoặc lịch bị thay đổi sau khi appointment đã CONFIRMED |
+| **Severity** | High |
+| **Owner** | Hospital Admin / Receptionist |
+| **User-facing Message** | "Bác sĩ [tên] không thể khám vào [date/time]. Bệnh viện sẽ liên hệ để hỗ trợ đặt lại lịch." |
+| **Internal Handling** | Auto-detect khi HIS lịch bác sĩ bị update. Check tất cả CONFIRMED/REMINDER_SENT appointments bị ảnh hưởng. Notify Hospital Admin và Receptionist ngay. |
+| **Suggested Action** | (1) Nếu có substitute doctor: auto-assign và notify patient; (2) Nếu không: Receptionist liên hệ patient thủ công, hỗ trợ reschedule ưu tiên |
+| **SLA** | 1 giờ kể từ khi phát hiện |
+| **Audit Log** | Yes — log `doctor_id`, `original_schedule`, `affected_appointment_ids[]`, `action_taken` |
+
+---
+
+### EXC-MED-05: APPOINTMENT_EXPIRED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-05 |
+| **Tên** | Appointment Expired — Slot Hold or Confirm Timeout |
+| **Trigger** | DRAFT quá 10 phút chưa submit, hoặc PENDING_CONFIRMATION quá 30 phút chưa được Receptionist xử lý |
+| **Severity** | Medium |
+| **Owner** | MedBook System (auto) |
+| **User-facing Message** | "Phiên đặt lịch đã hết hạn do không hoàn tất trong thời gian quy định. Vui lòng đặt lại lịch." |
+| **Internal Handling** | Auto-expire bởi scheduler job. Slot released ngay. Nếu PENDING: alert Receptionist về expired appointment để track performance |
+| **Suggested Action** | Redirect patient về màn hình chọn slot với appointment data pre-filled (để patient không phải nhập lại) |
+| **SLA** | Tự động |
+| **Audit Log** | Yes |
+
+---
+
+### EXC-MED-06: PATIENT_TOO_EARLY
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-06 |
+| **Tên** | Patient Arrives Too Early for Check-in |
+| **Trigger** | Patient scan QR trước 60 phút so với giờ hẹn |
+| **Severity** | Low |
+| **Owner** | MedBook System (auto-handle) |
+| **User-facing Message** | "Bạn đến sớm quá! Check-in sẽ mở lúc [time - 60min]. Trong khi chờ, bạn có thể xem bản đồ bệnh viện hoặc chuẩn bị hồ sơ." |
+| **Internal Handling** | Block check-in. Return friendly message với countdown đến khi window mở. Cung cấp link bản đồ cơ sở và checklist chuẩn bị hồ sơ |
+| **Suggested Action** | N/A — patient cần chờ. Không cần human intervention |
+| **SLA** | Tự động |
+| **Audit Log** | No |
+
+---
+
+### EXC-MED-07: PATIENT_TOO_LATE
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-07 |
+| **Tên** | Patient Arrives Too Late for Self Check-in |
+| **Trigger** | Patient scan QR sau 30 phút so với giờ hẹn |
+| **Severity** | Medium |
+| **Owner** | Receptionist |
+| **User-facing Message** | "Bạn đến trễ hơn khung giờ check-in cho phép. Vui lòng đến quầy lễ tân để được hỗ trợ." |
+| **Internal Handling** | Block self check-in qua QR/kiosk. Alert Receptionist dashboard với flag "LATE_ARRIVAL". Appointment chưa chuyển NO_SHOW vì còn đang trong cửa sổ Receptionist xử lý |
+| **Suggested Action** | Receptionist kiểm tra lý do đến muộn, quyết định override (BR-CHECKIN-04) nếu bác sĩ còn slot |
+| **SLA** | 5 phút (Receptionist phải xử lý trước khi NO_SHOW auto-set) |
+| **Audit Log** | Yes nếu có override |
+
+---
+
+### EXC-MED-08: QR_INVALID
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-08 |
+| **Tên** | QR Code Invalid, Expired, or Wrong Facility |
+| **Trigger** | QR token fail JWT validation, hoặc QR đã hết hạn, hoặc facility_id trong QR không khớp với kiosk |
+| **Severity** | Medium |
+| **Owner** | MedBook System (auto) → Patient (đến quầy lễ tân) |
+| **User-facing Message** | (a) Hết hạn: "Mã QR đã hết hạn. Vui lòng đến quầy lễ tân." (b) Sai facility: "Vui lòng đến đúng cơ sở. Lịch hẹn của bạn tại [facility_name]." (c) Invalid: "Mã QR không hợp lệ. Vui lòng thử lại hoặc đến quầy lễ tân." |
+| **Internal Handling** | Fail-fast validation tại API layer. Log `qr_validation_failure_reason` |
+| **Suggested Action** | Receptionist check-in thủ công nếu bệnh nhân có appointment hợp lệ |
+| **SLA** | Tự động |
+| **Audit Log** | Yes — log `qr_token_hash`, `failure_reason`, `kiosk_id`, `timestamp` |
+
+---
+
+### EXC-MED-09: ALREADY_CHECKED_IN
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-09 |
+| **Tên** | Patient Tries to Check-in Again |
+| **Trigger** | Patient scan QR lần 2 hoặc Receptionist manual check-in cho appointment đã CHECKED_IN |
+| **Severity** | Low |
+| **Owner** | MedBook System (auto-block) |
+| **User-facing Message** | "Lịch hẹn này đã được check-in lúc [time]. Số thứ tự của bạn: [queue_number]. Vui lòng chú ý bảng hiển thị." |
+| **Internal Handling** | Block duplicate check-in. QR đã invalidated sau lần scan đầu, không thể scan lại. Trả về current status và queue number |
+| **Suggested Action** | N/A — show current status |
+| **SLA** | Tự động |
+| **Audit Log** | Yes — log `duplicate_checkin_attempt_at`, `kiosk_id` |
+
+---
+
+### EXC-MED-10: HIS_SYNC_FAILED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-10 |
+| **Tên** | HIS Registration Failed After Retry |
+| **Trigger** | HIS API call thất bại sau 3 lần retry (2 lần auto + 1 lần initial). `his_sync_status = FAILED` |
+| **Severity** | **Critical** |
+| **Owner** | Receptionist (urgent — 5 phút SLA) |
+| **User-facing Message** | "Đang xử lý thông tin, vui lòng đến quầy lễ tân để được hỗ trợ." (Không hiển thị lỗi kỹ thuật cho bệnh nhân) |
+| **Internal Handling** | Set `his_sync_status = FAILED`. Đưa vào exception queue với priority CRITICAL. Push alert đến Receptionist dashboard ngay lập tức. Bệnh nhân có thể đợi tại khosk tối đa 2 phút trước khi hướng dẫn đến quầy |
+| **Suggested Action** | Receptionist: (1) Kiểm tra HIS có đang hoạt động không; (2) Tạo visit thủ công trong HIS desktop; (3) Update `his_sync_status` và `queue_number` vào MedBook qua reception portal |
+| **SLA** | **5 phút** kể từ khi EXC-MED-10 được tạo (Receptionist phải acknowledge). Sau 15 phút không có action → escalate sang EXCEPTION state và alert System Admin |
+| **Audit Log** | Yes — mandatory. Log `retry_count`, `error_code[]`, `error_detail`, `receptionist_action`, `resolution_method` |
+
+---
+
+### EXC-MED-11: HIS_PATIENT_MATCHING_FAILED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-11 |
+| **Tên** | HIS Patient Identity Matching Failed |
+| **Trigger** | Lookup HIS theo `identity_number` trả về: không tìm thấy (handled by BR-HIS-03 — tạo mới) HOẶC tìm thấy nhiều hơn 1 record match (duplicate trong HIS) |
+| **Severity** | High |
+| **Owner** | Receptionist |
+| **User-facing Message** | "Đang xử lý thông tin, vui lòng đến quầy lễ tân để được hỗ trợ." |
+| **Internal Handling** | Nếu duplicate records trong HIS: set HIS_SYNC_FAILED, alert Receptionist với `his_duplicate_patient_codes[]`. Receptionist phải chọn đúng record HIS |
+| **Suggested Action** | Receptionist kiểm tra HIS, xác minh thông tin bệnh nhân trực tiếp, chọn đúng `his_patient_code` và trigger retry sync |
+| **SLA** | 10 phút |
+| **Audit Log** | Yes |
+
+---
+
+### EXC-MED-12: QUEUE_GENERATION_FAILED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-12 |
+| **Tên** | Queue Number Generation Failed |
+| **Trigger** | HIS sync success nhưng HIS không trả về `queue_number` (HIS queue system lỗi), hoặc MedBook không thể generate queue number nội bộ |
+| **Severity** | High |
+| **Owner** | Receptionist |
+| **User-facing Message** | "Check-in thành công! Vui lòng đến quầy lễ tân để lấy số thứ tự." |
+| **Internal Handling** | Set `his_sync_status = SYNCED` nhưng `queue_number = null`. Alert Receptionist. Patient vẫn được coi là đã check-in thành công — chỉ thiếu queue number |
+| **Suggested Action** | Receptionist manually cấp queue number từ HIS queue system và update vào MedBook |
+| **SLA** | 5 phút |
+| **Audit Log** | Yes |
+
+---
+
+### EXC-MED-13: NOTIFICATION_FAILED
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-13 |
+| **Tên** | Notification Delivery Failed |
+| **Trigger** | Notification Service không thể deliver SMS hoặc push notification sau tất cả retry |
+| **Severity** | Low |
+| **Owner** | MedBook System (log only) |
+| **User-facing Message** | N/A — patient không biết notification failed |
+| **Internal Handling** | Log notification failure với `failure_reason`. Appointment vẫn tiếp tục bình thường — notification failure không block appointment flow. Nếu cả SMS và push đều failed: log vào exception queue với priority LOW để team review |
+| **Suggested Action** | Không cần action ngay. Batch review hàng ngày để phát hiện pattern (ví dụ: SIM không nhận SMS vì nhà mạng lỗi) |
+| **SLA** | 24 giờ (batch review) |
+| **Audit Log** | Yes — log `notification_event_type`, `failure_channels[]`, `failure_reason` |
+
+---
+
+### EXC-MED-14: PATIENT_NO_SHOW
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-14 |
+| **Tên** | Patient No-show After Grace Period |
+| **Trigger** | Scheduled job phát hiện appointment ở REMINDER_SENT + no check-in + `current_time > appointment_time + 15 phút` |
+| **Severity** | Medium |
+| **Owner** | MedBook System (auto-set) → Receptionist (override trong 24h) |
+| **User-facing Message** | "Chúng tôi ghi nhận bạn không đến khám vào [date/time]. Nếu có nhầm lẫn, vui lòng liên hệ bệnh viện trong 24 giờ." |
+| **Internal Handling** | Auto-set `appointment_status = NO_SHOW`. Slot đánh dấu `pending_release` (không release ngay — buffer 15 phút để Receptionist override). Sau 15 phút buffer, slot released. Notify patient qua SMS |
+| **Suggested Action** | Receptionist override (BR-CANCEL-06) nếu bệnh nhân có lý do hợp lệ trong vòng 24h |
+| **SLA** | Tự động — override window 24h |
+| **Audit Log** | Yes — log `no_show_set_at`, `grace_period_elapsed`, `override_attempts[]` |
+
+---
+
+### EXC-MED-15: HOSPITAL_CANCELLATION
+
+| | |
+|---|---|
+| **Exception ID** | EXC-MED-15 |
+| **Tên** | Hospital Cancels Appointment |
+| **Trigger** | Hospital Admin cancel appointment do: bác sĩ nghỉ đột xuất, sự cố thiết bị, bảo trì hệ thống |
+| **Severity** | High |
+| **Owner** | Hospital Admin (trigger) → Receptionist (patient follow-up) |
+| **User-facing Message** | "Rất tiếc, bệnh viện phải hủy lịch hẹn của bạn vào [date/time]. Lý do: [reason]. Vui lòng đặt lại lịch hoặc gọi hotline [số] để được hỗ trợ." |
+| **Internal Handling** | Hospital Admin trigger cancel với reason code. System auto-notify patient (SMS + push ngay lập tức). Slot released ngay. Nếu cancel trong vòng 2h trước giờ khám: flag `priority_reschedule = true` và cung cấp slot ưu tiên. |
+| **Suggested Action** | Receptionist follow-up qua phone call nếu cancel muộn (< 2h trước giờ khám). Log toàn bộ action |
+| **SLA** | Notification phải gửi trong 5 phút sau khi cancel được confirm |
+| **Audit Log** | Yes — mandatory với `reason_code`, `cancel_notice_hours` (bao nhiêu giờ trước giờ khám) |
+
+---
+
+## Exception Queue UI Requirements
+
+### Mục tiêu màn hình
+Receptionist và Hospital Admin cần một view tập trung để thấy toàn bộ exception đang open, biết exception nào cần xử lý gấp nhất (dựa trên SLA countdown), và thực hiện action mà không cần rời màn hình.
+
+### Table Columns
+
+| Cột | Mô tả | Sortable |
+|---|---|---|
+| **Exception Type** | Badge màu theo severity: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low | Có |
+| **Appointment ID** | Link → Appointment Detail | Không |
+| **Patient Name** | Tên bệnh nhân | Không |
+| **Current Status** | `appointment_status + checkin_status` | Có |
+| **Created** | Thời gian exception được tạo (relative: "5 phút trước") | Có |
+| **SLA Remaining** | Countdown traffic-light: 🟢 > 50%, 🟡 20–50%, 🔴 < 20%, 💀 breached | Có |
+| **Owner** | Assigned to (Receptionist name), "Unassigned" màu đỏ | Không |
+| **Actions** | Resolve · Reassign · Escalate · View Detail | Không |
+
+### Actions per Exception Type
+
+| Exception | Actions Available |
+|---|---|
+| EXC-MED-10 (HIS_SYNC_FAILED) | Retry HIS Sync · Manual HIS Entry · View HIS Error |
+| EXC-MED-11 (PATIENT_MATCHING_FAILED) | Select HIS Patient Record · Retry Sync |
+| EXC-MED-07 (PATIENT_TOO_LATE) | Manual Check-in Override · Mark No-show |
+| EXC-MED-14 (NO_SHOW) | Override No-show · Confirm No-show |
+| EXC-MED-04 (DOCTOR_SCHEDULE_CHANGED) | Assign Substitute · Contact Patient · Hospital Cancel |
+| EXC-MED-15 (HOSPITAL_CANCELLATION) | Confirm Cancel · Contact Patient · Prioritize Reschedule |
+| All | Add Note · Escalate · View Audit Log |
+
+### Empty / Loading / Error States
+- **Empty:** "Không có exception nào. Tất cả appointment đang xử lý bình thường. ✅"
+- **Loading:** Skeleton table 3–5 rows
+- **Error:** Banner đỏ "Không thể tải dữ liệu exception — Thử lại" + fallback load last known data
