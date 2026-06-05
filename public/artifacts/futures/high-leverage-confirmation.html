@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>High Leverage Confirmation Modal — BA Portfolio Artifact</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f1117;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+  }
+
+  /* Top label */
+  .top-label {
+    width: 100%;
+    max-width: 960px;
+    background: #1a1d27;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .top-label .badge {
+    background: #f59e0b22;
+    color: #f59e0b;
+    border: 1px solid #f59e0b44;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .main-layout {
+    width: 100%;
+    max-width: 960px;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Modal container */
+  .modal-backdrop {
+    background: #1a1d27;
+    border-radius: 16px;
+    border: 1px solid #2d3148;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modal-context {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #64748b;
+    font-size: 13px;
+  }
+  .modal-context span {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+
+  .modal-card {
+    background: #22263a;
+    border-radius: 12px;
+    border: 1px solid #ef444433;
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(239,68,68,0.15);
+  }
+
+  /* Modal Header */
+  .modal-header {
+    background: linear-gradient(135deg, #1f1520 0%, #2a1020 100%);
+    padding: 20px 24px;
+    border-bottom: 1px solid #ef444433;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .warning-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ef444422;
+    border: 2px solid #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+  .modal-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  /* Modal body */
+  .modal-body {
+    padding: 20px 24px;
+  }
+
+  /* Leverage display */
+  .leverage-badge {
+    background: #ef444415;
+    border: 1px solid #ef444440;
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .leverage-label {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .leverage-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #ef4444;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-item {
+    background: #1a1d27;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #2d3148;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+  }
+  .stat-value.danger { color: #ef4444; }
+  .stat-value.warning { color: #f59e0b; }
+
+  /* Warning text */
+  .warning-box {
+    background: #1c1208;
+    border: 1px solid #f59e0b44;
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #fcd34d;
+    line-height: 1.5;
+  }
+
+  /* Checkbox */
+  .acknowledge-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    background: #1a1d27;
+    border-radius: 8px;
+    border: 1px solid #2d3148;
+    cursor: pointer;
+  }
+  .custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ef4444;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ef444422;
+  }
+  .custom-checkbox.checked {
+    background: #ef4444;
+  }
+  .acknowledge-text {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+  .acknowledge-text strong {
+    color: #f1f5f9;
+  }
+
+  /* Session note */
+  .session-note {
+    font-size: 11px;
+    color: #475569;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .session-note span {
+    color: #64748b;
+  }
+
+  /* Annotation number inline */
+  .ann-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: #0f1117;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .modal-footer {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 10px;
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid #374151;
+    color: #94a3b8;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .btn-confirm {
+    background: #ef4444;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-confirm.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Annotation Panel */
+  .annotation-panel {
+    background: #1e2538;
+    border-radius: 16px;
+    border: 1px solid #2d3148;
+    padding: 20px;
+  }
+  .annotation-header {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #2d3148;
+  }
+  .annotation-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #2d314833;
+  }
+  .annotation-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .ann-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: #0f1117;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .annotation-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+  .annotation-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .tag {
+    display: inline-block;
+    background: #f59e0b22;
+    color: #fbbf24;
+    border: 1px solid #f59e0b33;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* Business Rule Box */
+  .br-box {
+    background: #0f1117;
+    border: 1px dashed #2d3148;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #64748b;
+  }
+  .br-box code {
+    color: #fbbf24;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top label -->
+<div class="top-label">
+  <span class="badge">Portfolio Artifact</span>
+  <span>Business Analyst · Crypto Futures Trading Platform · High Leverage Confirmation Modal</span>
+</div>
+
+<div class="main-layout">
+  <!-- Left: Modal -->
+  <div class="modal-backdrop">
+    <div class="modal-context">
+      Triggered when user selects <span>leverage ≥ 20x</span> and taps "Open Position"
+    </div>
+
+    <div class="modal-card">
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="warning-icon">⚠</div>
+        <div>
+          <div class="modal-title">High Leverage Risk Confirmation <span class="ann-num">1</span></div>
+          <div class="modal-subtitle">Review the risks before proceeding</div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <!-- Leverage badge -->
+        <div class="leverage-badge">
+          <div>
+            <div class="leverage-label">Selected Leverage</div>
+            <div style="font-size:11px;color:#ef444499;margin-top:2px;">Above risk threshold (≥ 20x)</div>
+          </div>
+          <div class="leverage-value">20×<span class="ann-num">2</span></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-label">Position Size</div>
+            <div class="stat-value">0.050 BTC</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Entry Price</div>
+            <div class="stat-value">43,250 USDT</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Required Margin</div>
+            <div class="stat-value warning">108.13 USDT</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Est. Liq. Price <span class="ann-num" style="background:#ef4444">3</span></div>
+            <div class="stat-value danger">41,835 USDT</div>
+          </div>
+        </div>
+
+        <!-- Warning text -->
+        <div class="warning-box">
+          ⚠ At 20× leverage, your position will be liquidated if BTC moves
+          <strong style="color:#fcd34d"> –4.75%</strong> against you.
+          Losses can exceed your initial margin.
+        </div>
+
+        <!-- Acknowledge checkbox -->
+        <div class="acknowledge-row" id="checkbox-row">
+          <div class="custom-checkbox" id="checkbox">✓</div>
+          <div class="acknowledge-text">
+            <strong>I understand the liquidation risk</strong><span class="ann-num" style="width:16px;height:16px;font-size:9px">4</span><br>
+            I acknowledge that trading with high leverage carries significant risk,
+            and I accept full responsibility for this order.
+          </div>
+        </div>
+
+        <!-- Session note -->
+        <div class="session-note">
+          <span>This confirmation appears once per session for leverage ≥ 20×.</span><span class="ann-num" style="background:#94a3b8;color:#0f1117">5</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="modal-footer">
+          <button class="btn-cancel">Cancel</button>
+          <button class="btn-confirm">
+            ⚡ Confirm Order
+            <span class="ann-num" style="background:rgba(255,255,255,0.3);color:white;width:16px;height:16px;font-size:9px">6</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business rule reference -->
+    <div class="br-box" style="max-width:440px;width:100%;margin-top:12px;">
+      Business Rule: <code>BR-LEV-01</code> — leverage ≥ <code>risk_threshold</code> (configurable, default 20×) → mandatory confirmation modal. Confirmation state stored per session: <code>session.leverage_acknowledged = true</code>. Event logged for audit: <code>leverage_confirmation_accepted</code>.
+    </div>
+  </div>
+
+  <!-- Right: Annotation Panel -->
+  <div class="annotation-panel">
+    <div class="annotation-header">BA Annotations</div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">1</div>
+      <div>
+        <div class="annotation-title">Modal Trigger Condition</div>
+        <div class="annotation-desc">Modal appears only when leverage is at or above the configured risk threshold. Threshold is a system config value — not hardcoded — so it can be updated without a deploy.</div>
+        <div class="tag">BR-LEV-01</div>
+      </div>
+    </div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">2</div>
+      <div>
+        <div class="annotation-title">Leverage Value Display</div>
+        <div class="annotation-desc">The exact leverage value is shown prominently so the user cannot claim they didn't see it. This is also captured in the audit log when confirmation is accepted.</div>
+        <div class="tag">AUDIT LOG</div>
+      </div>
+    </div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">3</div>
+      <div>
+        <div class="annotation-title">Estimated Liquidation Price</div>
+        <div class="annotation-desc">Shown in red inside the confirmation modal — reinforces the BA decision to show this before order submission, not just in Position Management. This is the single most important risk number for the user.</div>
+        <div class="tag">BA DECISION</div>
+      </div>
+    </div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">4</div>
+      <div>
+        <div class="annotation-title">Mandatory Acknowledgement</div>
+        <div class="annotation-desc">User must actively check the acknowledgement box. Passive reading is not enough. This creates an explicit consent record and shifts accountability to the user for high-risk orders.</div>
+        <div class="tag">COMPLIANCE</div>
+      </div>
+    </div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">5</div>
+      <div>
+        <div class="annotation-title">Once-per-Session Rule</div>
+        <div class="annotation-desc">Modal appears only once per session to avoid annoying pro traders who frequently adjust leverage. Session state resets on logout or session expiry. Trade-off: reduces safety repetition but improves UX for power users.</div>
+        <div class="tag">UX TRADE-OFF</div>
+      </div>
+    </div>
+
+    <div class="annotation-item">
+      <div class="ann-circle">6</div>
+      <div>
+        <div class="annotation-title">Confirmation Audit Event</div>
+        <div class="annotation-desc">Confirm Order click triggers: (a) store session flag, (b) log event with leverage value, timestamp, and user ID, (c) pass control back to order submission flow. Cancel clears acknowledgement without logging.</div>
+        <div class="tag">SYSTEM EVENT</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
