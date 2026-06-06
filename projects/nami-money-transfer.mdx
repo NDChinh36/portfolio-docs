@@ -115,6 +115,50 @@ Nami Innovation muốn thêm tính năng **chuyển tiền nội bộ** giữa c
 
 ---
 
+## Key BA Decisions
+
+<AccordionGroup>
+
+<Accordion title="Decision 1 — Futures → Futures (khác user) bị block hoàn toàn">
+
+| | |
+|---|---|
+| **Context** | Team debated liệu có cho phép Futures account transfer trực tiếp sang Futures account của user khác (giống Spot P2P) không. |
+| **Problem / Risk** | Futures margin bị lock khi có open position; cross-user Futures transfer tạo risk control complexity và có thể bị dùng để manipulate margin. Engineering lo ngại về race condition khi validate margin locked. |
+| **BA Recommendation** | Block hoàn toàn Futures → Futures (cross-user). Chỉ cho phép: Spot → Spot (cross-user P2P), Futures ↔ Spot (cùng user — internal rebalance). |
+| **Trade-off** | Hạn chế một edge use case (trader muốn chuyển margin trực tiếp giữa các tài khoản khác nhau). Trade-off chấp nhận được vì use case này rất hiếm. |
+| **Expected Impact** | Simplify validation rules; alignment với Futures risk model; loại bỏ một class of bugs liên quan đến margin lock khi cross-user Futures transfer. |
+
+</Accordion>
+
+<Accordion title="Decision 2 — Validate dùng available balance, không phải total balance">
+
+| | |
+|---|---|
+| **Context** | Dev draft ban đầu validate `transfer_amount ≤ total_balance`. BA review và phát hiện edge case quan trọng. |
+| **Problem / Risk** | User có open Futures position → một phần margin bị lock (`margin_locked`). Nếu validate theo `total_balance`, user có thể transfer hết số dư — không đủ margin để maintain position → vị thế bị liquidate. |
+| **BA Recommendation** | Validate theo `available_balance = total_balance − margin_locked`. Cần call Futures engine để lấy `margin_locked` trước bước validate. |
+| **Trade-off** | Thêm một API call trong luồng validate, tăng latency nhẹ (~50–100ms). Cần handle trường hợp Futures engine không respond. |
+| **Expected Impact** | Ngăn user vô tình liquidate Futures position khi transfer; align với behavior chuẩn của các sàn lớn (Binance, OKX). |
+
+</Accordion>
+
+<Accordion title="Decision 3 — OTP bắt buộc chỉ khi P2P transfer vượt ngưỡng amount">
+
+| | |
+|---|---|
+| **Context** | Security team muốn OTP cho mọi cross-user P2P transfer. UX team muốn flow đơn giản, không có OTP. |
+| **Problem / Risk** | OTP mọi transfer = quá nhiều friction cho small amounts, ảnh hưởng conversion. Không có OTP = security risk cho large transfers nếu tài khoản bị compromise. |
+| **BA Recommendation** | Threshold-based approach: P2P transfer vượt ngưỡng X USDT yêu cầu OTP qua email hoặc authenticator app. Transfer nội bộ cùng user (Spot ↔ Futures) không cần OTP. |
+| **Trade-off** | Cần define và maintain threshold value. Nếu giá USDT thay đổi đáng kể, threshold có thể cần điều chỉnh. Phải document rõ ràng cho user. |
+| **Expected Impact** | Balance giữa security và UX; align với practice của Binance, OKX trong internal transfer; giảm friction cho small transfers trong khi bảo vệ large transfers. |
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
 ## Điểm nổi bật
 
 <CardGroup cols={2}>
