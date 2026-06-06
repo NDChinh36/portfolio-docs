@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campaign Configuration Dashboard — Reward System</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f1f5f9; color: #1e293b; font-size: 13px; }
+
+  /* Layout */
+  .shell { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; background: #0f172a; color: #cbd5e1; display: flex; flex-direction: column; flex-shrink: 0; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #1e293b; }
+  .sidebar-header h2 { font-size: 13px; font-weight: 700; color: #f1f5f9; letter-spacing: .5px; text-transform: uppercase; }
+  .sidebar-header p { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .sidebar-section { padding: 12px 16px 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #475569; letter-spacing: .6px; }
+  .campaign-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; transition: background .15s; border-left: 3px solid transparent; }
+  .campaign-item:hover { background: #1e293b; }
+  .campaign-item.active { background: #1e3a5f; border-left-color: #3b82f6; }
+  .campaign-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-active { background: #22c55e; }
+  .dot-scheduled { background: #f59e0b; }
+  .dot-ended { background: #94a3b8; }
+  .campaign-item .ci-text { flex: 1; min-width: 0; }
+  .campaign-item .ci-name { font-size: 12px; color: #e2e8f0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .campaign-item .ci-meta { font-size: 10px; color: #64748b; margin-top: 1px; }
+
+  /* Top bar */
+  .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar h1 { font-size: 15px; font-weight: 600; color: #0f172a; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-active { background: #dcfce7; color: #15803d; }
+  .badge-volume { background: #dbeafe; color: #1d4ed8; }
+  .badge-event { background: #fef3c7; color: #92400e; }
+  .badge-streak { background: #f3e8ff; color: #6b21a8; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-ghost { background: transparent; color: #64748b; border: 1px solid #e2e8f0; }
+  .btn-primary { background: #2563eb; color: #fff; }
+
+  /* Content */
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; gap: 16px; }
+
+  /* Cards */
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; position: relative; }
+  .card-header { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .5px; }
+  .card-body { padding: 14px 16px; }
+  .card-full { grid-column: 1 / -1; }
+
+  /* Form elements */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; display: block; }
+  .input { width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 12px; color: #111827; background: #f9fafb; }
+  .input-row { display: flex; gap: 8px; }
+  .input-row .input { flex: 1; }
+  select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2394a3b8' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; padding-right: 26px; }
+
+  /* Rule rows */
+  .rule-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f8fafc; }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-label { font-size: 12px; color: #374151; font-weight: 500; }
+  .rule-value { font-size: 12px; color: #1d4ed8; font-weight: 600; background: #eff6ff; padding: 2px 8px; border-radius: 4px; }
+  .rule-value.danger { color: #dc2626; background: #fef2f2; }
+  .rule-value.muted { color: #6b7280; background: #f3f4f6; }
+
+  /* Budget bar */
+  .budget-track { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 8px 0 4px; }
+  .budget-fill { height: 100%; background: #3b82f6; border-radius: 3px; }
+  .budget-fill.warning { background: #f59e0b; }
+  .budget-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+  .budget-big { font-size: 18px; font-weight: 700; color: #0f172a; }
+  .budget-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .budget-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .budget-stat { text-align: center; padding: 10px; background: #f8fafc; border-radius: 6px; }
+  .budget-stat .num { font-size: 16px; font-weight: 700; color: #1e293b; }
+  .budget-stat .lbl { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+
+  /* Trigger type pills */
+  .trigger-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .trigger-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1.5px solid; cursor: pointer; }
+  .pill-volume { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+  .pill-volume.selected { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .pill-event { background: #fefce8; color: #a16207; border-color: #fde68a; }
+  .pill-streak { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+  .pill-referral { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+
+  /* Annotation pins */
+  .annotation { position: absolute; }
+  .ann-pin { width: 20px; height: 20px; background: #f97316; color: #fff; border-radius: 50%; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: default; box-shadow: 0 2px 6px rgba(249,115,22,.4); }
+  .ann-tooltip { position: absolute; background: #fff; border: 1.5px solid #f97316; border-radius: 8px; padding: 8px 10px; font-size: 11px; color: #374151; line-height: 1.5; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 10; }
+  .ann-tooltip strong { color: #ea580c; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle { width: 32px; height: 18px; background: #cbd5e1; border-radius: 9px; position: relative; cursor: pointer; flex-shrink: 0; }
+  .toggle.on { background: #22c55e; }
+  .toggle::after { content: ''; position: absolute; width: 12px; height: 12px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left .15s; }
+  .toggle.on::after { left: 17px; }
+  .toggle-text { font-size: 12px; color: #374151; }
+  .toggle-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Reward System</h2>
+      <p>Campaign Manager</p>
+    </div>
+
+    <div class="sidebar-section">Active</div>
+    <div class="campaign-item active">
+      <div class="dot dot-active"></div>
+      <div class="ci-text">
+        <div class="ci-name">Volume Spring 2025</div>
+        <div class="ci-meta">Volume-based · 18d left</div>
+      </div>
+    </div>
+    <div class="campaign-item">
+      <div class="dot dot-active"></div>
+      <div class="ci-text">
+        <div class="ci-name">KYC First-Deposit</div>
+        <div class="ci-meta">Event-based · Running</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Scheduled</div>
+    <div class="campaign-item">
+      <div class="dot dot-scheduled"></div>
+      <div class="ci-text">
+        <div class="ci-name">7-Day Login Streak</div>
+        <div class="ci-meta">Streak-based · Starts Jun 15</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Ended</div>
+    <div class="campaign-item">
+      <div class="dot dot-ended"></div>
+      <div class="ci-text">
+        <div class="ci-name">Referral Q1 2025</div>
+        <div class="ci-meta">Referral · Ended</div>
+      </div>
+    </div>
+    <div class="campaign-item">
+      <div class="dot dot-ended"></div>
+      <div class="ci-text">
+        <div class="ci-name">New Year Trade-Off</div>
+        <div class="ci-meta">Volume-based · Ended</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main panel -->
+  <div class="main">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Volume Spring 2025</h1>
+        <span class="badge badge-active">● Active</span>
+        <span class="badge badge-volume">Volume-based</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">Duplicate</button>
+        <button class="btn btn-ghost">Pause</button>
+        <button class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Content grid -->
+    <div class="content">
+
+      <!-- Campaign Settings -->
+      <div class="card" style="position:relative;">
+        <div class="card-header">
+          <span class="card-title">Campaign Settings</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">Campaign Name</label>
+            <input class="input" value="Volume Spring 2025" readonly />
+          </div>
+          <div class="field">
+            <label class="label">Campaign Period</label>
+            <div class="input-row">
+              <input class="input" value="May 01, 2025" readonly />
+              <input class="input" value="Jun 18, 2025" readonly />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Trigger Type</label>
+            <div class="trigger-pills">
+              <div class="trigger-pill pill-volume selected">Volume-based</div>
+              <div class="trigger-pill pill-event">Event-based</div>
+              <div class="trigger-pill pill-streak">Streak-based</div>
+              <div class="trigger-pill pill-referral">Referral</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Distribution Mode</label>
+            <select class="input">
+              <option>Daily Batch (00:00 UTC)</option>
+              <option>Immediate</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Annotation A -->
+        <div class="annotation" style="top:132px; right:-12px;">
+          <div class="ann-pin">A</div>
+          <div class="ann-tooltip" style="right:28px; top:-4px; white-space:normal; width:210px;">
+            <strong>4 Trigger Types</strong><br/>
+            Volume / Event / Streak / Referral — mỗi loại có logic riêng biệt, không share engine
+          </div>
+        </div>
+
+        <!-- Annotation B -->
+        <div class="annotation" style="bottom:22px; right:-12px;">
+          <div class="ann-pin">B</div>
+          <div class="ann-tooltip" style="right:28px; top:-4px; white-space:normal; width:210px;">
+            <strong>Distribution Mode</strong><br/>
+            Growth tự chọn: <em>Immediate</em> (event-based) hoặc <em>Daily Batch</em> (volume-based)
+          </div>
+        </div>
+      </div>
+
+      <!-- Trigger Conditions -->
+      <div class="card" style="position:relative;">
+        <div class="card-header">
+          <span class="card-title">Trigger Conditions</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">Volume Threshold (USDT)</label>
+            <div class="input-row">
+              <input class="input" value="100" readonly style="width:80px;flex:none;" />
+              <span style="align-self:center;color:#94a3b8;font-size:11px;">cumulative within period</span>
+            </div>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Count cancelled transactions</span>
+            <span class="rule-value danger">No — Excluded</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Count reversed transactions</span>
+            <span class="rule-value danger">No — Excluded</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Eligible pairs</span>
+            <span class="rule-value">All Futures Pairs</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Minimum single trade size</span>
+            <span class="rule-value">$10 USDT</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Eligible account types</span>
+            <span class="rule-value">Spot + Futures</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reward Settings -->
+      <div class="card" style="position:relative;">
+        <div class="card-header">
+          <span class="card-title">Reward Settings</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">Reward Type</label>
+            <select class="input">
+              <option>Token Airdrop (NAO)</option>
+              <option>Fee Voucher</option>
+              <option>Cashback (USDT)</option>
+              <option>Feature Unlock</option>
+            </select>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Reward amount per milestone</span>
+            <span class="rule-value">5 NAO</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Number of milestones</span>
+            <span class="rule-value">3 milestones</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Reward expiry after claim</span>
+            <span class="rule-value">7 days</span>
+          </div>
+          <div class="rule-row">
+            <span class="rule-label">Rollback window (reversed tx)</span>
+            <span class="rule-value danger">24 hours</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Anti-Abuse Rules -->
+      <div class="card" style="position:relative;">
+        <div class="card-header">
+          <span class="card-title">Anti-Abuse Rules</span>
+          <span style="font-size:10px;color:#ef4444;font-weight:700;background:#fef2f2;padding:2px 7px;border-radius:4px;">RISK REQUIRED</span>
+        </div>
+        <div class="card-body">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-text">Minimum account age</div>
+              <div class="toggle-sub">Block accounts created within 7 days</div>
+            </div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-text">Per-user reward cap</div>
+              <div class="toggle-sub">Max 15 NAO total per user</div>
+            </div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-text">Cooldown between claims</div>
+              <div class="toggle-sub">Min 24 hours between reward payouts</div>
+            </div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-text">Blacklist check</div>
+              <div class="toggle-sub">Skip accounts on Risk Team blacklist</div>
+            </div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-text">Same-device duplicate detection</div>
+              <div class="toggle-sub">Flag multiple accounts from same device</div>
+            </div>
+            <div class="toggle on"></div>
+          </div>
+        </div>
+
+        <!-- Annotation C -->
+        <div class="annotation" style="top:50px; right:-12px;">
+          <div class="ann-pin">C</div>
+          <div class="ann-tooltip" style="right:28px; top:-4px; white-space:normal; width:220px;">
+            <strong>Thiết kế từ PRD đầu tiên</strong><br/>
+            Anti-abuse rules là scope MVP — không phải patch sau launch. Yêu cầu Risk Team approve trước khi deploy.
+          </div>
+        </div>
+      </div>
+
+      <!-- Budget Tracking (full width) -->
+      <div class="card card-full" style="position:relative;">
+        <div class="card-header">
+          <span class="card-title">Budget Tracking</span>
+          <span style="font-size:12px;color:#f59e0b;font-weight:600;">⚠ 72% consumed — 18 days remaining</span>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;gap:32px;align-items:flex-start;">
+            <div style="flex:1;">
+              <div class="budget-big">10,800 NAO <span style="font-size:13px;color:#94a3b8;font-weight:400;">distributed</span></div>
+              <div class="budget-sub">of 15,000 NAO total budget</div>
+              <div class="budget-track">
+                <div class="budget-fill warning" style="width:72%;"></div>
+              </div>
+              <div class="budget-labels">
+                <span>0</span>
+                <span>Budget Cap: 15,000 NAO</span>
+              </div>
+            </div>
+            <div class="budget-grid" style="width:360px;">
+              <div class="budget-stat">
+                <div class="num">4,218</div>
+                <div class="lbl">Users Eligible</div>
+              </div>
+              <div class="budget-stat">
+                <div class="num">3,105</div>
+                <div class="lbl">Rewards Claimed</div>
+              </div>
+              <div class="budget-stat">
+                <div class="num">37</div>
+                <div class="lbl">Flagged Accounts</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Annotation D -->
+        <div class="annotation" style="top:16px; right:16px;">
+          <div class="ann-pin">D</div>
+          <div class="ann-tooltip" style="right:28px; top:0; white-space:normal; width:230px;">
+            <strong>Budget Cap bắt buộc</strong><br/>
+            Campaign B hết budget trong 2 ngày thay vì 14 ngày khi chưa có cap. Real-time tracking + alert khi vượt 80%.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
