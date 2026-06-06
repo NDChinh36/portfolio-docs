@@ -185,12 +185,12 @@ flowchart TD
 
 ### Artifact 2 — Business Rule Table mẫu
 
-| Rule ID | Tên Rule | Trigger | Điều kiện | Expected Behavior | Edge Case |
-|---|---|---|---|---|---|
-| BR-LIQ-01 | Auto Liquidation | Margin Ratio update | Ratio ≥ 100% | Đóng toàn bộ position; không cho cancel | Nếu insurance fund không đủ → ADL activation |
-| BR-WARN-01 | Margin Warning | Margin Ratio update | Ratio ≥ 80% | Push notification + in-app alert | Nếu đã warn trong vòng 1h → không warn lại |
-| BR-LEV-01 | High Leverage Confirm | User chọn leverage | Leverage ≥ 20x | Mandatory popup confirmation | Lần 2+ trong cùng session → bỏ qua popup |
-| BR-FUND-01 | Funding Rate Settlement | Cron job mỗi 8h | Long/Short có open position | Long pays Short nếu rate dương | Nếu position bị close trước lúc settle → không tính |
+| Rule ID | Điều kiện | Hành vi | Edge Case |
+|---|---|---|---|
+| BR-LIQ-01 | Margin Ratio ≥ 100% | Đóng toàn bộ position; không cancel được | Insurance fund thiếu → ADL activation |
+| BR-WARN-01 | Margin Ratio ≥ 80% | Push notification + in-app alert | Đã warn trong vòng 1h → không warn lại |
+| BR-LEV-01 | Leverage ≥ 20x được chọn | Mandatory popup confirmation | Lần 2+ trong cùng session → bỏ qua popup |
+| BR-FUND-01 | Cron mỗi 8h; có open position | Long trả short nếu rate dương | Position đóng trước lúc settle → không tính |
 
 *Business Rule Register là tài liệu BA maintain xuyên suốt dự án — không chỉ dùng một lần.*
 
