@@ -1,143 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Internal Transfer — Nami App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Confirmation — Nami App · BA Portfolio</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #e2e8f0; display: flex; align-items: flex-start; justify-content: center; padding: 16px 20px; min-height: 100vh; gap: 20px; color: #1e293b; font-size: 13px; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    color: #1e293b;
+    font-size: 13px;
+  }
+
+  .portfolio-label {
+    width: 100%;
+    background: #0f172a;
+    color: #64748b;
+    text-align: center;
+    padding: 7px 16px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .portfolio-label strong { color: #94a3b8; }
+
+  .main-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 20px 24px 32px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
 
   /* Phone frame */
-  .phone { background: #fff; width: 340px; min-width: 340px; border-radius: 28px; box-shadow: 0 16px 48px rgba(0,0,0,.18); overflow: hidden; display: flex; flex-direction: column; }
-  .notch { height: 28px; background: #0f172a; display: flex; align-items: center; justify-content: center; }
-  .notch-bar { width: 100px; height: 10px; background: #1e293b; border-radius: 5px; }
+  .phone {
+    width: 330px;
+    min-width: 330px;
+    background: #fff;
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    height: 26px; background: #0f172a;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notch-pill { width: 90px; height: 8px; background: #1e293b; border-radius: 4px; }
 
-  /* App topbar */
-  .topbar { background: #0f172a; padding: 10px 16px 14px; display: flex; align-items: center; gap: 10px; }
-  .back-btn { color: #60a5fa; font-size: 18px; cursor: pointer; }
+  .topbar {
+    background: #0f172a;
+    padding: 10px 16px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .back-btn { color: #60a5fa; font-size: 20px; cursor: pointer; line-height: 1; }
   .topbar-title { font-size: 15px; font-weight: 700; color: #f8fafc; }
 
-  /* Steps indicator */
-  .steps { background: #0f172a; padding: 0 16px 14px; display: flex; align-items: center; gap: 0; }
+  /* Step indicator */
+  .steps {
+    background: #0f172a;
+    padding: 0 16px 14px;
+    display: flex; align-items: center;
+  }
   .step { display: flex; flex-direction: column; align-items: center; flex: 1; }
-  .step-circle { width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
-  .step-circle.done { background: #22c55e; color: #fff; }
-  .step-circle.active { background: #3b82f6; color: #fff; }
-  .step-circle.pending { background: #334155; color: #64748b; }
-  .step-label { font-size: 9px; color: #64748b; margin-top: 4px; text-align: center; }
-  .step-line { flex: 1; height: 2px; background: #334155; align-self: center; margin-bottom: 18px; }
+  .step-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-done { background: #22c55e; color: #fff; }
+  .step-active { background: #3b82f6; color: #fff; }
+  .step-pending { background: #334155; color: #475569; }
+  .step-label { font-size: 9px; color: #475569; margin-top: 3px; text-align: center; line-height: 1.3; }
+  .step-line { flex: 1; height: 2px; background: #334155; align-self: flex-start; margin-top: 11px; }
   .step-line.done { background: #22c55e; }
 
-  /* Scrollable body */
-  .body { flex: 1; overflow-y: auto; padding: 14px; background: #f8fafc; }
+  .phone-body { background: #f8fafc; overflow-y: auto; flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
 
-  /* Section cards */
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-  .card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 10px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 11px 13px; }
+  .card-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 9px; }
 
-  /* Account row */
-  .account-row { display: flex; align-items: center; gap: 8px; }
-  .account-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-  .icon-spot { background: #eff6ff; }
-  .icon-spot2 { background: #f0fdf4; }
-  .account-text .acc-type { font-size: 12px; font-weight: 700; color: #0f172a; }
-  .account-text .acc-sub { font-size: 11px; color: #6b7280; margin-top: 1px; }
-  .account-text .acc-bal { font-size: 12px; font-weight: 700; color: #16a34a; margin-top: 3px; }
-  .account-arrow { margin: 0 auto; color: #94a3b8; font-size: 18px; }
+  /* Receiver */
+  .receiver-row { display: flex; align-items: center; gap: 10px; }
+  .receiver-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; font-weight: 800; flex-shrink: 0;
+  }
+  .receiver-info { flex: 1; }
+  .receiver-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .receiver-uid { font-size: 11px; color: #64748b; margin-top: 1px; }
+  .verified-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #dcfce7; color: #15803d;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; margin-top: 3px;
+  }
 
   /* Balance breakdown */
-  .bal-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f8fafc; }
+  .bal-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f8fafc; }
   .bal-row:last-child { border-bottom: none; }
   .bal-key { font-size: 12px; color: #374151; }
   .bal-val { font-size: 12px; font-weight: 700; }
-  .bal-val.green { color: #16a34a; }
-  .bal-val.orange { color: #f59e0b; }
-  .bal-val.muted { color: #94a3b8; }
+  .val-muted { color: #94a3b8; }
+  .val-orange { color: #f59e0b; }
+  .val-green { font-size: 14px; color: #16a34a; }
 
-  /* Amount input */
-  .amount-input-row { display: flex; align-items: center; gap: 8px; }
-  .amount-input { flex: 1; border: 1.5px solid #3b82f6; border-radius: 8px; padding: 10px 12px; font-size: 18px; font-weight: 800; color: #0f172a; background: #eff6ff; }
-  .max-btn { padding: 8px 12px; background: #1d4ed8; color: #fff; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
-  .coin-badge { font-size: 11px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
-  .avail-note { font-size: 11px; color: #64748b; background: #f8fafc; padding: 5px 8px; border-radius: 5px; margin-top: 8px; border: 1px solid #e2e8f0; }
+  /* Amount */
+  .amount-wrap { display: flex; align-items: center; gap: 8px; }
+  .amount-input {
+    flex: 1; border: 1.5px solid #dc2626; border-radius: 8px;
+    padding: 10px 12px; font-size: 18px; font-weight: 800;
+    color: #dc2626; background: #fef2f2;
+  }
+  .coin-label { font-size: 12px; font-weight: 700; color: #374151; }
+  .max-btn {
+    padding: 8px 12px; background: #1d4ed8; color: #fff;
+    border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .amount-error {
+    margin-top: 6px; font-size: 11px; color: #dc2626;
+    background: #fef2f2; padding: 4px 8px; border-radius: 5px;
+    border: 1px solid #fecaca;
+  }
 
-  /* OTP section */
-  .otp-warning { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; }
-  .otp-icon { font-size: 16px; flex-shrink: 0; }
-  .otp-text { font-size: 11px; color: #92400e; line-height: 1.5; }
-  .otp-text strong { display: block; font-size: 12px; margin-bottom: 2px; }
-  .otp-input-row { display: flex; gap: 6px; margin-top: 8px; }
-  .otp-digit { flex: 1; height: 40px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 16px; font-weight: 800; text-align: center; color: #0f172a; background: #fff; }
-  .otp-digit:first-child { border-color: #1d4ed8; background: #eff6ff; }
+  /* State machine */
+  .state-machine { display: flex; align-items: center; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
+  .state {
+    padding: 3px 8px; border-radius: 12px; font-size: 9px; font-weight: 700;
+    border: 1px solid;
+  }
+  .state-active { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .state-pending { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+  .state-success { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .state-failed { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .state-rollback { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+  .state-arrow { font-size: 10px; color: #94a3b8; }
+
+  /* OTP */
+  .otp-warning {
+    background: #fef3c7; border: 1px solid #fcd34d;
+    border-radius: 8px; padding: 8px 10px;
+    display: flex; gap: 7px; align-items: flex-start;
+  }
+  .otp-icon { font-size: 14px; flex-shrink: 0; }
+  .otp-text { font-size: 11px; color: #92400e; line-height: 1.4; }
+  .otp-text strong { display: block; font-size: 12px; margin-bottom: 1px; }
+  .otp-inputs { display: flex; gap: 5px; margin-top: 7px; }
+  .otp-box {
+    flex: 1; height: 36px; border: 1.5px solid #d1d5db;
+    border-radius: 7px; font-size: 15px; font-weight: 800;
+    text-align: center; color: #0f172a; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .otp-box.filled { border-color: #1d4ed8; background: #eff6ff; }
+
+  /* Idempotency row */
+  .idempotency-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid #f1f5f9;
+  }
+  .idem-key { font-size: 11px; color: #64748b; }
+  .idem-val { font-family: "SF Mono", "Fira Code", monospace; font-size: 10px; color: #1d4ed8; background: #eff6ff; padding: 2px 7px; border-radius: 4px; }
 
   /* Summary */
-  .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; }
-  .summary-row:last-child { border-bottom: none; }
+  .sum-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; }
+  .sum-row:last-child { border-bottom: none; }
   .sum-key { font-size: 12px; color: #6b7280; }
   .sum-val { font-size: 12px; font-weight: 700; color: #0f172a; }
-  .sum-val.green { color: #16a34a; }
   .sum-val.blue { color: #1d4ed8; }
+  .sum-val.green { color: #16a34a; }
+  .sum-val.error { color: #dc2626; }
 
   /* Confirm button */
-  .confirm-btn { width: 100%; margin-top: 10px; padding: 14px; background: #1d4ed8; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 800; text-align: center; cursor: pointer; border: none; }
+  .confirm-btn {
+    width: 100%; padding: 13px;
+    background: #94a3b8; /* disabled state */
+    color: #fff; border-radius: 10px;
+    font-size: 14px; font-weight: 800;
+    text-align: center; cursor: not-allowed;
+    border: none; margin-top: 4px;
+  }
+  .confirm-hint { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 6px; }
 
-  /* Annotation side panel */
-  .annotations { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding-top: 28px; max-width: 260px; }
+  /* Annotation panel */
+  .annotation-panel {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 13px;
+    padding-top: 16px;
+  }
   .ann-item { display: flex; gap: 10px; align-items: flex-start; }
-  .ann-pin { width: 24px; height: 24px; background: #f97316; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(249,115,22,.4); margin-top: 1px; }
-  .ann-text strong { font-size: 12px; color: #ea580c; display: block; margin-bottom: 3px; }
-  .ann-text span { font-size: 11px; color: #374151; line-height: 1.6; }
-  .ann-connector { font-size: 20px; color: #cbd5e1; align-self: flex-start; }
+  .ann-pin {
+    width: 24px; height: 24px; flex-shrink: 0;
+    background: #f97316; color: #fff; border-radius: 50%;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(249,115,22,.45);
+    margin-top: 1px;
+  }
+  .ann-body strong { font-size: 12px; color: #ea580c; display: block; margin-bottom: 3px; }
+  .ann-body span { font-size: 11px; color: #374151; line-height: 1.6; }
+  .ann-divider { border: none; border-top: 1px solid #e2e8f0; margin: 4px 0; }
+
+  code { background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 10px; }
 </style>
 </head>
 <body>
 
+<div class="portfolio-label">
+  <strong>Portfolio Artifact · Business Analyst</strong> — Transfer Confirmation Screen · Money Transfer Feature · Nami Innovation
+</div>
+
+<div class="main-layout">
+
   <!-- Phone mockup -->
   <div class="phone">
-    <div class="notch"><div class="notch-bar"></div></div>
+    <div class="notch"><div class="notch-pill"></div></div>
 
     <div class="topbar">
       <span class="back-btn">‹</span>
       <span class="topbar-title">Chuyển Tiền Nội Bộ</span>
     </div>
 
-    <!-- Step indicator -->
     <div class="steps">
       <div class="step">
-        <div class="step-circle done">✓</div>
+        <div class="step-circle step-done">✓</div>
         <div class="step-label">Chọn TK</div>
       </div>
       <div class="step-line done"></div>
       <div class="step">
-        <div class="step-circle active">2</div>
+        <div class="step-circle step-active">2</div>
         <div class="step-label">Nhập số tiền</div>
       </div>
       <div class="step-line"></div>
       <div class="step">
-        <div class="step-circle pending">3</div>
+        <div class="step-circle step-pending">3</div>
         <div class="step-label">Xác nhận</div>
       </div>
     </div>
 
-    <div class="body">
+    <div class="phone-body">
 
-      <!-- Accounts -->
+      <!-- Receiver card -->
       <div class="card">
-        <div class="card-label">Tài khoản chuyển/nhận</div>
-        <div class="account-row">
-          <div class="account-icon icon-spot">💼</div>
-          <div class="account-text">
-            <div class="acc-type">Spot Account</div>
-            <div class="acc-sub">Nguồn chuyển</div>
-          </div>
-        </div>
-        <div style="text-align:center;color:#94a3b8;font-size:20px;padding:6px 0;">↓</div>
-        <div class="account-row">
-          <div class="account-icon icon-spot2">👤</div>
-          <div class="account-text">
-            <div class="acc-type">@trading_pro_99</div>
-            <div class="acc-sub">Spot Account · Đã xác minh</div>
+        <div class="card-label">Người nhận</div>
+        <div class="receiver-row">
+          <div class="receiver-avatar">T</div>
+          <div class="receiver-info">
+            <div class="receiver-name">Trần Minh Tú</div>
+            <div class="receiver-uid">UID #trading_pro_99 · Spot Account</div>
+            <div class="verified-badge">✓ Đã xác minh</div>
           </div>
         </div>
       </div>
@@ -147,107 +271,149 @@
         <div class="card-label">Số dư khả dụng — USDT</div>
         <div class="bal-row">
           <span class="bal-key">Total Balance</span>
-          <span class="bal-val muted">500.00 USDT</span>
+          <span class="bal-val val-muted">500.00 USDT</span>
         </div>
         <div class="bal-row">
           <span class="bal-key">Margin Locked (Futures)</span>
-          <span class="bal-val orange">− 49.80 USDT</span>
+          <span class="bal-val val-orange">− 49.80 USDT</span>
         </div>
-        <div class="bal-row" style="padding-top:7px;">
+        <div class="bal-row">
           <span class="bal-key" style="font-weight:700;color:#0f172a;">Available Balance</span>
-          <span class="bal-val green" style="font-size:14px;">450.20 USDT</span>
+          <span class="bal-val val-green">450.20 USDT</span>
         </div>
       </div>
 
       <!-- Amount input -->
       <div class="card">
         <div class="card-label">Số tiền chuyển</div>
-        <div class="amount-input-row">
+        <div class="amount-wrap">
           <input class="amount-input" value="2,500" readonly />
-          <span class="coin-badge" style="font-size:13px;font-weight:700;color:#374151;">USDT</span>
+          <span class="coin-label">USDT</span>
           <div class="max-btn">MAX</div>
         </div>
-        <div class="avail-note">Tối đa: 450.20 USDT (available balance)</div>
+        <div class="amount-error">⚠ Vượt available balance (450.20 USDT). Tối đa: 450.20 USDT</div>
       </div>
 
-      <!-- OTP Warning -->
-      <div class="otp-warning">
-        <span class="otp-icon">⚠️</span>
-        <div class="otp-text">
-          <strong>Xác thực bắt buộc</strong>
-          P2P transfer vượt ngưỡng 1,000 USDT — nhập OTP gửi đến email để tiếp tục.
+      <!-- Transaction state machine -->
+      <div class="card">
+        <div class="card-label">Trạng thái giao dịch</div>
+        <div class="state-machine">
+          <span class="state state-pending">PENDING</span>
+          <span class="state-arrow">→</span>
+          <span class="state state-active">PROCESSING</span>
+          <span class="state-arrow">→</span>
+          <span class="state state-success">SUCCESS</span>
+        </div>
+        <div class="state-machine" style="margin-top:5px;padding-top:5px;border-top:1px dashed #f1f5f9;">
+          <span class="state state-failed">FAILED</span>
+          <span class="state-arrow">→</span>
+          <span class="state state-rollback">ROLLBACK</span>
+          <span style="font-size:9px;color:#94a3b8;margin-left:4px;">(auto 24h)</span>
         </div>
       </div>
-      <div class="otp-input-row">
-        <input class="otp-digit" value="7" readonly />
-        <input class="otp-digit" value="" readonly />
-        <input class="otp-digit" value="" readonly />
-        <input class="otp-digit" value="" readonly />
-        <input class="otp-digit" value="" readonly />
-        <input class="otp-digit" value="" readonly />
+
+      <!-- OTP section -->
+      <div class="otp-warning">
+        <span class="otp-icon">🔐</span>
+        <div class="otp-text">
+          <strong>Xác thực OTP bắt buộc</strong>
+          P2P transfer vượt 1,000 USDT — nhập OTP qua email.
+        </div>
+      </div>
+      <div class="otp-inputs">
+        <div class="otp-box filled">7</div>
+        <div class="otp-box">–</div>
+        <div class="otp-box">–</div>
+        <div class="otp-box">–</div>
+        <div class="otp-box">–</div>
+        <div class="otp-box">–</div>
       </div>
 
-      <!-- Summary -->
-      <div class="card" style="margin-top:10px;">
+      <!-- Summary + idempotency -->
+      <div class="card">
         <div class="card-label">Xác nhận giao dịch</div>
-        <div class="summary-row">
+        <div class="sum-row">
           <span class="sum-key">Người nhận</span>
           <span class="sum-val blue">@trading_pro_99</span>
         </div>
-        <div class="summary-row">
+        <div class="sum-row">
           <span class="sum-key">Số tiền</span>
-          <span class="sum-val">2,500.00 USDT</span>
+          <span class="sum-val error">2,500.00 USDT</span>
         </div>
-        <div class="summary-row">
+        <div class="sum-row">
           <span class="sum-key">Phí giao dịch</span>
           <span class="sum-val green">Miễn phí</span>
         </div>
-        <div class="summary-row">
+        <div class="sum-row">
           <span class="sum-key">Thời gian xử lý</span>
           <span class="sum-val">Tức thì</span>
         </div>
+        <div class="idempotency-row">
+          <span class="idem-key">Idempotency Key</span>
+          <span class="idem-val">TXN-NAMI-7F3A9C</span>
+        </div>
       </div>
 
-      <button class="confirm-btn">Xác nhận chuyển tiền</button>
-    </div>
-  </div>
+      <button class="confirm-btn" disabled>Xác nhận chuyển tiền</button>
+      <div class="confirm-hint">Disabled — vui lòng sửa số tiền để tiếp tục</div>
+
+    </div><!-- /phone-body -->
+  </div><!-- /phone -->
 
   <!-- Annotation panel -->
-  <div class="annotations">
+  <div class="annotation-panel">
 
     <div class="ann-item">
       <div class="ann-pin">A</div>
-      <div class="ann-text">
-        <strong>Available ≠ Total Balance</strong>
-        <span>Validate theo <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">available = total − margin_locked</code>. BA Decision 2: user có open Futures position không được transfer hết total balance → liquidation risk.</span>
+      <div class="ann-body">
+        <strong>Receiver Validation</strong>
+        <span>Hiển thị avatar + tên trước confirm để user xác nhận đúng người nhận. Edge case: receiver không active → show error trước confirm screen, không tiếp tục luồng. Prevents fund loss to inactive accounts.</span>
       </div>
     </div>
+
+    <hr class="ann-divider">
 
     <div class="ann-item">
       <div class="ann-pin">B</div>
-      <div class="ann-text">
-        <strong>Futures → Futures (cross-user) bị block</strong>
-        <span>Chỉ Spot → Spot (cross-user) và Futures ↔ Spot (cùng user). BA Decision 1: giảm risk, simplify validation logic.</span>
+      <div class="ann-body">
+        <strong>Balance Validation</strong>
+        <span>Validate theo <code>available = total − margin_locked</code>. User có Futures open position không được transfer hết <code>total_balance</code> → liquidation risk. BA Decision 2: thêm API call lấy <code>margin_locked</code> trước bước validate.</span>
       </div>
     </div>
+
+    <hr class="ann-divider">
 
     <div class="ann-item">
       <div class="ann-pin">C</div>
-      <div class="ann-text">
-        <strong>OTP threshold-based</strong>
-        <span>OTP chỉ bắt buộc khi P2P amount vượt ngưỡng (BA Decision 3). Transfer nội bộ cùng user không cần OTP. Cân bằng UX vs. security.</span>
+      <div class="ann-body">
+        <strong>Transaction State Machine</strong>
+        <span>5 states: <strong>PENDING → PROCESSING → SUCCESS</strong> (happy path) hoặc <strong>FAILED → ROLLBACK</strong> (error path). State transitions được BA spec rõ ràng trong PRD — dev implement theo state machine, không tự xử lý edge case.</span>
       </div>
     </div>
+
+    <hr class="ann-divider">
 
     <div class="ann-item">
       <div class="ann-pin">D</div>
-      <div class="ann-text">
-        <strong>Receiver verification</strong>
-        <span>Hiển thị avatar + tên receiver trước confirm để user xác nhận đúng người nhận. Edge case: receiver không active → show error trước confirm screen.</span>
+      <div class="ann-body">
+        <strong>Rollback Policy</strong>
+        <span>Transfer thất bại sau debit (system failure) → auto rollback tức thì. Reversed transaction trong 24h → rollback reward (nếu có). Log incident + notify user. BA define rollback scenarios trong Edge Case Register.</span>
       </div>
     </div>
 
-  </div>
+    <hr class="ann-divider">
+
+    <div class="ann-item">
+      <div class="ann-pin">E</div>
+      <div class="ann-body">
+        <strong>Duplicate Prevention</strong>
+        <span>Mỗi transaction có <code>idempotency_key</code> unique (client-generated). Submit cùng key 2 lần → server trả về kết quả giao dịch đầu, không tạo duplicate. Prevents double-submit khi network timeout.</span>
+      </div>
+    </div>
+
+  </div><!-- /annotation-panel -->
+
+</div><!-- /main-layout -->
 
 </body>
 </html>
