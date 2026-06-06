@@ -146,13 +146,16 @@ Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần l
 
 ## Phối hợp Dev / QA / UX
 
-**Điểm khó nhất khi align với Dev — Funding Rate:**  
+### Align với Engineering
+
 Funding rate là khái niệm mà mỗi người có mental model khác nhau. Dev hỏi: "Tiền bị trừ đúng vào 8h hay theo event trigger?" UX hỏi: "Countdown hiển thị theo múi giờ nào?" CS lo: "Nếu user complain bị trừ sai, mình giải thích thế nào?" Câu trả lời khác nhau từ mỗi góc — BA phải viết explainer riêng và tổ chức walkthrough trước khi bất kỳ ai bắt đầu.
 
-**Trade-off UX và Risk Control:**  
+### UX vs Risk Control trade-off
+
 UX muốn Order Form sạch và tối giản. Risk yêu cầu phải visible: margin required, estimated liquidation price, leverage warning. Thỏa hiệp: các field cốt yếu về risk luôn visible — secondary info (funding rate countdown, fee detail) dùng expand/tooltip. Không ẩn hoàn toàn, không làm rối màn hình chính.
 
-**BA giúp giảm ambiguity ở đâu:**  
+### BA giúp giảm ambiguity ở đâu
+
 Tôi cung cấp edge case list từ FRD kèm test data cụ thể cho từng case — ví dụ leverage = 1 → không có liquidation price; margin ratio = 99.9% → warning state, chưa liquidate. QA dùng để build test scenario, không cần tự suy luận. Một số inconsistency trong behavior tôi phát hiện trực tiếp trong UAT vì hiểu domain — không phải vì test script chỉ ra.
 
 ---
