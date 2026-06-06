@@ -87,20 +87,22 @@ Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần l
   </Accordion>
 
   <Accordion title="Order Types & Edge Cases" icon="list-check">
-    **Order types:** Limit · Market · Stop-Limit · Take Profit / Stop Loss
 
-    | Edge Case | Vấn đề | Giải pháp |
-    |---|---|---|
-    | Partial fill | Order khớp một phần | PARTIALLY_FILLED state + allow cancel remainder |
-    | Liquidation cascade | Nhiều account liq cùng lúc | Insurance fund absorb; ADL nếu fund cạn |
-    | Leverage ≥ 20x | User không hiểu rủi ro đòn bẩy cao | Mandatory confirmation popup |
-    | Mark vs. last price | Liq trigger theo mark price | Spec rõ để tránh confusion Dev–QA |
+  **Order types:** Limit · Market · Stop-Limit · Take Profit / Stop Loss
+
+  | Edge Case | Vấn đề | Giải pháp |
+  |---|---|---|
+  | Partial fill | Order khớp một phần | PARTIALLY_FILLED state + allow cancel remainder |
+  | Liquidation cascade | Nhiều account liq cùng lúc | Insurance fund absorb; ADL nếu fund cạn |
+  | Leverage ≥ 20x | User không hiểu rủi ro đòn bẩy cao | Mandatory confirmation popup |
+  | Mark vs. last price | Liq trigger theo mark price | Spec rõ để tránh confusion Dev–QA |
   </Accordion>
 
   <Accordion title="Funding Rate — Khái niệm khó align nhất" icon="rotate">
-    Cơ chế thu/trả mỗi 8 giờ giữa long và short. Rate dương → long trả short; âm → short trả long.
 
-    Không phức tạp về công thức — nhưng rất khó để Engineering, UX và CS hiểu nhất quán về *ai trả, ai nhận, countdown hiển thị thế nào*. Tôi viết internal explainer document riêng tách khỏi PRD và tổ chức walkthrough session trước khi Design bắt đầu.
+  Cơ chế thu/trả mỗi 8 giờ giữa long và short. Rate dương → long trả short; âm → short trả long.
+
+  Không phức tạp về công thức — nhưng rất khó để Engineering, UX và CS hiểu nhất quán về *ai trả, ai nhận, countdown hiển thị thế nào*. Tôi viết internal explainer document riêng tách khỏi PRD và tổ chức walkthrough session trước khi Design bắt đầu.
   </Accordion>
 </AccordionGroup>
 
