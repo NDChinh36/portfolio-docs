@@ -47,11 +47,17 @@ Nami Innovation mở rộng từ spot trading sang **futures trading** — một
 
 ## Cách tiếp cận
 
-**Business Rule Register từ đầu —** Khi nhận ra futures có hàng chục rules phụ thuộc nhau, tôi đề xuất xây register tập trung thay vì scatter trong nhiều tài liệu. Mỗi rule có: ID, mô tả, formula, danh sách dependency và ví dụ numeric. Engineering dùng để track: *nếu rule này thay đổi, cần update gì tiếp theo*.
+### Business Rule Register từ đầu
 
-**User story trước, technical spec sau —** Viết user story cho từng loại trader trước, sau đó mới define business rules cần có để support từng story. Tránh team bị lạc vào technical details trước khi đồng thuận về value thực sự.
+Khi nhận ra futures có hàng chục rules phụ thuộc nhau, tôi đề xuất xây register tập trung thay vì scatter trong nhiều tài liệu. Mỗi rule có: ID, mô tả, formula, danh sách dependency và ví dụ numeric. Engineering dùng để track: *nếu rule này thay đổi, cần update gì tiếp theo*.
 
-**Prototype review trước PRD —** Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần lớn inconsistency giữa UX và business rule được phát hiện ở bước này — không phải sau khi dev đã code.
+### User story trước, technical spec sau
+
+Viết user story cho từng loại trader trước, sau đó mới define business rules cần có để support từng story. Tránh team bị lạc vào technical details trước khi đồng thuận về value thực sự.
+
+### Prototype review trước PRD
+
+Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần lớn inconsistency giữa UX và business rule được phát hiện ở bước này — không phải sau khi dev đã code.
 
 ---
 
