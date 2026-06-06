@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Internal Transfer — Nami App</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #e2e8f0; display: flex; align-items: flex-start; justify-content: center; padding: 16px 20px; min-height: 100vh; gap: 20px; color: #1e293b; font-size: 13px; }
+
+  /* Phone frame */
+  .phone { background: #fff; width: 340px; min-width: 340px; border-radius: 28px; box-shadow: 0 16px 48px rgba(0,0,0,.18); overflow: hidden; display: flex; flex-direction: column; }
+  .notch { height: 28px; background: #0f172a; display: flex; align-items: center; justify-content: center; }
+  .notch-bar { width: 100px; height: 10px; background: #1e293b; border-radius: 5px; }
+
+  /* App topbar */
+  .topbar { background: #0f172a; padding: 10px 16px 14px; display: flex; align-items: center; gap: 10px; }
+  .back-btn { color: #60a5fa; font-size: 18px; cursor: pointer; }
+  .topbar-title { font-size: 15px; font-weight: 700; color: #f8fafc; }
+
+  /* Steps indicator */
+  .steps { background: #0f172a; padding: 0 16px 14px; display: flex; align-items: center; gap: 0; }
+  .step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .step-circle { width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .step-circle.done { background: #22c55e; color: #fff; }
+  .step-circle.active { background: #3b82f6; color: #fff; }
+  .step-circle.pending { background: #334155; color: #64748b; }
+  .step-label { font-size: 9px; color: #64748b; margin-top: 4px; text-align: center; }
+  .step-line { flex: 1; height: 2px; background: #334155; align-self: center; margin-bottom: 18px; }
+  .step-line.done { background: #22c55e; }
+
+  /* Scrollable body */
+  .body { flex: 1; overflow-y: auto; padding: 14px; background: #f8fafc; }
+
+  /* Section cards */
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 10px; }
+
+  /* Account row */
+  .account-row { display: flex; align-items: center; gap: 8px; }
+  .account-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .icon-spot { background: #eff6ff; }
+  .icon-spot2 { background: #f0fdf4; }
+  .account-text .acc-type { font-size: 12px; font-weight: 700; color: #0f172a; }
+  .account-text .acc-sub { font-size: 11px; color: #6b7280; margin-top: 1px; }
+  .account-text .acc-bal { font-size: 12px; font-weight: 700; color: #16a34a; margin-top: 3px; }
+  .account-arrow { margin: 0 auto; color: #94a3b8; font-size: 18px; }
+
+  /* Balance breakdown */
+  .bal-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f8fafc; }
+  .bal-row:last-child { border-bottom: none; }
+  .bal-key { font-size: 12px; color: #374151; }
+  .bal-val { font-size: 12px; font-weight: 700; }
+  .bal-val.green { color: #16a34a; }
+  .bal-val.orange { color: #f59e0b; }
+  .bal-val.muted { color: #94a3b8; }
+
+  /* Amount input */
+  .amount-input-row { display: flex; align-items: center; gap: 8px; }
+  .amount-input { flex: 1; border: 1.5px solid #3b82f6; border-radius: 8px; padding: 10px 12px; font-size: 18px; font-weight: 800; color: #0f172a; background: #eff6ff; }
+  .max-btn { padding: 8px 12px; background: #1d4ed8; color: #fff; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .coin-badge { font-size: 11px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .avail-note { font-size: 11px; color: #64748b; background: #f8fafc; padding: 5px 8px; border-radius: 5px; margin-top: 8px; border: 1px solid #e2e8f0; }
+
+  /* OTP section */
+  .otp-warning { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; }
+  .otp-icon { font-size: 16px; flex-shrink: 0; }
+  .otp-text { font-size: 11px; color: #92400e; line-height: 1.5; }
+  .otp-text strong { display: block; font-size: 12px; margin-bottom: 2px; }
+  .otp-input-row { display: flex; gap: 6px; margin-top: 8px; }
+  .otp-digit { flex: 1; height: 40px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 16px; font-weight: 800; text-align: center; color: #0f172a; background: #fff; }
+  .otp-digit:first-child { border-color: #1d4ed8; background: #eff6ff; }
+
+  /* Summary */
+  .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; }
+  .summary-row:last-child { border-bottom: none; }
+  .sum-key { font-size: 12px; color: #6b7280; }
+  .sum-val { font-size: 12px; font-weight: 700; color: #0f172a; }
+  .sum-val.green { color: #16a34a; }
+  .sum-val.blue { color: #1d4ed8; }
+
+  /* Confirm button */
+  .confirm-btn { width: 100%; margin-top: 10px; padding: 14px; background: #1d4ed8; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 800; text-align: center; cursor: pointer; border: none; }
+
+  /* Annotation side panel */
+  .annotations { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding-top: 28px; max-width: 260px; }
+  .ann-item { display: flex; gap: 10px; align-items: flex-start; }
+  .ann-pin { width: 24px; height: 24px; background: #f97316; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(249,115,22,.4); margin-top: 1px; }
+  .ann-text strong { font-size: 12px; color: #ea580c; display: block; margin-bottom: 3px; }
+  .ann-text span { font-size: 11px; color: #374151; line-height: 1.6; }
+  .ann-connector { font-size: 20px; color: #cbd5e1; align-self: flex-start; }
+</style>
+</head>
+<body>
+
+  <!-- Phone mockup -->
+  <div class="phone">
+    <div class="notch"><div class="notch-bar"></div></div>
+
+    <div class="topbar">
+      <span class="back-btn">‹</span>
+      <span class="topbar-title">Chuyển Tiền Nội Bộ</span>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="steps">
+      <div class="step">
+        <div class="step-circle done">✓</div>
+        <div class="step-label">Chọn TK</div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step">
+        <div class="step-circle active">2</div>
+        <div class="step-label">Nhập số tiền</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-circle pending">3</div>
+        <div class="step-label">Xác nhận</div>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <!-- Accounts -->
+      <div class="card">
+        <div class="card-label">Tài khoản chuyển/nhận</div>
+        <div class="account-row">
+          <div class="account-icon icon-spot">💼</div>
+          <div class="account-text">
+            <div class="acc-type">Spot Account</div>
+            <div class="acc-sub">Nguồn chuyển</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:#94a3b8;font-size:20px;padding:6px 0;">↓</div>
+        <div class="account-row">
+          <div class="account-icon icon-spot2">👤</div>
+          <div class="account-text">
+            <div class="acc-type">@trading_pro_99</div>
+            <div class="acc-sub">Spot Account · Đã xác minh</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance breakdown -->
+      <div class="card">
+        <div class="card-label">Số dư khả dụng — USDT</div>
+        <div class="bal-row">
+          <span class="bal-key">Total Balance</span>
+          <span class="bal-val muted">500.00 USDT</span>
+        </div>
+        <div class="bal-row">
+          <span class="bal-key">Margin Locked (Futures)</span>
+          <span class="bal-val orange">− 49.80 USDT</span>
+        </div>
+        <div class="bal-row" style="padding-top:7px;">
+          <span class="bal-key" style="font-weight:700;color:#0f172a;">Available Balance</span>
+          <span class="bal-val green" style="font-size:14px;">450.20 USDT</span>
+        </div>
+      </div>
+
+      <!-- Amount input -->
+      <div class="card">
+        <div class="card-label">Số tiền chuyển</div>
+        <div class="amount-input-row">
+          <input class="amount-input" value="2,500" readonly />
+          <span class="coin-badge" style="font-size:13px;font-weight:700;color:#374151;">USDT</span>
+          <div class="max-btn">MAX</div>
+        </div>
+        <div class="avail-note">Tối đa: 450.20 USDT (available balance)</div>
+      </div>
+
+      <!-- OTP Warning -->
+      <div class="otp-warning">
+        <span class="otp-icon">⚠️</span>
+        <div class="otp-text">
+          <strong>Xác thực bắt buộc</strong>
+          P2P transfer vượt ngưỡng 1,000 USDT — nhập OTP gửi đến email để tiếp tục.
+        </div>
+      </div>
+      <div class="otp-input-row">
+        <input class="otp-digit" value="7" readonly />
+        <input class="otp-digit" value="" readonly />
+        <input class="otp-digit" value="" readonly />
+        <input class="otp-digit" value="" readonly />
+        <input class="otp-digit" value="" readonly />
+        <input class="otp-digit" value="" readonly />
+      </div>
+
+      <!-- Summary -->
+      <div class="card" style="margin-top:10px;">
+        <div class="card-label">Xác nhận giao dịch</div>
+        <div class="summary-row">
+          <span class="sum-key">Người nhận</span>
+          <span class="sum-val blue">@trading_pro_99</span>
+        </div>
+        <div class="summary-row">
+          <span class="sum-key">Số tiền</span>
+          <span class="sum-val">2,500.00 USDT</span>
+        </div>
+        <div class="summary-row">
+          <span class="sum-key">Phí giao dịch</span>
+          <span class="sum-val green">Miễn phí</span>
+        </div>
+        <div class="summary-row">
+          <span class="sum-key">Thời gian xử lý</span>
+          <span class="sum-val">Tức thì</span>
+        </div>
+      </div>
+
+      <button class="confirm-btn">Xác nhận chuyển tiền</button>
+    </div>
+  </div>
+
+  <!-- Annotation panel -->
+  <div class="annotations">
+
+    <div class="ann-item">
+      <div class="ann-pin">A</div>
+      <div class="ann-text">
+        <strong>Available ≠ Total Balance</strong>
+        <span>Validate theo <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">available = total − margin_locked</code>. BA Decision 2: user có open Futures position không được transfer hết total balance → liquidation risk.</span>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-pin">B</div>
+      <div class="ann-text">
+        <strong>Futures → Futures (cross-user) bị block</strong>
+        <span>Chỉ Spot → Spot (cross-user) và Futures ↔ Spot (cùng user). BA Decision 1: giảm risk, simplify validation logic.</span>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-pin">C</div>
+      <div class="ann-text">
+        <strong>OTP threshold-based</strong>
+        <span>OTP chỉ bắt buộc khi P2P amount vượt ngưỡng (BA Decision 3). Transfer nội bộ cùng user không cần OTP. Cân bằng UX vs. security.</span>
+      </div>
+    </div>
+
+    <div class="ann-item">
+      <div class="ann-pin">D</div>
+      <div class="ann-text">
+        <strong>Receiver verification</strong>
+        <span>Hiển thị avatar + tên receiver trước confirm để user xác nhận đúng người nhận. Edge case: receiver không active → show error trước confirm screen.</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
