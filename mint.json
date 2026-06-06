@@ -132,6 +132,23 @@
       ]
     },
     {
+      "group": "Tài liệu mẫu — MoMo Transfer (Practice)",
+      "pages": [
+        {
+          "group": "MoMo P2P Transfer — BA Document Set",
+          "icon": "mobile",
+          "pages": [
+            "projects/momo-transfer/overview",
+            "projects/momo-transfer/brd",
+            "projects/momo-transfer/user-stories",
+            "projects/momo-transfer/use-case-spec",
+            "projects/momo-transfer/frd",
+            "projects/momo-transfer/erd"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Tài liệu mẫu — Ví điện tử (Background System)",
       "pages": [
         {
