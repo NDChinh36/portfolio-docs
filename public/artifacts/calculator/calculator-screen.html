@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trading Calculator — Nami Exchange</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f1f5f9; color: #1e293b; font-size: 13px; }
+
+  .shell { display: flex; flex-direction: column; height: 100vh; }
+
+  /* App header */
+  .appbar { background: #0f172a; padding: 0 20px; height: 48px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .appbar-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .pair-badge { background: #1e3a5f; color: #93c5fd; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 5px; }
+  .appbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .price-live { font-size: 13px; font-weight: 700; color: #4ade80; }
+  .price-change { font-size: 11px; color: #4ade80; }
+
+  /* Tabs */
+  .tabs { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 20px; display: flex; gap: 0; flex-shrink: 0; }
+  .tab { padding: 10px 18px; font-size: 12px; font-weight: 600; color: #94a3b8; cursor: pointer; border-bottom: 2.5px solid transparent; white-space: nowrap; }
+  .tab.active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+
+  /* Main content */
+  .content { flex: 1; padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; overflow: hidden; position: relative; }
+
+  /* Input panel */
+  .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; overflow: hidden; }
+  .panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 14px; }
+
+  /* Direction toggle */
+  .dir-toggle { display: flex; border-radius: 7px; overflow: hidden; border: 1.5px solid #e2e8f0; margin-bottom: 14px; }
+  .dir-btn { flex: 1; padding: 9px 0; font-size: 12px; font-weight: 700; text-align: center; cursor: pointer; }
+  .dir-long { background: #16a34a; color: #fff; }
+  .dir-short { background: #f8fafc; color: #94a3b8; }
+
+  /* Fields */
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .label-hint { color: #9ca3af; font-weight: 400; font-size: 10px; letter-spacing: 0; text-transform: none; }
+  .input { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-weight: 600; color: #0f172a; background: #f9fafb; }
+  .input.positive { border-color: #86efac; background: #f0fdf4; }
+
+  /* Leverage */
+  .lev-row { display: flex; align-items: center; gap: 8px; }
+  .lev-badge { background: #eff6ff; color: #1d4ed8; font-size: 13px; font-weight: 800; padding: 7px 10px; border-radius: 6px; min-width: 46px; text-align: center; flex-shrink: 0; }
+  .lev-slider { flex: 1; accent-color: #1d4ed8; height: 4px; }
+  .lev-marks { display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-top: 4px; padding: 0 2px; }
+
+  /* Margin mode */
+  .mode-row { display: flex; gap: 6px; }
+  .mode-btn { padding: 6px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid; }
+  .mode-on { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .mode-off { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+
+  .fill-btn { width: 100%; margin-top: 12px; padding: 8px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 6px; font-size: 11px; color: #64748b; cursor: pointer; text-align: center; font-weight: 600; }
+
+  /* Results panel */
+  .results { display: flex; flex-direction: column; gap: 10px; position: relative; }
+
+  .rc { padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; position: relative; }
+  .rc.profit { background: #f0fdf4; border-color: #86efac; }
+  .rc.danger { background: #fff1f2; border-color: #fca5a5; }
+  .rc.blue { background: #eff6ff; border-color: #bfdbfe; }
+  .rc.neutral { background: #f8fafc; }
+
+  .rc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 5px; }
+  .rc-main { display: flex; align-items: baseline; gap: 8px; }
+  .rc-value { font-size: 20px; font-weight: 800; line-height: 1; }
+  .green { color: #15803d; }
+  .red { color: #dc2626; }
+  .navy { color: #1e40af; }
+  .dark { color: #1e293b; }
+  .rc-pct { font-size: 14px; font-weight: 700; }
+  .rc-formula { font-size: 10px; color: #94a3b8; font-family: "SF Mono", monospace; background: rgba(0,0,0,.03); padding: 3px 7px; border-radius: 3px; margin-top: 5px; }
+  .rc-note { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+
+  /* Annotations */
+  .ann { position: absolute; z-index: 20; }
+  .ann-pin { width: 22px; height: 22px; background: #f97316; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(249,115,22,.45); flex-shrink: 0; }
+  .ann-box { position: absolute; background: #fff; border: 1.5px solid #f97316; border-radius: 8px; padding: 9px 11px; box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 180px; max-width: 220px; }
+  .ann-box strong { color: #ea580c; font-size: 11px; display: block; margin-bottom: 3px; }
+  .ann-box span { font-size: 11px; color: #374151; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="appbar">
+    <span class="appbar-title">⚡ Nami Futures</span>
+    <span class="pair-badge">BTC/USDT PERP</span>
+    <div class="appbar-right">
+      <span class="price-live">$65,240.00</span>
+      <span class="price-change">+2.14%</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">📊 PnL Calculator</div>
+    <div class="tab">💣 Liquidation Price</div>
+    <div class="tab">💰 Required Margin</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Input Panel -->
+    <div class="panel">
+      <div class="panel-title">Thông số vị thế</div>
+
+      <div class="dir-toggle">
+        <div class="dir-btn dir-long">▲ Long</div>
+        <div class="dir-btn dir-short">▼ Short</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Entry Price <span class="label-hint">USDT</span></div>
+        <input class="input" value="65,000.00" readonly />
+      </div>
+
+      <div class="field">
+        <div class="label">Exit / Target Price <span class="label-hint">USDT</span></div>
+        <input class="input positive" value="68,000.00" readonly />
+      </div>
+
+      <div class="field">
+        <div class="label">Quantity <span class="label-hint">BTC</span></div>
+        <input class="input" value="0.5" readonly />
+      </div>
+
+      <div class="field">
+        <div class="label">Leverage <span class="label-hint">1× – 125×</span></div>
+        <div class="lev-row">
+          <span class="lev-badge">20×</span>
+          <input type="range" class="lev-slider" min="1" max="125" value="20" readonly />
+        </div>
+        <div class="lev-marks"><span>1×</span><span>25×</span><span>50×</span><span>100×</span><span>125×</span></div>
+      </div>
+
+      <div class="field">
+        <div class="label">Margin Mode</div>
+        <div class="mode-row">
+          <div class="mode-btn mode-on">Isolated</div>
+          <div class="mode-btn mode-off">Cross</div>
+        </div>
+      </div>
+
+      <div class="fill-btn">⚡ Fill from Current Open Position</div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results">
+
+      <div class="rc profit">
+        <div class="rc-label">Profit / Loss</div>
+        <div class="rc-main">
+          <span class="rc-value green">+$1,500.00</span>
+          <span class="rc-pct green">+4.62%</span>
+        </div>
+        <div class="rc-formula">PnL = (68,000 − 65,000) × 0.5</div>
+      </div>
+
+      <div class="rc blue">
+        <div class="rc-label">Return on Equity (ROE)</div>
+        <div class="rc-main">
+          <span class="rc-value navy">+92.31%</span>
+        </div>
+        <div class="rc-note">PnL ÷ Initial Margin × 100</div>
+      </div>
+
+      <div class="rc neutral">
+        <div class="rc-label">Required Margin (Isolated)</div>
+        <div class="rc-main">
+          <span class="rc-value dark">$1,625.00</span>
+        </div>
+        <div class="rc-formula">(65,000 × 0.5) ÷ 20 = 1,625 USDT</div>
+      </div>
+
+      <div class="rc danger">
+        <div class="rc-label">Liquidation Price</div>
+        <div class="rc-main">
+          <span class="rc-value red">$51,843.75</span>
+        </div>
+        <div class="rc-formula">Entry × (1 − 1/Lev + MM_Rate)</div>
+      </div>
+
+      <!-- Annotation A -->
+      <div class="ann" style="top:0px; right:0px; display:flex; gap:6px; align-items:flex-start;">
+        <div class="ann-box" style="right:28px; top:0; text-align:left;">
+          <strong>A — 3 User Personas</strong>
+          <span>Trader mới → Liq Price<br/>Trader thường → PnL + ROE<br/>Trader pro → Full parameters</span>
+        </div>
+        <div class="ann-pin">A</div>
+      </div>
+
+      <!-- Annotation B -->
+      <div class="ann" style="bottom:90px; right:0px; display:flex; gap:6px; align-items:flex-start;">
+        <div class="ann-box" style="right:28px; top:0; text-align:left;">
+          <strong>B — Công thức từ PRD</strong>
+          <span>BA define chính xác formula + MM Rate lookup table theo tier — Dev implement theo spec này</span>
+        </div>
+        <div class="ann-pin">B</div>
+      </div>
+
+      <!-- Annotation C -->
+      <div class="ann" style="bottom:2px; right:0px; display:flex; gap:6px; align-items:flex-start;">
+        <div class="ann-box" style="right:28px; top:0; text-align:left;">
+          <strong>C — Edge Case: Lev = 1×</strong>
+          <span>Không có liquidation → ẩn trường này. Cross mode → hiển thị disclaimer thay vì giá cụ thể.</span>
+        </div>
+        <div class="ann-pin">C</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
