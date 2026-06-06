@@ -80,11 +80,26 @@ Tôi không chỉ viết tài liệu — tôi giúp team hiểu đúng bài toá
 
 ---
 
-<Card title="Generic E-Wallet App — Tài liệu mẫu" icon="wallet" href="/projects/ewallet/project-context">
-  Bộ tài liệu BA hoàn chỉnh theo chuỗi SDLC: BRD · User Stories · Use Case Spec · FRD · ERD · UAT Test Cases. Viết lại để thực hành cấu trúc tài liệu đúng loại và đúng người đọc — áp dụng kinh nghiệm từ dự án thực tế.
+## Tài liệu mẫu — Practice Case Studies
 
-  <Warning>**Reconstructed practice case** — Tài liệu thực hành. Không phải dự án tại công ty.</Warning>
-</Card>
+<Warning>
+  Các tài liệu dưới đây được xây dựng độc lập để thực hành và trình bày năng lực BA trong nhiều domain khác nhau. Không phải dự án thương mại thực tế.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Healthcare — Appointment Booking" icon="hospital" href="/projects/healthcare-appointment/overview">
+    Đặt lịch khám ngoại trú, check-in QR/kiosk và HIS integration. Bài toán trọng tâm: multi-system orchestration, legacy HIS constraint, idempotency key, patient safety safeguards.
+  </Card>
+  <Card title="Logistics — OMS/WMS Fulfillment" icon="truck" href="/projects/logistics-oms-wms/overview">
+    Order Management + Warehouse Management System. Bài toán trọng tâm: multi-warehouse routing, exception queue, carrier integration, fulfillment SLA tracking.
+  </Card>
+  <Card title="Digital Payment — QR & Reconciliation" icon="credit-card" href="/projects/ewallet/payment-case-study">
+    QR payment flow, transaction state machine, và reconciliation. Bài toán trọng tâm: double-spend prevention, eventual consistency, settlement window rules.
+  </Card>
+  <Card title="E-Wallet Background System" icon="wallet" href="/projects/ewallet/project-context">
+    Bộ tài liệu SDLC đầy đủ: BRD · User Stories · Use Case Spec · FRD · ERD · UAT. 8 modules từ Auth đến QR Payment và Transaction History.
+  </Card>
+</CardGroup>
 
 ---
 
