@@ -39,11 +39,9 @@ Nami Innovation mở rộng từ spot trading sang **futures trading** — một
 
 ## Bài toán BA phải giải quyết
 
-| Bài toán | Mô tả |
-|---|---|
-| **Domain ambiguity** | Nhiều khái niệm đa nghĩa: isolated vs. cross margin, mark price vs. last price, funding rate direction. Nếu BA–Dev–QA hiểu khác nhau, bug xuất hiện ở production — và domain này không có "undo". |
-| **Edge case density** | Mỗi order type × margin mode × position state tạo ra một ma trận kịch bản. Không thể để Engineering tự suy luận từng trường hợp. |
-| **Stakeholder alignment** | Product muốn UX đơn giản cho trader mới; Engineering lo ngại complexity và performance; Risk cần guardrail chặt. BA phải tìm phương án cả ba bên làm việc được. |
+- **Domain ambiguity** — Nhiều khái niệm đa nghĩa: isolated vs. cross margin, mark price vs. last price, funding rate direction. Nếu BA–Dev–QA hiểu khác nhau, bug xuất hiện ở production — và domain này không có "undo".
+- **Edge case density** — Mỗi order type × margin mode × position state tạo ra một ma trận kịch bản. Không thể để Engineering tự suy luận từng trường hợp.
+- **Stakeholder alignment** — Product muốn UX đơn giản cho trader mới; Engineering lo ngại complexity và performance; Risk cần guardrail chặt. BA phải tìm phương án cả ba bên làm việc được.
 
 ---
 
