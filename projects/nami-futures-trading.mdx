@@ -65,13 +65,14 @@ Cùng Design review prototype Figma trước khi viết PRD chi tiết. Phần l
 
 <AccordionGroup>
   <Accordion title="Margin Calculation" icon="calculator">
-    | Loại | Mô tả | Công thức |
-    |---|---|---|
-    | **Initial Margin** | Ký quỹ ban đầu bắt buộc | `Position Size / Leverage` |
-    | **Maintenance Margin** | Ngưỡng tối thiểu duy trì position | `Position Size × MM Rate` |
-    | **Margin Ratio** | Chỉ số sức khỏe tài khoản; liq khi ≥ 100% | `Maintenance Margin / Account Equity` |
 
-    **Lưu ý:** MM Rate thay đổi theo Position Tier — phải xây lookup table, không được hardcode.
+  | Loại | Mô tả | Công thức |
+  |---|---|---|
+  | **Initial Margin** | Ký quỹ ban đầu bắt buộc | `Position Size / Leverage` |
+  | **Maintenance Margin** | Ngưỡng tối thiểu duy trì position | `Position Size × MM Rate` |
+  | **Margin Ratio** | Chỉ số sức khỏe tài khoản; liq khi ≥ 100% | `Maintenance Margin / Account Equity` |
+
+  **Lưu ý:** MM Rate thay đổi theo Position Tier — phải xây lookup table, không được hardcode.
   </Accordion>
 
   <Accordion title="Liquidation Conditions" icon="triangle-exclamation">
