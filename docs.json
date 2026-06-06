@@ -1,0 +1,186 @@
+{
+  "theme": "mint",
+  "name": "Nguyễn Đức Chinh — BA Portfolio",
+  "colors": {
+    "primary": "#1D4ED8",
+    "light": "#3B82F6",
+    "dark": "#1E40AF"
+  },
+  "favicon": "/images/favicon.svg",
+  "logo": {
+    "light": "/images/logo-light.svg",
+    "dark": "/images/logo-dark.svg",
+    "href": "https://github.com/NDChinh36"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/NDChinh36"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "LinkedIn",
+      "href": "https://linkedin.com/in/chinhredc/"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/NDChinh36"
+    }
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "href": "https://github.com/NDChinh36"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "BA - Nguyen Duc Chinh",
+        "icon": "bank",
+        "groups": [
+          {
+            "group": "Giới thiệu",
+            "pages": [
+              "introduction"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "BA Projects",
+        "groups": [
+          {
+            "group": "Dự án thực tế — Nami Innovation",
+            "pages": [
+              "projects/nami-futures-trading",
+              "projects/nami-reward-program",
+              "projects/nami-money-transfer",
+              "projects/nami-calculator"
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — Futures Calculator (Nâng cao)",
+            "pages": [
+              {
+                "group": "Futures Position Calculator",
+                "icon": "calculator",
+                "pages": [
+                  "projects/futures-calculator/overview",
+                  "projects/futures-calculator/brd",
+                  "projects/futures-calculator/user-stories",
+                  "projects/futures-calculator/use-cases",
+                  "projects/futures-calculator/calculator",
+                  "projects/futures-calculator/copy-fill",
+                  "projects/futures-calculator/erd",
+                  "projects/futures-calculator/uat"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — Healthcare (Nâng cao)",
+            "pages": [
+              {
+                "group": "Hospital Appointment & HIS Check-in",
+                "icon": "hospital",
+                "pages": [
+                  "projects/healthcare-appointment/overview",
+                  "projects/healthcare-appointment/booking-flow",
+                  "projects/healthcare-appointment/state-machine",
+                  "projects/healthcare-appointment/business-rules",
+                  "projects/healthcare-appointment/data-mapping",
+                  "projects/healthcare-appointment/source-of-truth",
+                  "projects/healthcare-appointment/rbac",
+                  "projects/healthcare-appointment/api-integration",
+                  "projects/healthcare-appointment/exception-handling",
+                  "projects/healthcare-appointment/uat-scenarios",
+                  "projects/healthcare-appointment/wireframe-plan"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — Logistics / OMS-WMS (Nâng cao)",
+            "pages": [
+              {
+                "group": "OMS/WMS Fulfillment Platform",
+                "icon": "truck",
+                "pages": [
+                  "projects/logistics-oms-wms/overview",
+                  "projects/logistics-oms-wms/fulfillment-flow",
+                  "projects/logistics-oms-wms/state-machine",
+                  "projects/logistics-oms-wms/business-rules",
+                  "projects/logistics-oms-wms/data-mapping",
+                  "projects/logistics-oms-wms/rbac",
+                  "projects/logistics-oms-wms/api-integration",
+                  "projects/logistics-oms-wms/exception-queue",
+                  "projects/logistics-oms-wms/uat"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — Digital Payment (Nâng cao)",
+            "pages": [
+              {
+                "group": "Digital Payment Case Study",
+                "icon": "credit-card",
+                "pages": [
+                  "projects/ewallet/payment-case-study",
+                  "projects/ewallet/transaction-state-machine",
+                  "projects/ewallet/reconciliation-dashboard",
+                  "projects/ewallet/exception-handling"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — MoMo Transfer (Practice)",
+            "pages": [
+              {
+                "group": "MoMo P2P Transfer — BA Document Set",
+                "icon": "mobile",
+                "pages": [
+                  "projects/momo-transfer/overview",
+                  "projects/momo-transfer/brd",
+                  "projects/momo-transfer/user-stories",
+                  "projects/momo-transfer/use-case-spec",
+                  "projects/momo-transfer/frd",
+                  "projects/momo-transfer/erd"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tài liệu mẫu — Ví điện tử (Background System)",
+            "pages": [
+              {
+                "group": "FinPay E-Wallet — 8 Modules",
+                "icon": "wallet",
+                "pages": [
+                  "projects/ewallet/overview",
+                  "projects/ewallet/project-context",
+                  "projects/ewallet/auth",
+                  "projects/ewallet/kyc",
+                  "projects/ewallet/wallet-core",
+                  "projects/ewallet/bank-linking",
+                  "projects/ewallet/transfer",
+                  "projects/ewallet/qr-payment",
+                  "projects/ewallet/transaction-history",
+                  "projects/ewallet/notifications-settings"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

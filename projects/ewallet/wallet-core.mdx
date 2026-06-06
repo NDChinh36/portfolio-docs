@@ -7,14 +7,14 @@ icon: "sack-dollar"
 # PRD: Wallet Core Module
 
 <Info>
-  **Document ID:** PRD-EW-WALLET-001 · **Version:** 1.0 · **Status:** Draft  
-  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team  
-  **Reviewer:** Tech Lead, Compliance, Risk Team · **Approver:** Head of Product  
+  **Document ID:** PRD-EW-WALLET-001 · **Version:** 1.0 · **Status:** Draft\
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team\
+  **Reviewer:** Tech Lead, Compliance, Risk Team · **Approver:** Head of Product\
   **Tài liệu liên quan:** PRD-EW-AUTH-001, PRD-EW-KYC-001, PRD-EW-BANK-001
 </Info>
 
 | Vai trò | Mục đích đọc |
-|---|---|
+| --- | --- |
 | Tech Lead / Developer | Thiết kế Wallet Core Service, NAPAS integration, balance engine |
 | Compliance | Xác nhận hạn mức đúng Nghị định 52/2024; phí = 0 |
 | Risk Team | Review limit engine, fraud detection trigger khi nạp/rút bất thường |
@@ -29,12 +29,15 @@ icon: "sack-dollar"
   <Card title="Balance Management" icon="scale-balanced">
     Hiển thị số dư tổng / khả dụng / bị khóa. Toggle ẩn/hiện. Cập nhật realtime sau mỗi GD.
   </Card>
+
   <Card title="Nạp tiền" icon="arrow-down-to-bracket">
-    Pull (kéo từ ngân hàng liên kết — chính) + Push QR (chuyển thủ công từ app ngân hàng — fallback)
+    Pull (kéo từ ngân hàng liên kết — chính) \+ Push QR (chuyển thủ công từ app ngân hàng — fallback)
   </Card>
+
   <Card title="Rút tiền" icon="arrow-up-from-bracket">
-    NAPAS 247 T+0; về tài khoản ngân hàng đã liên kết; PIN bắt buộc; tức thì
+    NAPAS 247 T\+0; về tài khoản ngân hàng đã liên kết; PIN bắt buộc; tức thì
   </Card>
+
   <Card title="Limit Engine" icon="gauge">
     Hạn mức real-time theo KYC tier; reset theo ngày/tháng; block trước khi thực hiện GD
   </Card>
@@ -49,16 +52,16 @@ icon: "sack-dollar"
 ### 1.2 Hạn mức theo KYC Tier
 
 | Hạn mức | Tier 1 (SĐT only) | Tier 2 (eKYC) | Tier 3 (Full KYC) | Nguồn |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Nạp / lần | 1,000,000 VND | 20,000,000 VND | 100,000,000 VND | Nghị định 52/2024 |
-| Rút / lần | ❌ Không cho rút | 20,000,000 VND | 100,000,000 VND | |
-| Tổng nạp + rút / tháng | 10,000,000 VND | 100,000,000 VND | 500,000,000 VND | |
-| Số dư tối đa tại bất kỳ thời điểm | 10,000,000 VND | 100,000,000 VND | 500,000,000 VND | |
+| Rút / lần | ❌ Không cho rút | 20,000,000 VND | 100,000,000 VND |  |
+| Tổng nạp \+ rút / tháng | 10,000,000 VND | 100,000,000 VND | 500,000,000 VND |  |
+| Số dư tối đa tại bất kỳ thời điểm | 10,000,000 VND | 100,000,000 VND | 500,000,000 VND |  |
 
 ### 1.3 Balance Types
 
 | Loại | Ký hiệu | Mô tả |
-|---|---|---|
+| --- | --- | --- |
 | **Total Balance** | `balance_total` | Tổng số dư trong ví |
 | **Available Balance** | `balance_available` | `= balance_total - balance_locked` — số tiền có thể dùng ngay |
 | **Locked Balance** | `balance_locked` | Tiền đang giữ trong lệnh pending (rút đang xử lý, transfer chờ duyệt) |
@@ -68,15 +71,15 @@ icon: "sack-dollar"
 ## 2. Danh sách màn hình
 
 | Screen ID | Tên màn hình | Điều kiện hiển thị |
-|---|---|---|
+| --- | --- | --- |
 | SCR-WALLET-01 | Home — Balance Card | Luôn hiển thị trên Home sau đăng nhập |
 | SCR-WALLET-02 | Chọn phương thức nạp | User nhấn "Nạp tiền" |
-| SCR-WALLET-03 | Nạp qua ngân hàng (Pull) — Chọn bank + nhập số tiền | User chọn "Từ ngân hàng liên kết" |
+| SCR-WALLET-03 | Nạp qua ngân hàng (Pull) — Chọn bank \+ nhập số tiền | User chọn "Từ ngân hàng liên kết" |
 | SCR-WALLET-04 | Nạp — Xác nhận pull | Sau khi nhập số tiền hợp lệ |
 | SCR-WALLET-05 | Nạp — Nhập PIN | Sau confirm pull |
 | SCR-WALLET-06 | Nạp — Đang xử lý | Sau PIN đúng; NAPAS call đang chạy |
 | SCR-WALLET-07 | Nạp — Kết quả | Sau khi NAPAS trả kết quả |
-| SCR-WALLET-08 | Nạp qua QR (Push) — Hiển thị QR + STK ảo | User chọn "Chuyển khoản thủ công" |
+| SCR-WALLET-08 | Nạp qua QR (Push) — Hiển thị QR \+ STK ảo | User chọn "Chuyển khoản thủ công" |
 | SCR-WALLET-09 | Rút tiền — Chọn ngân hàng nhận | User nhấn "Rút tiền" |
 | SCR-WALLET-10 | Rút tiền — Nhập số tiền | Sau khi chọn ngân hàng |
 | SCR-WALLET-11 | Rút tiền — Xác nhận | Sau khi nhập số tiền hợp lệ |
@@ -125,7 +128,7 @@ flowchart TD
 
 ## 4. User Flow — Nạp tiền (Push QR — Fallback)
 
-```mermaid
+```mermaid actions={true}
 flowchart TD
     A[SCR-WALLET-08\nHiển thị QR + STK ảo] --> B[Hệ thống tạo\nVirtual Account Number\ncho user này]
     B --> C[Hiển thị:\n• QR Code động\n• Số TK ảo: xxxx-yyyy-zzzz\n• Tên thụ hưởng\n• Nội dung CK: mã user]
@@ -138,7 +141,7 @@ flowchart TD
     G -- Có --> I{Số tiền trong\nhạn mức?}
     I -- Vượt hạn mức --> J[Reject; hoàn tiền\nngược lại user\nqua NAPAS]
     I -- Hợp lệ --> K[Credit vào ví]
-    K --> L[Push notification\n'Nạp {amount} thành công']
+    K --> L[Push notification\n"Nạp {amount} thành công"]
     L --> M([Balance tự cập nhật\nkhi user mở app])
 ```
 
@@ -149,7 +152,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A([User nhấn\n"Rút tiền"]) --> B{Tier ≥ Tier 2?}
-    B -- Tier 1 --> C[Thông báo:\n'Cần xác minh danh tính\ntrước khi rút tiền']
+    B -- Tier 1 --> C[Thông báo:\n"Cần xác minh danh tính\ntrước khi rút tiền"]
     C --> D[Link đến KYC Module]
     B -- Tier 2+ --> E[SCR-WALLET-09\nChọn ngân hàng nhận]
 
@@ -251,7 +254,7 @@ sequenceDiagram
 
 ---
 
-## 8. Sequence Diagram — Withdrawal (NAPAS 247 T+0)
+## 8. Sequence Diagram — Withdrawal (NAPAS 247 T\+0)
 
 ```mermaid
 sequenceDiagram
@@ -289,7 +292,7 @@ sequenceDiagram
 
 ### SCR-WALLET-01 — Home Balance Card
 
-```
+```text
 ┌─────────────────────────────────┐
 │  ┌───────────────────────────┐  │
 │  │  Số dư khả dụng    [👁]   │  │
@@ -311,14 +314,14 @@ sequenceDiagram
 ```
 
 | Component | Loại | Nội dung | Điều kiện | Action |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Balance label | Text (small) | "Số dư khả dụng" | Always | — |
 | Balance amount | Text H1 bold | "X,XXX,XXX đ" (format: dấu phẩy ngăn cách) | Default: hiển thị rõ | — |
 | Balance masked | Text H1 | "• • • • • • đ" | Khi user ẩn | — |
 | Toggle eye icon | Icon button | 👁 / 👁‍🗨 | Always | Toggle ẩn/hiện; lưu preference |
-| Locked amount | Text (small, grey) | "Đang xử lý: {X} đ" | Khi `balance_locked > 0` | — |
+| Locked amount | Text (small, grey) | Khi `balance_locked > 0` | — |  |
 | "Nạp tiền" button | Outlined button | ↓ Nạp | Always | Sang SCR-WALLET-02 |
-| "Rút tiền" button | Outlined button | ↑ Rút | Tier 2+; else disabled với tooltip | Sang SCR-WALLET-09 |
+| "Rút tiền" button | Outlined button | ↑ Rút | Tier 2\+; else disabled với tooltip | Sang SCR-WALLET-09 |
 | Tier badge | Badge | "Tier 1" / "Tier 2" / "Tier 3" | Always | Tap → xem hạn mức chi tiết |
 | Upgrade CTA | Banner (orange) | "Xác minh danh tính để rút tiền và tăng hạn mức →" | Tier 1 only | Sang KYC module |
 
@@ -326,7 +329,7 @@ sequenceDiagram
 
 ### SCR-WALLET-03 — Nạp qua Ngân hàng (Pull)
 
-```
+```text
 ┌─────────────────────────────────┐
 │  ←              Nạp tiền       │
 │                                 │
@@ -350,13 +353,13 @@ sequenceDiagram
 ```
 
 | Component | Loại | Nội dung | Điều kiện | Action |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | "Chọn ngân hàng" | Label | "Nguồn tiền" | Always | — |
 | Bank list | Dropdown/Sheet | Danh sách ngân hàng liên kết (avatar, tên bank, số TK ẩn 4 số cuối) | Always | Chọn 1 |
-| "Thêm ngân hàng" | Text link | "+ Thêm ngân hàng mới" | Always | Sang Bank Linking module |
+| "Thêm ngân hàng" | Text link | "\+ Thêm ngân hàng mới" | Always | Sang Bank Linking module |
 | Amount input | Numeric input | "Nhập số tiền" | Always | Format realtime: "1.000.000 đ" |
 | Quick amount | Chips | 50K · 100K · 500K · 1M · 2M | Always | Auto-fill amount |
-| Remaining limit | Text (small) | "Hạn mức ngày còn lại: {X} đ · Tháng còn lại: {Y} đ" | Always | — |
+| Remaining limit | Text (small) | Always | — |  |
 | Min/Max note | Text (small) | "Tối thiểu 5,000 đ · Tối đa 20,000,000 đ/lần (Tier 2)" | Always | — |
 | Inline error | Text (red) | Xem Validation Rules | Khi lỗi | — |
 | "Tiếp tục" | Primary button | "Tiếp tục" | Disabled khi invalid | Sang SCR-WALLET-04 |
@@ -365,7 +368,7 @@ sequenceDiagram
 
 ### SCR-WALLET-04 — Xác nhận Nạp (Pull)
 
-```
+```text
 ┌─────────────────────────────────┐
 │  ←          Xác nhận nạp tiền  │
 │                                 │
@@ -387,11 +390,11 @@ sequenceDiagram
 ```
 
 | Component | Loại | Nội dung | Action |
-|---|---|---|---|
-| Summary card | Card | Nguồn: [bank name] — [masked account] | — |
-| | | Số tiền: **{amount}** | — |
-| | | Phí: **Miễn phí** | — |
-| | | Ước tính nhận: **{amount}** (trong vòng vài giây) | — |
+| --- | --- | --- | --- |
+| Summary card | Card | Nguồn: \[bank name\] — \[masked account\] | — |
+|  |  | Số tiền: {amount} | — |
+|  |  | Phí: **Miễn phí** | — |
+|  |  | Ước tính nhận: {amount} (trong vòng vài giây) | — |
 | Legal note | Text (small) | "Giao dịch không thể hoàn sau khi xác nhận." | — |
 | "Xác nhận nạp" | Primary button | "Xác nhận nạp tiền" | Sang PIN screen |
 | "Hủy" | Text link | "Hủy" | Về SCR-WALLET-03 |
@@ -400,7 +403,7 @@ sequenceDiagram
 
 ### SCR-WALLET-08 — Nạp qua QR (Push)
 
-```
+```text
 ┌─────────────────────────────────┐
 │  ←           Nạp qua QR        │
 │                                 │
@@ -428,23 +431,23 @@ sequenceDiagram
 ```
 
 | Component | Loại | Nội dung | Action |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Instruction | Text | "Dùng app ngân hàng bất kỳ để quét QR hoặc chuyển đến số TK bên dưới" | — |
 | QR Code | Image | QR chứa thông tin Virtual Account | — |
-| Virtual account info | Card | **Số TK ảo:** {virtual_account_number} | Copy to clipboard |
-| | | **Tên thụ hưởng:** [Tên công ty / App Name] | — |
-| | | **Nội dung CK:** {user_code} — *Bắt buộc nhập đúng* | — |
-| | | **Ngân hàng:** [Bank name] | — |
+| Virtual account info | Card | Copy to clipboard |  |
+|  |  | **Tên thụ hưởng:** \[Tên công ty / App Name\] | — |
+|  |  | — |  |
+|  |  | **Ngân hàng:** \[Bank name\] | — |
 | Min amount note | Text | "Tối thiểu 5,000 đ" | — |
 | Warning | Banner (orange) | "Nhập đúng nội dung chuyển khoản. Sai nội dung, tiền có thể không được cộng tự động." | — |
-| Status | Auto-refresh | "Đang chờ giao dịch..." → "✅ Nhận được {X} đ!" | Poll `/wallet/topup/status` mỗi 5s |
+| Status | Auto-refresh | Poll `/wallet/topup/status` mỗi 5s |  |
 | "Tôi đã chuyển xong" | Secondary button | "Tôi đã chuyển xong" | Đóng màn hình; về Home; notify khi nhận được |
 
 ---
 
 ### SCR-WALLET-11 — Xác nhận Rút tiền
 
-```
+```text
 ┌─────────────────────────────────┐
 │  ←          Xác nhận rút tiền  │
 │                                 │
@@ -468,12 +471,12 @@ sequenceDiagram
 ```
 
 | Component | Loại | Nội dung | Action |
-|---|---|---|---|
-| Summary card | Card | Đến: [bank name] — [masked account] — [owner name] | — |
-| | | Số tiền: **{amount}** | — |
-| | | Phí: **Miễn phí** | — |
-| | | Thời gian nhận: **Ngay lập tức (NAPAS 247)** | — |
-| Available balance | Text | "Số dư sau khi rút: [available - amount] đ" | — |
+| --- | --- | --- | --- |
+| Summary card | Card | Đến: \[bank name\] — \[masked account\] — \[owner name\] | — |
+|  |  | Số tiền: {amount} | — |
+|  |  | Phí: **Miễn phí** | — |
+|  |  | Thời gian nhận: **Ngay lập tức (NAPAS 247)** | — |
+| Available balance | Text | "Số dư sau khi rút: \[available - amount\] đ" | — |
 | Irreversible warning | Banner (red) | "⚠ Giao dịch không thể hoàn sau khi xác nhận." | — |
 | "Xác nhận rút" | Primary button (red) | "Xác nhận rút tiền" | Sang PIN screen |
 | "Hủy" | Text link | "Hủy" | Về SCR-WALLET-10 |
@@ -483,28 +486,28 @@ sequenceDiagram
 ## 10. Validation Rules
 
 | Field / Bước | Rule | Thông báo | Trigger |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Số tiền nạp** | ≥ 5,000 VND | "Số tiền tối thiểu là 5,000 đ" | On blur / submit |
-| | ≤ 20,000,000 VND/lần (Tier 2) | "Số tiền tối đa 1 lần nạp là 20,000,000 đ" | On blur |
-| | ≤ Hạn mức ngày còn lại | "Vượt hạn mức ngày. Bạn còn có thể nạp {X} đ hôm nay." | After API limit check |
-| | ≤ Hạn mức tháng còn lại | "Vượt hạn mức tháng. Còn {Y} đ trong tháng này." | After API limit check |
-| | ≤ Số dư tối đa trong ví (balance_total + amount ≤ tier_max_balance) | "Số dư ví sẽ vượt hạn mức {tier_max}. Vui lòng rút bớt trước." | After API limit check |
-| | Chỉ chứa số (không ký tự đặc biệt) | Format auto: phân cách dấu chấm | On input |
+|  | ≤ 20,000,000 VND/lần (Tier 2) | "Số tiền tối đa 1 lần nạp là 20,000,000 đ" | On blur |
+|  | ≤ Hạn mức ngày còn lại | After API limit check |  |
+|  | ≤ Hạn mức tháng còn lại | After API limit check |  |
+|  | ≤ Số dư tối đa trong ví (balance\_total \+ amount ≤ tier\_max\_balance) | After API limit check |  |
+|  | Chỉ chứa số (không ký tự đặc biệt) | Format auto: phân cách dấu chấm | On input |
 | **Số tiền rút** | ≥ 10,000 VND | "Số tiền tối thiểu rút là 10,000 đ" | On blur |
-| | ≤ `balance_available` | "Số dư khả dụng không đủ. Hiện có {X} đ." | On blur / API |
-| | ≤ 20,000,000 VND/lần (Tier 2) | "Số tiền tối đa 1 lần rút là 20,000,000 đ" | On blur |
-| | ≤ Hạn mức tháng còn lại | "Vượt hạn mức tháng. Còn {Y} đ." | API |
+|  | ≤ `balance_available` | On blur / API |  |
+|  | ≤ 20,000,000 VND/lần (Tier 2) | "Số tiền tối đa 1 lần rút là 20,000,000 đ" | On blur |
+|  | ≤ Hạn mức tháng còn lại | API |  |
 | **Chọn ngân hàng (rút)** | Phải có ít nhất 1 ngân hàng liên kết | Redirect → Bank Linking module | Pre-screen |
-| | Ngân hàng được chọn phải còn active | "Ngân hàng này không khả dụng. Chọn ngân hàng khác." | API |
-| **PIN** | Đúng PIN | "PIN không đúng. Còn {N} lần." | After API |
-| | Sai 5 lần | Lock account 30 phút | After API |
+|  | Ngân hàng được chọn phải còn active | "Ngân hàng này không khả dụng. Chọn ngân hàng khác." | API |
+| **PIN** | Đúng PIN | After API |  |
+|  | Sai 5 lần | Lock account 30 phút | After API |
 
 ---
 
 ## 11. Business Rules
 
 | ID | Rule | Áp dụng tại |
-|---|---|---|
+| --- | --- | --- |
 | BR-WALLET-01 | Tier 1: không được rút tiền về ngân hàng | SCR-WALLET-01 (disable nút Rút), SCR-WALLET-09 |
 | BR-WALLET-02 | Nạp và rút đều miễn phí 100%; không thu phí ẩn | Confirm screens |
 | BR-WALLET-03 | Atomic operation: debit và credit phải xảy ra đồng thời; không trạng thái trung gian | Wallet Core DB |
@@ -514,59 +517,57 @@ sequenceDiagram
 | BR-WALLET-07 | Withdrawal: Lock amount ngay sau khi PIN đúng; chỉ unlock khi NAPAS confirm hoặc rollback khi fail | Wallet Core |
 | BR-WALLET-08 | NAPAS withdrawal fail: retry tối đa 3 lần (5s, 15s, 30s); sau 3 lần → rollback; notify user | NAPAS integration |
 | BR-WALLET-09 | Balance không bao giờ âm; enforce tại DB level: `CHECK (balance_total >= 0)` | DB constraint |
-| BR-WALLET-10 | Hạn mức tháng reset vào 00:00 ngày 1 hàng tháng (múi giờ UTC+7) | Limit Engine |
-| BR-WALLET-11 | Hạn mức ngày reset vào 00:00 mỗi ngày (UTC+7) | Limit Engine |
+| BR-WALLET-10 | Hạn mức tháng reset vào 00:00 ngày 1 hàng tháng (múi giờ UTC\+7) | Limit Engine |
+| BR-WALLET-11 | Hạn mức ngày reset vào 00:00 mỗi ngày (UTC\+7) | Limit Engine |
 | BR-WALLET-12 | Push top-up: Nếu amount vượt hạn mức → hoàn tiền ngay trong 30 phút qua NAPAS | Webhook handler |
 | BR-WALLET-13 | Cảnh báo khi user nạp vượt 80% hạn mức tháng: banner thông báo | Limit Engine |
-| BR-WALLET-14 | **LimitEngine bucket theo nhóm:** (1) TOPUP có bucket riêng; (2) WITHDRAWAL có bucket riêng; (3) **TRANSFER + QR_PAY dùng chung bucket** "DEBIT" — cộng gộp với nhau theo ngày/tháng (xem BR-QR-08). Ví dụ: Tier 2 limit ngày 100M; chuyển 70M + QR 40M = 110M → QR_PAY bị từ chối dù limit TRANSFER chưa đầy | Limit Engine, Transfer Service, QR Service |
 
 ---
 
 ## 12. Notification Specifications
 
 | Event | Channel | Nội dung | Thời điểm |
-|---|---|---|---|
-| Nạp tiền thành công (pull) | Push + In-app | "✅ Nạp thành công +{amount} đ từ {bank_name}. Số dư: {new_balance} đ" | Ngay khi credit |
-| Nạp tiền thành công (push) | Push + In-app | "✅ Nhận được +{amount} đ từ chuyển khoản {bank_name}. Số dư: {new_balance} đ" | Khi webhook credit |
-| Nạp tiền thất bại | Push + In-app | "❌ Nạp tiền thất bại: {reason}. Vui lòng thử lại." | Khi fail confirmed |
-| Rút tiền thành công | Push + In-app + SMS | "✅ Rút {amount} đ về {bank_name} thành công. Mã GD: {tx_id}" | Khi NAPAS confirm |
-| Rút tiền đang xử lý (timeout) | Push + In-app | "⏳ Lệnh rút {amount} đ đang được xử lý. Chúng tôi sẽ thông báo khi hoàn tất." | Khi timeout |
-| Rút tiền thất bại + hoàn tiền | Push + In-app | "❌ Rút tiền thất bại. {amount} đ đã được hoàn lại vào ví. Mã lỗi: {code}" | Khi rollback hoàn tất |
-| Gần đạt hạn mức tháng (80%) | Push + In-app | "⚠ Bạn đã dùng 80% hạn mức giao dịch tháng. Còn {X} đ. Nâng tier để tăng hạn mức." | Khi vượt 80% |
-| Đạt hạn mức tháng (100%) | Push + In-app | "🔴 Hạn mức tháng đã hết. Chờ đến [ngày 1 tháng sau] để tiếp tục giao dịch." | Khi đạt 100% |
-| Push top-up bị hoàn tiền | SMS + Push | "Chuyển khoản {amount} đ vào ví bị hoàn: {reason}. Tiền sẽ về TK ngân hàng trong 30 phút." | Khi refund initiated |
+| --- | --- | --- | --- |
+| Nạp tiền thành công (pull) | Push \+ In-app | Ngay khi credit |  |
+| Nạp tiền thành công (push) | Push \+ In-app | Khi webhook credit |  |
+| Nạp tiền thất bại | Push \+ In-app | Khi fail confirmed |  |
+| Rút tiền thành công | Push \+ In-app \+ SMS | Khi NAPAS confirm |  |
+| Rút tiền đang xử lý (timeout) | Push \+ In-app | Khi timeout |  |
+| Rút tiền thất bại \+ hoàn tiền | Push \+ In-app | Khi rollback hoàn tất |  |
+| Gần đạt hạn mức tháng (80%) | Push \+ In-app | Khi vượt 80% |  |
+| Đạt hạn mức tháng (100%) | Push \+ In-app | "🔴 Hạn mức tháng đã hết. Chờ đến \[ngày 1 tháng sau\] để tiếp tục giao dịch." | Khi đạt 100% |
+| Push top-up bị hoàn tiền | SMS \+ Push | Khi refund initiated |  |
 
 ---
 
 ## 13. API Summary
 
 | Method | Endpoint | Request | Response | Mô tả |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | GET | `/wallet/balance` | — (header: token) | `[total, available, locked, currency, tier]` | Lấy số dư; gọi mỗi khi mở app / sau mỗi GD |
 | POST | `/wallet/topup/pull` | `[bank_account_id, amount, idempotency_key, pin_hash]` | `[tx_id, status, new_balance]` | Kéo tiền từ ngân hàng liên kết |
 | GET | `/wallet/topup/virtual-account` | — | `[virtual_account_no, bank_name, account_name, user_code, qr_content]` | Lấy thông tin STK ảo để hiển thị QR push |
 | GET | `/wallet/topup/status?tx_id=` | — | `[status, amount?, credited_at?]` | Poll trạng thái push top-up |
 | POST | `/wallet/withdraw` | `[bank_account_id, amount, idempotency_key, pin_hash]` | `[tx_id, status, new_balance]` | Rút tiền về ngân hàng |
 | GET | `/wallet/limits` | — | `[per_tx_max, daily_remaining, monthly_remaining, max_balance]` | Lấy hạn mức realtime |
-| POST | `/webhooks/napas/credit` | `[virtual_account, amount, bank_ref, ...]` *(internal)* | `[success: true]` | NAPAS gửi webhook khi push top-up đến |
-| POST | `/internal/wallet/atomic-transfer` | `{sender_wallet_id, recipient_wallet_id, amount, idempotency_key, caller: "TRANSFER_SVC"}` *(internal — không phơi ra public API Gateway)* | `{tx_id, status: "COMPLETED"/"FAILED", sender_new_balance, timestamp}` | **Internal API** dành cho Transfer Service: thực hiện atomic debit/credit trong 1 DB transaction (BEGIN → debit → credit → COMMIT); gọi bởi Transfer Service sau khi limit check pass; row-lock theo thứ tự wallet_id nhỏ → lớn để tránh deadlock; kết quả ghi vào Transaction DB đồng thời |
+| POST | `/webhooks/napas/credit` | `[virtual_account, amount, bank_ref, ...]`_(internal)_ | `[success: true]` | NAPAS gửi webhook khi push top-up đến |
 
 ---
 
 ## 14. Error Codes
 
 | Code | HTTP | Hiển thị user | Ghi chú dev |
-|---|---|---|---|
-| `WALLET_001` | 400 | "Số tiền tối thiểu là 5,000 đ" | amount < min_topup |
-| `WALLET_002` | 400 | "Số tiền tối đa 1 lần là {X} đ" | amount > per_tx_limit |
-| `WALLET_003` | 400 | "Vượt hạn mức ngày. Còn {X} đ hôm nay." | daily_remaining < amount |
-| `WALLET_004` | 400 | "Vượt hạn mức tháng. Còn {X} đ tháng này." | monthly_remaining < amount |
-| `WALLET_005` | 400 | "Số dư ví sẽ vượt hạn mức cho phép." | new_balance > max_balance |
-| `WALLET_006` | 400 | "Số dư khả dụng không đủ. Hiện có {X} đ." | available < withdraw_amount |
+| --- | --- | --- | --- |
+| `WALLET_001` | 400 | "Số tiền tối thiểu là 5,000 đ" | amount \< min\_topup |
+| `WALLET_002` | 400 | amount \> per\_tx\_limit |  |
+| `WALLET_003` | 400 | daily\_remaining \< amount |  |
+| `WALLET_004` | 400 | monthly\_remaining \< amount |  |
+| `WALLET_005` | 400 | "Số dư ví sẽ vượt hạn mức cho phép." | new\_balance \> max\_balance |
+| `WALLET_006` | 400 | available \< withdraw\_amount |  |
 | `WALLET_007` | 402 | "Số dư tài khoản ngân hàng không đủ." | Bank returned insufficient funds |
 | `WALLET_008` | 503 | "Ngân hàng đang bảo trì. Vui lòng thử lại sau." | Bank / NAPAS timeout |
-| `WALLET_009` | 409 | — (xử lý silent; trả kết quả cũ) | Duplicate idempotency_key |
-| `WALLET_010` | 403 | "Tài khoản Tier 1 chưa được rút tiền. Xác minh danh tính để mở tính năng này." | tier < TIER_2 |
+| `WALLET_009` | 409 | — (xử lý silent; trả kết quả cũ) | Duplicate idempotency\_key |
+| `WALLET_010` | 403 | "Tài khoản Tier 1 chưa được rút tiền. Xác minh danh tính để mở tính năng này." | tier \< TIER\_2 |
 | `WALLET_011` | 400 | "Ngân hàng này không khả dụng lúc này. Chọn ngân hàng khác." | Bank account inactive/unlinked |
 
 ---
@@ -574,160 +575,23 @@ sequenceDiagram
 ## 15. Edge Cases
 
 | Trường hợp | Xử lý |
-|---|---|
-| User nạp đúng bằng hạn mức tối đa ví rồi ngay lập tức rút | Sequence: nạp → balance = max; rút → balance = max - withdraw_amount; không lỗi nếu amount ≤ balance |
+| --- | --- |
+| User nạp đúng bằng hạn mức tối đa ví rồi ngay lập tức rút | Sequence: nạp → balance = max; rút → balance = max - withdraw\_amount; không lỗi nếu amount ≤ balance |
 | Push top-up đến nhưng tài khoản bị frozen (CCCD hết hạn) | Hoàn tiền tự động; notify user: "Tài khoản đang bị hạn chế. Cập nhật CCCD để nhận tiền." |
 | Hai lệnh rút cùng lúc (race condition) | Optimistic lock trên balance; lệnh thứ hai sẽ fail nếu balance không đủ sau khi lệnh đầu lock amount |
 | NAPAS timeout rút tiền nhưng Bank đã credit user | Wallet Core phát hiện duplicate qua `napas_ref`; không rollback; mark COMPLETED manually |
 | User thay đổi tier (KYC approved) trong khi có lệnh nạp đang pending | Lệnh pending dùng limit của tier cũ; sau approve tier mới áp dụng lệnh tiếp theo |
 | Virtual Account Number bị gửi tiền không có `user_code` | Webhook từ chối và hoàn tiền; log để CS xử lý thủ công nếu user claim |
 | Network mất kết nối sau khi PIN đúng, trước khi nhận kết quả | App hiển thị "Đang xử lý"; khi reconnect gọi `GET /wallet/topup/status?idempotency_key=`; idempotency đảm bảo không duplicate |
-| Giao dịch khởi tạo lúc 23:59:58 — limit check pass, nhưng DB commit lúc 00:00:02 (sang ngày mới) | Limit tính theo thời điểm **DB commit** (server timestamp); ngày reset 00:00 UTC+7; GD này tính vào ngày mới — developer phải dùng `now()` tại DB layer, không phải thời điểm request |
-| Tài khoản ngân hàng đã liên kết bị ngân hàng đóng (account closed) kể từ lần topup cuối | Pull topup API trả lỗi từ ngân hàng → WALLET_007 / WALLET_008; App hiển thị "Ngân hàng không thể xử lý lúc này. Vui lòng kiểm tra tài khoản ngân hàng hoặc chọn ngân hàng khác."; không tự động unlink |
 
 ---
 
-## 16. Cross-Module Data Flow
+## 16. Open Questions
 
-<Info>
-  Phần này mô tả cách Wallet Core ghi dữ liệu sang các module khác sau mỗi giao dịch. Cần đọc bởi Developer và QA khi implement Transaction History và Notifications.
-</Info>
-
-### Wallet Core → Transaction History
-
-Sau mỗi GD hoàn tất (COMPLETED hoặc FAILED), Wallet Core ghi bản ghi vào **transactions table** (chung với Transaction History module):
-
-| Field | Kiểu | Mô tả | Nguồn |
-|---|---|---|---|
-| `tx_id` | UUID | Unique transaction ID | Wallet Core generate |
-| `user_id` | UUID | Chủ ví (sender hoặc receiver) | Từ request |
-| `type` | enum | `topup_pull`, `topup_push`, `withdrawal`, `p2p_send`, `p2p_receive`, `qr_pay` | Wallet Core classify |
-| `direction` | enum | `credit` / `debit` | Wallet Core determine |
-| `amount` | bigint (VND) | Số tiền tuyệt đối (không âm) | Từ request |
-| `fee` | bigint | Phí GD (hiện tại = 0) | Fee engine |
-| `status` | enum | `success`, `pending`, `failed` | Wallet Core outcome |
-| `counterparty_name` | string | Tên đối tác (masked nếu cần) | User Service lookup |
-| `description` | string | Nội dung chuyển khoản (nếu có) | Từ request |
-| `napas_ref` | string? | Mã tham chiếu NAPAS (nullable — chỉ có với topup/rút/QR) | NAPAS response |
-| `balance_after` | bigint | Số dư ví sau khi GD commit | Wallet Core snapshot tại commit |
-| `created_at` | timestamp | Thời điểm GD khởi tạo | Server timestamp |
-| `completed_at` | timestamp? | Thời điểm GD hoàn tất (nullable) | Wallet Core timestamp |
-
-**Ghi chú cho các module khác:**
-- **Transfer module**: Sau khi `AtomicTransfer` COMMIT, Wallet Core ghi 2 records: `p2p_send` cho sender + `p2p_receive` cho recipient
-- **QR Payment module**: Ghi 1 record `qr_pay` cho buyer sau NAPAS credit confirm
-- **Transaction History module**: Chỉ READ — không ghi trực tiếp vào transactions table
-- **Cache invalidation**: Wallet Core emit event `WALLET_TX_CREATED` → Transaction Service bắt event → invalidate Redis cache `txlist_{user_id}_default`
-
-### Wallet Core → KYC Module
-
-Khi user KYC thành công và Tier thay đổi:
-- KYC Service gọi `PATCH /internal/wallet/tier` với `{user_id, new_tier}` để Wallet Core cập nhật limit engine
-- Wallet Core reload limit config cho user ngay lập tức (không cần restart)
-
----
-
-## 17. Roadmap — Tính năng phát triển
-
-<Info>
-  Các tính năng và quyết định kỹ thuật dưới đây cần Tech Lead và Risk Team làm rõ trước Sprint tương ứng. Một số mục ảnh hưởng đến kiến trúc cốt lõi của Wallet Core và không thể dễ dàng thay đổi sau launch.
-</Info>
-
-<AccordionGroup>
-  <Accordion title="[Sprint 1] Virtual Account Number — Fixed vs Rotating Strategy" icon="hashtag">
-    **Team:** Tech Lead · **Ưu tiên:** Critical
-
-    Quyết định chiến lược cấp **Số tài khoản ảo (STK ảo)** cho mỗi user khi nạp tiền từ ngân hàng: (A) **1 STK ảo cố định** per user — đơn giản, dễ dùng; hoặc (B) **STK ảo mới cho mỗi lần nạp** — an toàn hơn, giảm rủi ro track transaction pattern, nhưng phức tạp hơn về hạ tầng.
-
-    **Yêu cầu chính:** Tech Lead chọn phương án và cập nhật API spec; document vào ADR; cập nhật SCR-WALLET-03 (màn nạp tiền).  
-    **Phụ thuộc:** NAPAS / đối tác ngân hàng xác nhận khả năng cấp STK ảo dynamic.
-  </Accordion>
-
-  <Accordion title="[Sprint 1] Fraud Detection — Pattern Analysis NAPAS Timeout Retry" icon="shield">
-    **Team:** Risk · **Ưu tiên:** High
-
-    Bổ sung khả năng **phân tích pattern** cho chuỗi NAPAS timeout retry: phát hiện user cố tình trigger retry để khai thác race condition hoặc double-credit. Ghi log đầy đủ và alert Risk Team khi phát hiện pattern bất thường.
-
-    **Yêu cầu chính:** Thêm `retry_count` và `retry_reason` vào transaction audit log; xây dựng alert rule (ví dụ ≥ 3 retry trong 10 phút / 1 user); Risk Team thiết lập threshold.  
-    **Phụ thuộc:** Risk Team cung cấp fraud pattern ruleset; Tech Lead thiết kế log schema trước Sprint 1.
-  </Accordion>
-
-  <Accordion title="[Sprint 1] Policy Scope Lock khi NAPAS Đang Retry — Per-Wallet vs Global" icon="lock">
-    **Team:** Tech Lead + Risk · **Ưu tiên:** High
-
-    Xác định **phạm vi lock** khi đang xử lý NAPAS timeout retry: (A) **Lock toàn bộ ví** — an toàn nhưng block mọi giao dịch của user; hoặc (B) **Lock per-transaction** — cho phép GD độc lập chạy song song. Ảnh hưởng đến UX và tính nhất quán dữ liệu.
-
-    **Yêu cầu chính:** Document policy vào BR-WALLET; cập nhật transaction flow; thêm trạng thái hiển thị phù hợp trên UI khi ví đang bị lock.  
-    **Phụ thuộc:** Risk Team đánh giá nguy cơ double-spend của từng phương án; Tech Lead đánh giá complexity implement per-transaction lock.
-  </Accordion>
-
-  <Accordion title="[Sprint 2] Cảnh báo Hạn mức 80% — Channel & Frequency Policy" icon="bell">
-    **Team:** Product · **Ưu tiên:** Medium
-
-    Thiết kế chi tiết tính năng cảnh báo khi user đạt **80% hạn mức chi tiêu**: gửi qua **push notification** (cao priority) hay chỉ hiện **in-app banner** (ít intrusive)? Tần suất: cảnh báo mỗi GD sau 80% hay chỉ 1 lần duy nhất?
-
-    **Yêu cầu chính:** Product quyết định channel và frequency; BA cập nhật Notification spec của module; implement trigger trong LimitEngine khi vượt ngưỡng 80%.  
-    **Phụ thuộc:** User research về notification preference; cân nhắc notification fatigue nếu alert mỗi GD.
-  </Accordion>
-
-  <Accordion title="[Sprint 2] Real-time Balance Update — WebSocket / Server-Sent Events" icon="bolt">
-    **Team:** Tech Lead · **Ưu tiên:** Medium
-
-    Thêm cơ chế **real-time balance refresh** thay vì chỉ pull khi mở app. Khi nhận GD mới (chuyển tiền đến, nạp tiền thành công), số dư tự động cập nhật trên Home screen.
-
-    **Yêu cầu chính:** Tech Lead lựa chọn WebSocket vs SSE; thiết kế reconnect strategy và backoff policy; cập nhật Home screen để subscribe balance events.  
-    **Phụ thuộc:** Đánh giá impact lên battery / data consumption; infrastructure cần hỗ trợ persistent connection tại scale mục tiêu.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## 17. Non-Functional Requirements (NFR)
-
-### Performance
-
-| Chỉ số | Target | Ghi chú |
-|---|---|---|
-| Balance read API | P95 < 100ms | Redis cache; không đọc DB trực tiếp |
-| Nạp tiền (pull) — commit response | P95 < 3s | Tổng thời gian từ PIN confirm đến credit ví |
-| Nạp tiền (push) — webhook processing | P95 < 1s | Thời gian từ NAPAS webhook đến credit ví user |
-| Rút tiền — NAPAS roundtrip | P95 < 5s | Phụ thuộc NAPAS SLA; P99 < 10s |
-| Atomic debit/credit (DB transaction) | P95 < 200ms | PostgreSQL với row-level lock |
-| Virtual account QR load | P95 < 300ms | Cached per user |
-
-### Bảo mật (Security)
-
-| Yêu cầu | Mô tả |
-|---|---|
-| Balance mutation authorization | Mọi thao tác ghi vào balance phải qua Wallet Core Service; không có direct DB write |
-| DB constraint | `CHECK (balance_available >= 0)` và `CHECK (balance_total >= balance_available)` enforce tại DB level |
-| Idempotency bắt buộc | Mọi topup/withdraw API phải kèm `idempotency_key`; server cache 24h |
-| NAPAS webhook authentication | Verify chữ ký HMAC từ NAPAS; whitelist IP NAPAS; reject request thiếu chữ ký |
-| Audit logging | Mọi balance mutation được log: user_id, amount, tx_type, before_balance, after_balance, ip, device_id, timestamp |
-
-### Tính sẵn sàng & Độ tin cậy
-
-| Chỉ số | Target | Ghi chú |
-|---|---|---|
-| Wallet Core Service uptime | ≥ 99.95% | Payment-critical; ≤ 4.4 giờ downtime/năm |
-| NAPAS 247 dependency | ≥ 99.5% | NAPAS SLA cam kết; có retry 3 lần |
-| Circuit breaker (NAPAS) | Mở sau 5 lỗi liên tiếp | Fallback: queue lệnh; notify user; tự đóng sau 60s |
-| Graceful read-only mode | Nếu write path fail: vẫn hiển thị balance (read-only); không cho GD mới | Tránh total outage |
-| DB replication | Sync replica cho reads; primary cho writes | Không single point of failure |
-
-### Tính toàn vẹn dữ liệu & Ledger
-
-| Yêu cầu | Mô tả |
-|---|---|
-| Double-entry ledger | Mỗi transaction tạo 2 ledger entries: debit (giảm source) + credit (tăng destination); tổng balance của hệ thống luôn = 0 |
-| Daily reconciliation | Automated reconciliation mỗi 00:30 UTC+7: so sánh ledger entries vs. wallet balance vs. NAPAS statement |
-| Alert on mismatch | Nếu reconciliation lệch > 0 đồng → alert ngay cho Finance + Tech Lead |
-
-### Lưu trữ & Compliance
-
-| Loại dữ liệu | Thời gian lưu | Cơ sở pháp lý |
-|---|---|---|
-| Transaction records (nạp, rút, phí) | Tối thiểu 5 năm | Nghị định 52/2024 |
-| Ledger entries | Tối thiểu 5 năm | Accounting & audit requirement |
-| Balance snapshots (daily) | 5 năm | Reconciliation & dispute resolution |
-| NAPAS webhook raw payload | 1 năm | Technical audit; dispute với NAPAS |
+| # | Câu hỏi | Owner | Sprint |
+| --- | --- | --- | --- |
+| OQ-WALLET-01 | Virtual Account Number: dùng 1 STK ảo cố định per user hay generate mới mỗi session? Sinh mới an toàn hơn nhưng phức tạp hơn. | Tech Lead | Sprint 1 |
+| OQ-WALLET-02 | Số lần retry NAPAS timeout (hiện thiết kế 3 lần): Risk Team có yêu cầu log thêm để phát hiện pattern giả GD không? | Risk | Sprint 1 |
+| OQ-WALLET-03 | Cảnh báo hạn mức 80%: push notification hay chỉ in-app? Tần suất: mỗi GD sau 80% hay chỉ 1 lần? | Product | Sprint 2 |
+| OQ-WALLET-04 | Khi NAPAS rút tiền bị timeout và đang retry: user có thể bắt đầu giao dịch khác không, hay lock toàn bộ ví? | Tech Lead \+ Risk | Sprint 1 |
+| OQ-WALLET-05 | Balance hiển thị có real-time push (WebSocket) không, hay chỉ pull khi mở app? | Tech Lead | Sprint 2 |
