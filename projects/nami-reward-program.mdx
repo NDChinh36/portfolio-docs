@@ -114,6 +114,50 @@ Nami Innovation cần một **hệ thống reward linh hoạt** để thúc đ�
 
 ---
 
+## Key BA Decisions
+
+<AccordionGroup>
+
+<Accordion title="Decision 1 — Tách trigger logic thành 4 loại độc lập">
+
+| | |
+|---|---|
+| **Context** | Growth muốn một hệ thống campaign "linh hoạt tối đa" — ban đầu đề xuất engine generic xử lý mọi loại condition. |
+| **Problem / Risk** | Generic engine không thể define rõ ràng edge case cho từng trigger: streak reset khi miss 1 ngày khác hoàn toàn rollback volume khi GD bị cancel. Mixing logic → bug khó detect, Growth khó config đúng. |
+| **BA Recommendation** | Tách thành 4 loại trigger với spec riêng biệt: **Volume-based** (cộng dồn, exclude cancelled tx), **Event-based** (one-time, không repeat), **Streak-based** (reset nếu bỏ ngày), **Referral** (chain action: invite + KYC + GD đầu tiên của người được giới thiệu). |
+| **Trade-off** | Cần build 4 sub-engine thay vì 1 engine generic. Dev estimate tăng ~30% nhưng behavior của mỗi loại trở nên predictable và testable độc lập. |
+| **Expected Impact** | Mỗi trigger type có edge case rõ ràng; Growth team tự config không bị nhầm lẫn giữa các loại; QA có thể test từng engine độc lập. |
+
+</Accordion>
+
+<Accordion title="Decision 2 — Anti-abuse rules phải thiết kế từ PRD đầu tiên, không phải patch sau launch">
+
+| | |
+|---|---|
+| **Context** | Growth team ban đầu chỉ focus vào happy path. Anti-abuse được đề xuất xử lý sau launch nếu phát sinh vấn đề. |
+| **Problem / Risk** | Reward farming xảy ra tức thì sau launch — khi phát hiện, reward đã phát và không thể thu hồi. Patch sau khi campaign đang chạy tạo UX inconsistency và user trust issue. |
+| **BA Recommendation** | Đưa anti-abuse rules vào scope MVP: account age minimum (≥7 ngày), cooldown giữa các lần nhận reward, budget cap per user và toàn campaign, blacklist mechanism. Làm việc trực tiếp với Risk Team trong giai đoạn elicitation, không chờ đến QA. |
+| **Trade-off** | Dev scope tăng, timeline dài hơn ~1 tuần. Risk Team phải participate sớm dù dự án thuộc Growth domain. |
+| **Expected Impact** | Không có farming incident khi launch. Budget cap ngăn campaign "hết tiền" trong 2 ngày thay vì 14 ngày theo kế hoạch (thực tế đã xảy ra với Campaign B trước khi có cap). |
+
+</Accordion>
+
+<Accordion title="Decision 3 — Distribution mode là config của Growth, không phải technical default">
+
+| | |
+|---|---|
+| **Context** | Engineering đề xuất chọn một mode distribution cố định (batch hàng ngày) để đơn giản hóa implementation. Growth chưa có quan điểm rõ ràng. |
+| **Problem / Risk** | Batch daily phù hợp với volume-based campaign nhưng tệ cho event-based (user hoàn thành KYC không thấy reward ngay → giảm motivation tại đúng thời điểm hành động). |
+| **BA Recommendation** | Cho phép Growth config per campaign: `distribution_mode = immediate / daily_batch`. BA spec rõ trade-off của từng mode để Growth chủ động chọn phù hợp với campaign type, không phải chọn theo mặc định kỹ thuật. |
+| **Trade-off** | Cần build và test cả 2 mode. Dev phức tạp hơn nhưng chỉ là config switch, không phải 2 hệ thống khác nhau. |
+| **Expected Impact** | Growth linh hoạt thiết kế trải nghiệm phù hợp. Event-based campaigns (KYC, first deposit) dùng immediate để maximize motivation tại thời điểm user vừa đạt điều kiện. |
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
 ## Điểm khác biệt so với feature thông thường
 
 <CardGroup cols={2}>
