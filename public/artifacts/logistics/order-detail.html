@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Detail — Logistics OMS/WMS · BA Portfolio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 13px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .portfolio-label {
+    background: #1e293b; color: #94a3b8;
+    text-align: center; padding: 7px 16px;
+    font-size: 11px; letter-spacing: 0.08em; font-weight: 500; flex-shrink: 0;
+  }
+  .portfolio-label strong { color: #e2e8f0; }
+
+  /* Sticky order header */
+  .order-header {
+    background: #fff;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .order-header-left { display: flex; align-items: center; gap: 14px; }
+  .back-btn { color: #3b82f6; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .order-id { font-size: 17px; font-weight: 800; color: #0f172a; }
+  .order-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge-transit { background: #dbeafe; color: #1d4ed8; }
+  .order-meta { font-size: 12px; color: #64748b; display: flex; gap: 10px; align-items: center; }
+  .order-meta span { display: flex; align-items: center; gap: 4px; }
+
+  /* Role-based action buttons */
+  .action-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .action-btn {
+    padding: 7px 14px; border-radius: 7px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid;
+  }
+  .btn-blue { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .btn-green { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+  .btn-red { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .btn-gray { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed; }
+  .btn-orange { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+  .role-label { font-size: 10px; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+  .role-divider { width: 1px; height: 24px; background: #e2e8f0; }
+
+  /* Annotation pin inline */
+  .apin { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #f97316; color: #fff; border-radius: 50%; font-size: 10px; font-weight: 800; box-shadow: 0 2px 8px rgba(249,115,22,.45); vertical-align: middle; flex-shrink: 0; }
+
+  /* SLA bar */
+  .sla-bar { display: flex; align-items: center; gap: 10px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 7px; padding: 7px 14px; }
+  .sla-label { font-size: 11px; font-weight: 700; color: #92400e; white-space: nowrap; }
+  .sla-progress-track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .sla-progress-fill { height: 100%; border-radius: 3px; background: #f59e0b; width: 35%; }
+  .sla-countdown { font-size: 12px; font-weight: 800; color: #c2410c; white-space: nowrap; }
+
+  /* Body content */
+  .body-content { flex: 1; overflow-y: auto; padding: 16px 24px 32px; display: flex; flex-direction: column; gap: 14px; }
+  .sla-row { flex-shrink: 0; }
+
+  /* 2-col grid */
+  .two-col { display: grid; grid-template-columns: 60fr 40fr; gap: 14px; }
+
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .card-header { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; display: flex; align-items: center; gap: 7px; }
+  .card-body { padding: 12px 16px; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 12px; position: relative; }
+  .tl-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 11px; top: 24px;
+    width: 2px; height: calc(100% - 8px);
+    background: #e2e8f0;
+  }
+  .tl-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0; margin-top: 2px;
+    border: 2px solid;
+    position: relative; z-index: 1;
+    background: #fff;
+  }
+  .dot-oms { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+  .dot-wms { border-color: #22c55e; color: #22c55e; background: #f0fdf4; }
+  .dot-carrier { border-color: #f97316; color: #f97316; background: #fff7ed; }
+  .dot-system { border-color: #94a3b8; color: #94a3b8; background: #f8fafc; }
+  .dot-human { border-color: #a855f7; color: #a855f7; background: #faf5ff; }
+  .tl-content { flex: 1; padding-bottom: 14px; }
+  .tl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .tl-action { font-size: 13px; font-weight: 600; color: #0f172a; }
+  .tl-source {
+    font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .src-oms { background: #dbeafe; color: #1d4ed8; }
+  .src-wms { background: #dcfce7; color: #15803d; }
+  .src-carrier { background: #fed7aa; color: #c2410c; }
+  .src-system { background: #f1f5f9; color: #64748b; }
+  .src-human { background: #f3e8ff; color: #7c3aed; }
+  .tl-time { font-size: 10px; color: #94a3b8; margin-left: auto; white-space: nowrap; }
+  .tl-detail { font-size: 11px; color: #64748b; line-height: 1.5; }
+
+  /* SKU table */
+  .sku-table { width: 100%; border-collapse: collapse; }
+  .sku-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; padding: 7px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+  .sku-table td { font-size: 12px; color: #374151; padding: 8px 10px; border-bottom: 1px solid #f8fafc; }
+  .sku-table tr:last-child td { border-bottom: none; }
+  .qty-match { color: #15803d; font-weight: 700; }
+  .qty-short { color: #dc2626; font-weight: 700; background: #fef2f2; padding: 2px 6px; border-radius: 4px; }
+  .qty-neutral { color: #374151; }
+  .sku-name { font-weight: 600; color: #0f172a; }
+  .sku-id { font-size: 10px; color: #94a3b8; font-family: monospace; }
+
+  /* Delivery card */
+  .delivery-info { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+  .delivery-row { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
+  .delivery-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .delivery-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em; display: block; margin-bottom: 1px; }
+  .delivery-val { font-weight: 600; color: #0f172a; }
+
+  /* Collapsible sections */
+  .collapsible { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .collapse-header { padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .collapse-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #64748b; display: flex; align-items: center; gap: 7px; }
+  .collapse-chevron { font-size: 11px; color: #94a3b8; }
+  .exception-list { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .exc-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+  .exc-type { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+  .exc-resolved { background: #dcfce7; color: #15803d; }
+  .exc-open { background: #fef2f2; color: #dc2626; }
+  .exc-info { flex: 1; }
+  .exc-title { font-size: 12px; font-weight: 600; color: #0f172a; }
+  .exc-meta { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+  .exc-time { font-size: 10px; color: #94a3b8; white-space: nowrap; }
+
+  /* Legend */
+  .legend-bar { background: #fff; border-top: 1px solid #e2e8f0; padding: 8px 24px; display: flex; gap: 16px; flex-wrap: wrap; flex-shrink: 0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #374151; }
+  .legend-pin { width: 20px; height: 20px; flex-shrink: 0; background: #f97316; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="portfolio-label">
+  <strong>Portfolio Artifact · Business Analyst</strong> — Order Detail Screen · Logistics OMS/WMS Fulfillment · Practice Case Study
+</div>
+
+<!-- Sticky order header -->
+<div class="order-header">
+  <div class="order-header-left">
+    <span class="back-btn">← Back to Queue</span>
+    <span class="order-id">ORD-2401-5532</span>
+    <span class="order-badge badge-transit">🚚 In Transit</span>
+    <div class="order-meta">
+      <span>Lazada · Merchant A</span>
+      <span>·</span>
+      <span>Created: 14 Jun 2025, 08:23</span>
+    </div>
+  </div>
+
+  <div class="action-group">
+    <!-- CS actions -->
+    <span class="role-label">CS:</span>
+    <button class="action-btn btn-blue">📞 Contact Customer</button>
+    <button class="action-btn btn-blue">✏️ Add Note</button>
+    <div class="role-divider"></div>
+    <!-- Op Manager additional actions -->
+    <span class="role-label">
+      <span class="apin">A</span> Op Manager:
+    </span>
+    <button class="action-btn btn-orange">⚡ Force Cancel</button>
+    <button class="action-btn btn-green">🏭 Reassign WH</button>
+    <button class="action-btn btn-gray">🖨️ Print Label</button>
+  </div>
+</div>
+
+<!-- Body -->
+<div class="body-content">
+
+  <!-- SLA row -->
+  <div class="sla-row">
+    <div class="sla-bar">
+      <span class="sla-label">
+        <span class="apin">B</span> SLA Delivery Deadline:
+      </span>
+      <div class="sla-progress-track">
+        <div class="sla-progress-fill"></div>
+      </div>
+      <span class="sla-countdown">⏰ Còn 3g 22p · Deadline: 14:00 hôm nay</span>
+    </div>
+  </div>
+
+  <!-- 2-col main content -->
+  <div class="two-col">
+
+    <!-- LEFT: Status Timeline -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="apin">C</span>
+          Status Timeline (OMS + WMS + Carrier)
+        </div>
+        <span style="font-size:11px;color:#94a3b8;">6 events</span>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+
+          <div class="tl-item">
+            <div class="tl-dot dot-carrier">🚚</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Picked up by carrier</span>
+                <span class="tl-source src-carrier">Carrier</span>
+                <span class="tl-time">10:15</span>
+              </div>
+              <div class="tl-detail">Giao Hàng Nhanh · TK: GHN240614001 · 2 packages</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot dot-wms">✓</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Packed & ready for pickup</span>
+                <span class="tl-source src-wms">WMS</span>
+                <span class="tl-time">09:48</span>
+              </div>
+              <div class="tl-detail">Warehouse A · Packer: Trần Văn B · 2/3 SKU picked (1 SKU short-picked — see SKU list)</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot dot-human">!</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Note added by CS agent</span>
+                <span class="tl-source src-human">Human</span>
+                <span class="tl-time">09:30</span>
+              </div>
+              <div class="tl-detail">Customer requested delivery before 14:00 — set SLA flag. Agent: Nguyễn Thị C</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot dot-wms">⚡</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Picking started</span>
+                <span class="tl-source src-wms">WMS</span>
+                <span class="tl-time">09:05</span>
+              </div>
+              <div class="tl-detail">Warehouse A · Picker: Lê Văn D · Zone 3B</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot dot-oms">📋</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Assigned to warehouse</span>
+                <span class="tl-source src-oms">OMS</span>
+                <span class="tl-time">08:41</span>
+              </div>
+              <div class="tl-detail">Auto-routed to Warehouse A (nearest, capacity available)</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot dot-oms">🆕</div>
+            <div class="tl-content">
+              <div class="tl-header">
+                <span class="tl-action">Order received from Lazada</span>
+                <span class="tl-source src-oms">OMS</span>
+                <span class="tl-time">08:23</span>
+              </div>
+              <div class="tl-detail">Channel: Lazada · Payment: Confirmed · Priority: Standard</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SKU list + delivery info -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="apin">D</span>
+            SKU List — Qty Tracking
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="sku-table">
+            <thead>
+              <tr>
+                <th>SKU / Product</th>
+                <th>Ordered</th>
+                <th>Picked</th>
+                <th>Shipped</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="sku-name">Nike Air Max 270</div>
+                  <div class="sku-id">SKU-NKE-270-BLK-42</div>
+                </td>
+                <td class="qty-neutral">1</td>
+                <td class="qty-match">1 ✓</td>
+                <td class="qty-neutral">1</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="sku-name">Adidas Hoodie Grey</div>
+                  <div class="sku-id">SKU-ADI-HDD-GRY-L</div>
+                </td>
+                <td class="qty-neutral">2</td>
+                <td class="qty-short">1 ⚠</td>
+                <td class="qty-neutral">1</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="sku-name">Sport Water Bottle</div>
+                  <div class="sku-id">SKU-SPT-BTL-750ML</div>
+                </td>
+                <td class="qty-neutral">1</td>
+                <td class="qty-match">1 ✓</td>
+                <td class="qty-neutral">1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:8px 14px;background:#fef9c3;border-top:1px solid #fde68a;font-size:11px;color:#92400e;">
+          ⚠ 1 SKU short-picked (Adidas Hoodie): ordered 2, picked 1. Exception logged automatically.
+        </div>
+      </div>
+
+      <!-- Delivery info -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Delivery Info</div>
+        </div>
+        <div class="card-body">
+          <div class="delivery-info">
+            <div class="delivery-row">
+              <span class="delivery-icon">👤</span>
+              <div>
+                <span class="delivery-label">Recipient</span>
+                <span class="delivery-val">Nguyễn Văn A · 0901 234 567</span>
+              </div>
+            </div>
+            <div class="delivery-row">
+              <span class="delivery-icon">📍</span>
+              <div>
+                <span class="delivery-label">Address</span>
+                <span class="delivery-val">123 Nguyễn Huệ, Q.1, TP.HCM</span>
+              </div>
+            </div>
+            <div class="delivery-row">
+              <span class="delivery-icon">📦</span>
+              <div>
+                <span class="delivery-label">Carrier / Tracking</span>
+                <span class="delivery-val">Giao Hàng Nhanh · GHN240614001</span>
+              </div>
+            </div>
+            <div class="delivery-row">
+              <span class="delivery-icon">🕐</span>
+              <div>
+                <span class="delivery-label">ETA</span>
+                <span class="delivery-val" style="color:#c2410c;font-weight:800;">Today by 14:00 (SLA)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Collapsible: Exception History -->
+  <div class="collapsible">
+    <div class="collapse-header">
+      <div class="collapse-title">Exception History — This Order <span style="background:#fef2f2;color:#dc2626;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;">1 open</span></div>
+      <span class="collapse-chevron">▼</span>
+    </div>
+    <div class="exception-list">
+      <div class="exc-item">
+        <span class="exc-type exc-open">OPEN</span>
+        <div class="exc-info">
+          <div class="exc-title">Short Pick — Adidas Hoodie (qty 1/2)</div>
+          <div class="exc-meta">Created auto · Assigned: Supervisor → Nguyễn T. D</div>
+        </div>
+        <span class="exc-time">09:49 hôm nay</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collapsible: Audit Log -->
+  <div class="collapsible">
+    <div class="collapse-header">
+      <div class="collapse-title">Audit Log (collapse mặc định)</div>
+      <span class="collapse-chevron">▶</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend bar -->
+<div class="legend-bar">
+  <div class="legend-item">
+    <div class="legend-pin">A</div>
+    <span><strong>Role-based Actions</strong> — CS thấy Contact + Note; Op Manager thêm Force Cancel, Reassign WH, Print Label</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-pin">B</div>
+    <span><strong>SLA Countdown</strong> — Visual progress bar + countdown; đỏ khi &lt;20% còn lại; breach → cảnh báo nổi bật</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-pin">C</div>
+    <span><strong>Interleaved Timeline</strong> — OMS + WMS + Carrier + Human events gộp chronological; BA design decision để CS không cần nhảy giữa hệ thống</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-pin">D</div>
+    <span><strong>SKU Discrepancy</strong> — Picked qty vs. Ordered qty; đỏ khi short-pick; auto-trigger exception logging</span>
+  </div>
+</div>
+
+</body>
+</html>
