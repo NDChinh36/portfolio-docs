@@ -104,9 +104,9 @@ Phạm vi công việc trong dự án này gồm:
 
 **Vấn đề / Rủi ro:** Người dùng có Futures position đang mở có margin bị lock nằm trong total balance. Validate theo total balance có thể cho phép transfer làm margin không còn đủ để duy trì position — tiềm ẩn liquidation không mong muốn.
 
-**Đề xuất BA:** Validate theo available balance = total balance trừ locked margin. Yêu cầu gọi Futures engine trước bước validation.
+**Đề xuất BA:** Validate theo available balance — tức là số dư thực tế khả dụng sau khi trừ phần margin đang bị lock bởi Futures position. Làm rõ định nghĩa này với Dev và thống nhất approach từ đầu để tránh implement sai validation logic.
 
-**Trade-off:** Thêm một API call trong validation flow, tăng nhẹ latency.
+**Trade-off:** Cần làm rõ thêm với Dev về cách lấy thông tin margin đang lock; Dev xác nhận approach và ảnh hưởng đến performance là không đáng kể.
 
 **Kết quả dự kiến:** Ngăn người dùng vô tình liquidate Futures position khi chuyển tiền.
 
