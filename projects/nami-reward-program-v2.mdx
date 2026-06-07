@@ -28,11 +28,11 @@ icon: "gift"
 - **Trách nhiệm chính:** Làm rõ campaign requirements, reward logic, campaign rules, anti-abuse rules, tracking metrics
 - **Kết quả:** 20K+ engagement · 60%+ volume increase
 
-> Outcome reflects team performance. BA contribution focused on defining campaign logic, reward rules, tracking structure and delivery support — not individual ownership of business metrics.
+> Kết quả phản ánh hiệu suất của cả team. Đóng góp của BA tập trung vào việc định nghĩa campaign logic, reward rules, tracking structure và hỗ trợ delivery — không phải ownership cá nhân về business metrics.
 
 ---
 
-## Business Context
+## Bối cảnh nghiệp vụ
 
 Nami Innovation needed a **flexible reward system** to support user engagement campaigns driven by in-app actions — trading volume, deposits, referrals and login streaks.
 
@@ -40,7 +40,7 @@ The challenge was not just distributing rewards. It required clear eligibility c
 
 Before this system, each campaign was hardcoded separately — slow to ship, expensive to change and hard to measure consistently.
 
-## My Role as BA
+## Vai trò của tôi trong dự án
 
 - Worked with PO and Growth/MKT to clarify campaign goals and reward conditions
 - Defined trigger logic, eligibility rules, budget caps, limits and automation behavior
@@ -48,28 +48,28 @@ Before this system, each campaign was hardcoded separately — slow to ship, exp
 - Wrote campaign PRD and supported functional specifications
 - Tracked campaign performance data after launch and refined logic based on results
 
-## BA Problems to Solve
+## Bài toán BA cần giải quyết
 
 - **Multi-stakeholder conflicts** — Growth wanted maximum campaign flexibility; Engineering wanted simple, predictable logic; CS needed to explain reward behavior to users; BI needed trackable events. Each team had different expectations.
 - **Rule clarity for Dev and QA** — Campaign conditions varied across trigger types. Without a structured spec, each team would interpret rules differently.
 - **Abuse prevention** — Reward systems attract unintended behavior. Anti-abuse rules needed to be defined before development, not patched after launch.
 - **Post-launch iteration** — Growth needed tracking metrics to evaluate campaigns and request logic changes based on real data.
 
-## BA Approach
+## Cách tiếp cận của BA
 
-### Stakeholder workshops before spec
+### Workshop với stakeholder trước khi viết spec
 
 Before writing any PRD, I ran separate sessions with each stakeholder group to surface needs and constraints. I synthesized the outputs into a prioritized PRD with clear scope and trade-off rationale.
 
-### Configurable campaign logic
+### Campaign logic dạng cấu hình
 
 I defined campaign logic as configurable rules rather than hardcoded per-campaign behavior — making future campaign launches faster and easier to maintain.
 
-### Anti-abuse rules from the start
+### Anti-abuse rules từ đầu dự án
 
 I included anti-abuse rules in the first PRD version, working with the Risk team during elicitation — before development began, not after the first abuse pattern was detected.
 
-## Core Campaign Business Rules
+## Business Rules cốt lõi
 
 | Rule | Behavior |
 | --- | --- |
@@ -81,7 +81,7 @@ I included anti-abuse rules in the first PRD version, working with the Risk team
 | **Abuse prevention** | New accounts, suspicious patterns and duplicate actions are excluded |
 | **Reward expiry** | Unclaimed rewards expire after a configurable period |
 
-## Key BA Decisions
+## Quyết định BA quan trọng
 
 ### Decision 1 — Four Separate Trigger Types Instead of One Generic Engine
 
@@ -119,7 +119,7 @@ I included anti-abuse rules in the first PRD version, working with the Risk team
 
 **Expected Impact:** Event-based campaigns deliver rewards at the moment of action; volume-based campaigns batch efficiently.
 
-## Main Flow
+## Luồng nghiệp vụ chính
 
 1. Growth team defines campaign goal, reward type and eligibility criteria
 2. BA clarifies trigger conditions, limits and anti-abuse rules
@@ -130,7 +130,7 @@ I included anti-abuse rules in the first PRD version, working with the Risk team
 7. BI and Growth track campaign performance metrics
 8. Campaign logic is refined based on post-launch data if needed
 
-## Important Edge Cases
+## Edge Cases quan trọng
 
 - Campaign budget exhausted mid-campaign → users who have not yet received reward are notified
 - User reaches per-user cap → no additional reward issued even if qualifying action is completed
@@ -139,7 +139,7 @@ I included anti-abuse rules in the first PRD version, working with the Risk team
 - Streak broken by one missed day → streak resets; user notified
 - Referral: referred user does not complete required action → no reward for referrer
 
-## Selected BA Deliverables
+## Tài liệu BA đã xây dựng
 
 - **Campaign PRD** — goals, rules, trigger logic, reward behavior and edge cases
 - **Trigger Type Spec** — four trigger types with separate logic and edge case handling
@@ -149,21 +149,21 @@ I included anti-abuse rules in the first PRD version, working with the Risk team
 - **User Guide** — CS-facing documentation explaining reward conditions to users
 - **UAT Checklist**
 
-## Collaboration with Teams
+## Phối hợp với các team
 
-### Product and Growth
+### Product và Growth
 
 I ran separate requirement sessions per trigger type and established a change request process — any scope change after development starts requires re-estimation and PO approval.
 
-### Engineering and QA
+### Engineering và QA
 
 I organized requirement sessions per trigger type so Engineering could estimate and build each module independently. QA received a full edge case matrix covering all trigger behaviors.
 
-### CS and BI
+### CS và BI
 
 I aligned tracking structure with BI before launch and prepared a CS-facing user guide explaining reward conditions. Post-launch, I used funnel data to propose logic adjustments based on real campaign performance.
 
-## Validation Before Release
+## Kiểm tra trước release
 
 - Reviewed campaign trigger logic end-to-end with QA
 - Validated budget cap and per-user cap behavior
@@ -171,13 +171,13 @@ I aligned tracking structure with BI before launch and prepared a CS-facing user
 - Tested reward distribution timing for both immediate and batch modes
 - Supported UAT sign-off and CS guide preparation
 
-## Lessons Learned
+## Bài học rút ra
 
 - **Growth features need business rules as much as product features** — without clear rules, Growth misconfigures campaigns and abuse scenarios emerge.
 - **Anti-abuse rules must be designed upfront** — adding them after launch means reward has already been distributed and cannot be recalled.
 - **Data-driven iteration requires upfront tracking design** — defining events and dashboards before launch made post-launch analysis much faster and the feedback loop much tighter.
 
-## Skills Demonstrated
+## Kỹ năng thể hiện
 
 - Requirement clarification and multi-stakeholder alignment
 - Campaign logic and business rule definition

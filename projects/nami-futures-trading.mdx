@@ -30,19 +30,19 @@ icon: "chart-line"
 
 ---
 
-## Business Context
+## Bối cảnh nghiệp vụ
 
 Nami Innovation expanded from spot trading to **futures trading** — a significant increase in product and business rule complexity.
 
 Futures trading requires handling leverage (5x–125x), margin management, position lifecycle rules and risk controls.
 
-**Why this matters for the BA role:** In a futures product, an incorrect business rule is not just a UI bug — it can create direct financial risk for users. Requirements needed to be complete, consistent and team-agreed before development began.
+**Tại sao điều này quan trọng với BA:** In a futures product, an incorrect business rule is not just a UI bug — it can create direct financial risk for users. Requirements needed to be complete, consistent and team-agreed before development began.
 
 > Chi tiết implementation (margin engine, liquidation engine, risk calculation) thuộc phạm vi Engineering và Risk team. Vai trò BA tập trung vào làm rõ product behavior, business rules, edge cases và validation expectation — đảm bảo Dev và QA có đủ context để xây dựng đúng.
 
 ---
 
-## My Role as BA
+## Vai trò của tôi trong dự án
 
 - Clarified product requirements with Product Owner and Product team
 - Defined business rules for order behavior, margin, leverage and position lifecycle
@@ -53,16 +53,16 @@ Futures trading requires handling leverage (5x–125x), margin management, posit
 
 ---
 
-## Outcome
+## Kết quả dự án
 
 - 6,000+ active users in early rollout
 - ~$10M trading volume in early months of operation
 
-> Outcome reflects team performance. BA contribution focused on requirement clarity, business rule definition, cross-functional alignment and release validation — not individual ownership of business metrics.
+> Kết quả phản ánh hiệu suất của cả team. Đóng góp của BA tập trung vào làm rõ yêu cầu, định nghĩa business rules, alignment đa team và hỗ trợ release validation — không phải ownership cá nhân về business metrics.
 
 ---
 
-## BA Problems to Solve
+## Bài toán BA cần giải quyết
 
 - **Domain ambiguity** — Futures concepts such as margin mode, liquidation price and position status needed a shared, consistent understanding across Product, Engineering, QA and UI/UX. Misalignment in domain vocabulary leads to hard-to-detect bugs in a financial product.
 - **Edge case density** — Each combination of order type, margin mode, leverage level and position status creates a distinct scenario. A structured approach was needed.
@@ -71,23 +71,23 @@ Futures trading requires handling leverage (5x–125x), margin management, posit
 
 ---
 
-## BA Approach
+## Cách tiếp cận của BA
 
-### Business Rule Register from the start
+### Business Rule Register từ đầu dự án
 
 Futures has many interdependent rules. I proposed building a centralized Business Rule Register instead of scattering rules across multiple documents. Each rule included an ID, description, dependency list and a numeric example. Engineering used it to track: "if this rule changes, what else needs to update?"
 
-### User story first, technical spec second
+### User story trước, technical spec sau
 
 I wrote user stories for each trader type before defining the corresponding business rules. This kept the team aligned on user value and prevented early focus on technical details before agreeing on what was being built.
 
-### Prototype review before PRD
+### Review Prototype trước khi viết PRD
 
 I reviewed Figma prototypes with Design before writing the detailed PRD. Most inconsistencies between UX and business rules were identified at this stage — not after development had started.
 
 ---
 
-## Core Business Rules
+## Business Rules cốt lõi
 
 | Rule | Expected Behavior |
 |---|---|
@@ -101,7 +101,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ---
 
-## Key BA Decisions
+## Quyết định BA quan trọng
 
 ### Decision 1 — Isolated Margin Only for MVP
 
@@ -141,7 +141,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ---
 
-## Main Flow
+## Luồng nghiệp vụ chính
 
 1. User selects trading pair
 2. User selects order type (Limit / Market / Stop-Limit)
@@ -157,7 +157,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ---
 
-## Important Edge Cases
+## Edge Cases quan trọng
 
 - Insufficient available balance → Submit button disabled; clear error message displayed
 - High leverage order → Mandatory confirmation required before submission
@@ -170,7 +170,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ---
 
-## Selected BA Deliverables
+## Tài liệu BA đã xây dựng
 
 - **BRS** — overall scope and core business rules for the futures trading feature
 - **PRD** — user flows, screen specifications, acceptance criteria and edge cases
@@ -180,23 +180,23 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ---
 
-## Collaboration with Dev / QA / UIUX
+## Phối hợp với các team
 
-### Engineering alignment
+### Phối hợp với Engineering
 
 Funding rate was a concept where each team had a different understanding initially. I wrote a short internal explainer and facilitated a walkthrough session before any team began their work — so Engineering, UX and CS could ask their respective questions in one place.
 
-### UX vs. risk requirements
+### UX và Risk requirements
 
 UX wanted a clean, minimal Order Form. Risk required key information to be visible: required margin, estimated liquidation price, leverage warning. Agreed approach: critical risk fields always visible; secondary information accessible via expand or tooltip — not hidden, not cluttering the primary screen.
 
-### Reducing ambiguity before release
+### Giảm thiểu mơ hồ trước release
 
 I provided QA with an edge case list and specific numeric test data for each case — for example, leverage = 1 means no liquidation price should appear; margin ratio = 99.9% is warning state, not yet liquidated. QA used this directly to build test scenarios without having to derive the logic independently.
 
 ---
 
-## Validation Before Release
+## Kiểm tra trước release
 
 - Reviewed order placement flow end-to-end with QA
 - Verified margin calculation and risk display logic against business rules
@@ -208,7 +208,7 @@ The platform launched without critical bugs related to trading logic — a share
 
 ---
 
-## Lessons Learned
+## Bài học rút ra
 
 - **Domain takes real time** — Spending two weeks on domain research before writing any requirements made a significant difference in spec quality.
 - **Map rule dependencies from day one** — Changing one assumption can cascade into many other rules. A Business Rule Register with explicit dependency mapping from kickoff prevents late-stage conflicts.
@@ -217,7 +217,7 @@ The platform launched without critical bugs related to trading logic — a share
 
 ---
 
-## Skills Demonstrated
+## Kỹ năng thể hiện
 
 - Requirement clarification and gap analysis
 - Business rule definition and dependency mapping

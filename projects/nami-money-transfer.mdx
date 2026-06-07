@@ -29,38 +29,27 @@ icon: "arrow-right-arrow-left"
 
 ---
 
-## Project Overview
+## Kết quả dự án
 
-- **Role:** Business Analyst
-- **Company:** Nami Innovation
-- **Timeline:** 10/2024 – 12/2024
-- **Platform:** Mobile
-- **Domain:** Fintech / Internal Transfer
-- **Team size:** ~10 (BA, Dev, QA, UI/UX, Growth, Brand)
-
----
-
-## Outcome
-
-- Released on schedule — 4-month timeline maintained
+- Released on schedule — 3-month timeline maintained
 - No critical bugs related to transfer logic after launch
 - First BA project completed with full end-to-end ownership
 
-> This project was significant for my development as a BA — it was the first project where I had complete ownership from elicitation through UAT and release sign-off.
+> Đây là dự án có ý nghĩa quan trọng trong quá trình phát triển của tôi với vai trò BA — dự án đầu tiên tôi có full ownership từ elicitation đến UAT và sign-off trước khi release.
 
 ---
 
-## Business Context
+## Bối cảnh nghiệp vụ
 
 Nami Innovation needed an **internal transfer feature** to allow users to move assets between accounts within the Nami ecosystem — without withdrawing to an external platform.
 
 The feature involved multiple account types (Spot, Futures), validation rules, balance locking logic and clear user flows despite complex backend behavior.
 
-**Why this required careful BA work:** A wrong validation rule in a financial transfer feature can allow invalid transfers or block legitimate ones. Rules needed to be precise, agreed upon and fully tested before launch.
+**Tại sao BA cần làm kỹ:** A wrong validation rule in a financial transfer feature can allow invalid transfers or block legitimate ones. Rules needed to be precise, agreed upon and fully tested before launch.
 
 ---
 
-## My Role as BA
+## Vai trò của tôi trong dự án
 
 - Defined transfer rules and user constraint logic
 - Wrote PRD, transfer rule matrix and user guide
@@ -70,7 +59,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## BA Problems to Solve
+## Bài toán BA cần giải quyết
 
 - **Transfer path rules** — Not all account-to-account combinations were supported. Clear rules were needed to define what was allowed and what was blocked.
 - **Available vs. total balance** — Users with open Futures positions have locked margin. Using total balance for validation would allow invalid transfers that could trigger unexpected position liquidation.
@@ -79,7 +68,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Core Business Rules
+## Business Rules cốt lõi
 
 | Rule | Behavior |
 | --- | --- |
@@ -93,7 +82,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Key BA Decisions
+## Quyết định BA quan trọng
 
 ### Decision 1 — Block Futures-to-Futures Cross-user Transfer
 
@@ -137,7 +126,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Main Flow
+## Luồng nghiệp vụ chính
 
 1. User selects transfer type (internal same-user or P2P to another user)
 2. User selects source account and asset
@@ -152,7 +141,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Important Edge Cases
+## Edge Cases quan trọng
 
 - Invalid or inactive receiver → error shown before confirmation; transfer blocked
 - Insufficient available balance → Submit disabled; clear message displayed
@@ -165,7 +154,7 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Selected BA Deliverables
+## Tài liệu BA đã xây dựng
 
 - **PRD** — user flows, screen specs, validation logic and edge cases
 - **Transfer Rule Matrix** — supported paths, blocked paths, available vs. total balance distinction
@@ -176,23 +165,23 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ---
 
-## Collaboration with Dev / QA / UIUX
+## Phối hợp với các team
 
-### Align with Engineering
+### Phối hợp với Engineering
 
 I clarified the available balance calculation requirement early — specifically that validation must call the Futures engine to retrieve locked margin before the validation step. Catching this before development started prevented a late-stage change that would have required significant rework.
 
-### QA Support
+### Hỗ trợ QA
 
 I provided QA with a complete edge case matrix including specific test scenarios — for example, the exact behavior when a user has a locked Futures position and transfers the maximum available amount. QA used this to build test cases without deriving the logic independently.
 
-### Growth and Brand alignment
+### Phối hợp với Growth và Brand
 
 This project included a launch communication review with Brand and a metric definition session with Growth to determine how transfer adoption would be measured after release.
 
 ---
 
-## Validation trước Release
+## Kiểm tra trước release
 
 - Reviewed transfer flow end-to-end with QA
 - Validated available balance calculation logic against transfer rules
@@ -202,7 +191,7 @@ This project included a launch communication review with Brand and a metric defi
 
 ---
 
-## Lessons Learned
+## Bài học rút ra
 
 - **Invest in user flow before PRD** — having a clear flow before writing the full PRD reduced revision cycles and saved communication overhead across the team.
 - **Available vs. total balance must be explicit** — this distinction is easy to miss in early drafts but critical in fintech. It should be an early clarification question in any transfer spec.
@@ -210,7 +199,7 @@ This project included a launch communication review with Brand and a metric defi
 
 ---
 
-## Skills Demonstrated
+## Kỹ năng thể hiện
 
 - Requirement clarification and end-to-end feature ownership
 - Validation rule definition

@@ -29,25 +29,14 @@ icon: "calculator"
 
 ---
 
-## Project Overview
-
-- **Role:** Business Analyst
-- **Company:** Nami Innovation
-- **Timeline:** 6/2024 – 10/2024
-- **Platform:** Web / Mobile
-- **Domain:** Trading Tools / Fintech
-- **Team size:** ~10 (BA, Dev, QA, UI/UX)
-
----
-
-## Outcome
+## Kết quả dự án
 
 - CS tickets about PnL and liquidation price calculation decreased after launch
 - Calculator designed to serve three trader groups: new traders (liquidation price), regular traders (PnL and ROE) and advanced traders (full parameter set)
 
 ---
 
-## Business Context
+## Bối cảnh nghiệp vụ
 
 Users needed a calculation tool to estimate trading outcomes before placing orders. Many users — especially new traders — were leaving the platform to use external tools to calculate PnL or liquidation price, then returning to trade.
 
@@ -55,7 +44,7 @@ This was the first feature I owned as a BA at Nami Innovation, immediately after
 
 ---
 
-## My Role as BA
+## Vai trò của tôi trong dự án
 
 - Collected user feedback through CS team interviews
 - Analyzed competitor calculator tools (Binance, OKX, Bybit)
@@ -66,7 +55,7 @@ This was the first feature I owned as a BA at Nami Innovation, immediately after
 
 ---
 
-## BA Problems to Solve
+## Bài toán BA cần giải quyết
 
 - **User need validation** — Before defining scope, I needed to confirm what calculation problems users actually had, not what Product assumed.
 - **Formula specification** — PnL, liquidation price and required margin formulas needed to be defined precisely enough for Dev to implement correctly and QA to verify.
@@ -75,23 +64,23 @@ This was the first feature I owned as a BA at Nami Innovation, immediately after
 
 ---
 
-## BA Approach
+## Cách tiếp cận của BA
 
-### Talk to CS team first
+### Bắt đầu từ CS team
 
 Instead of starting from assumptions, I interviewed the CS team to identify the most common user calculation questions. This revealed three distinct trader groups with different needs — driving the scope and tab-based layout.
 
-### Competitor analysis before scope definition
+### Nghiên cứu competitor trước khi define scope
 
 I analyzed calculators on Binance, OKX and Bybit to benchmark features, identify UX patterns and understand what Nami needed to include or could simplify.
 
-### Formula definition as a BA deliverable
+### Formula definition là deliverable của BA
 
 I documented each formula explicitly as a BA deliverable — not just as implementation notes. This gave Dev a clear reference and gave QA expected values to validate against.
 
 ---
 
-## Core Business Rules
+## Business Rules cốt lõi
 
 | Rule | Behavior |
 | --- | --- |
@@ -104,7 +93,7 @@ I documented each formula explicitly as a BA deliverable — not just as impleme
 
 ---
 
-## Main Flow
+## Luồng nghiệp vụ chính
 
 1. User selects calculator type (PnL / Liquidation Price / Required Margin)
 2. User enters trading parameters (entry price, exit price, quantity, leverage, margin mode)
@@ -115,7 +104,7 @@ I documented each formula explicitly as a BA deliverable — not just as impleme
 
 ---
 
-## Selected BA Deliverables
+## Tài liệu BA đã xây dựng
 
 - **PRD** — feature scope, user flows and screen specifications
 - **Formula Definition Document** — PnL, liquidation price and required margin formulas for Long/Short and Isolated/Cross variants
@@ -126,23 +115,23 @@ I documented each formula explicitly as a BA deliverable — not just as impleme
 
 ---
 
-## Collaboration with Dev / QA / UIUX
+## Phối hợp với các team
 
-### Formula clarification with Dev
+### Clarify formula với Dev
 
 I walked Dev through each formula in a dedicated session — including edge cases like Cross Margin liquidation (which depends on full account equity, not just position margin) and the difference between ROE and PnL percentage. This prevented misunderstanding during implementation.
 
-### QA formula validation support
+### Hỗ trợ QA kiểm tra formula
 
 I prepared a formula checklist with specific numeric examples — input values and expected outputs — so QA could verify formula accuracy without deriving the expected results themselves.
 
-### UX decisions with Design
+### Quyết định UX với Design
 
 I worked with Design on two key UX decisions: real-time calculation (no submit button needed) and the "Fill from position" button (lets users pull parameters from an open order directly into the calculator). Both came from competitor analysis and CS feedback.
 
 ---
 
-## Validation trước Release
+## Kiểm tra trước release
 
 - Reviewed formula outputs against expected values from the formula spec
 - Confirmed edge case behavior (leverage = 1, Cross mode disclaimer)
@@ -151,7 +140,7 @@ I worked with Design on two key UX decisions: real-time calculation (no submit b
 
 ---
 
-## Lessons Learned
+## Bài học rút ra
 
 - **CS team is the fastest path to user insight** — for a utility tool like a calculator, CS feedback was more accurate and faster than user surveys or assumptions.
 - **Formula specification is a core BA deliverable** — even for a "simple" calculation feature, formula definitions need to be explicit, testable and owned by BA from the start.
@@ -159,7 +148,7 @@ I worked with Design on two key UX decisions: real-time calculation (no submit b
 
 ---
 
-## Skills Demonstrated
+## Kỹ năng thể hiện
 
 - User feedback analysis via CS team
 - Competitor research and feature benchmarking
