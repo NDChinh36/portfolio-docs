@@ -128,42 +128,10 @@
             ]
           },
           {
-            "group": "Tài liệu mẫu — Digital Payment (Nâng cao)",
+            "group": "Tài liệu mẫu — E-wallet / Payment System",
             "pages": [
               {
-                "group": "Digital Payment Case Study",
-                "icon": "credit-card",
-                "pages": [
-                  "projects/ewallet/payment-case-study",
-                  "projects/ewallet/transaction-state-machine",
-                  "projects/ewallet/reconciliation-dashboard",
-                  "projects/ewallet/exception-handling"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Tài liệu mẫu — MoMo Transfer (Practice)",
-            "pages": [
-              {
-                "group": "MoMo P2P Transfer — BA Document Set",
-                "icon": "mobile",
-                "pages": [
-                  "projects/momo-transfer/overview",
-                  "projects/momo-transfer/brd",
-                  "projects/momo-transfer/user-stories",
-                  "projects/momo-transfer/use-case-spec",
-                  "projects/momo-transfer/frd",
-                  "projects/momo-transfer/erd"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Tài liệu mẫu — Ví điện tử (Background System)",
-            "pages": [
-              {
-                "group": "FinPay E-Wallet — 8 Modules",
+                "group": "FinPay E-Wallet — Overview & Modules",
                 "icon": "wallet",
                 "pages": [
                   "projects/ewallet/overview",
@@ -176,6 +144,28 @@
                   "projects/ewallet/qr-payment",
                   "projects/ewallet/transaction-history",
                   "projects/ewallet/notifications-settings"
+                ]
+              },
+              {
+                "group": "Digital Payment & Reconciliation",
+                "icon": "credit-card",
+                "pages": [
+                  "projects/ewallet/payment-case-study",
+                  "projects/ewallet/transaction-state-machine",
+                  "projects/ewallet/reconciliation-dashboard",
+                  "projects/ewallet/exception-handling"
+                ]
+              },
+              {
+                "group": "MoMo P2P Transfer — Appendix",
+                "icon": "mobile",
+                "pages": [
+                  "projects/momo-transfer/overview",
+                  "projects/momo-transfer/brd",
+                  "projects/momo-transfer/user-stories",
+                  "projects/momo-transfer/use-case-spec",
+                  "projects/momo-transfer/frd",
+                  "projects/momo-transfer/erd"
                 ]
               }
             ]
