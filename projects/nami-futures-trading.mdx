@@ -1,182 +1,186 @@
 ---
 title: "Crypto Futures Trading Platform"
-description: "Real Project — Business Analyst · Nami Innovation · 2025 – Present"
+description: "Dự án thực tế — Business Analyst · Nami Innovation · 2025 – Hiện tại"
 icon: "chart-line"
 ---
 
 <Info>
-  **Real Project — Nami Innovation** · Business Analyst  
-  **Timeline:** 2025 – Present · **Platform:** Web / Mobile · **Team:** ~20 people
+  **Dự án thực tế — Nami Innovation** · Business Analyst  
+  **Thời gian:** 2025 – Hiện tại · **Nền tảng:** Web / Mobile · **Quy mô team:** ~20 người
 </Info>
 
 <Note>
-  This case is based on my real work as a Business Analyst at Nami Innovation. Sensitive business rules, internal metrics and technical details have been generalized or anonymized.
+  Trang này là case study tóm tắt dựa trên công việc thực tế tại Nami Innovation. Các Business Rules chi tiết, số liệu nội bộ và thông tin kỹ thuật đã được khái quát hóa hoặc ẩn danh.
 </Note>
 
 ---
 
-## Thông tin tổng quan dự án
+## Thông tin nhanh về dự án
 
 - **Dự án:** Crypto Futures Trading Platform
-- **Loại dự án:** Dự án thực tế — Nami Innovation
+- **Loại:** Dự án thực tế tại Nami Innovation
 - **Vai trò:** Business Analyst
 - **Thời gian:** 2025 – Hiện tại
 - **Domain:** Fintech / Crypto Trading / Futures
 - **Nền tảng:** Web / Mobile
 - **Quy mô team:** ~20 người
-- **Phương pháp làm việc:** Agile / Scrum
-- **Trách nhiệm chính:** Làm rõ yêu cầu, viết PRD/BRS, định nghĩa Business Rules, thiết kế User Flow, hỗ trợ UAT
-- **Kết quả:** 6,000+ active users · ~$10M trading volume
+- **Cách làm việc:** Agile / Scrum
+- **Phạm vi BA:** Làm rõ yêu cầu, viết PRD/BRS, định nghĩa Business Rules, thiết kế User Flow, hỗ trợ UAT
+- **Kết quả:** 6,000+ active users · ~$10M trading volume _(kết quả team)_
 
 ---
 
-## Bối cảnh nghiệp vụ
+## Bối cảnh dự án
 
-Nami Innovation expanded from spot trading to **futures trading** — a significant increase in product and business rule complexity.
+Nami Innovation mở rộng từ spot trading sang **futures trading** — phức tạp hơn đáng kể về cả product lẫn Business Rules.
 
-Futures trading requires handling leverage (5x–125x), margin management, position lifecycle rules and risk controls.
+Futures trading liên quan đến leverage (5x–125x), margin management, position lifecycle và risk controls. Đặc thù quan trọng: trong sản phẩm tài chính, một Business Rule sai không chỉ là lỗi UI — mà có thể gây rủi ro tài chính trực tiếp cho người dùng. Yêu cầu phải đầy đủ, nhất quán và được toàn team thống nhất trước khi phát triển.
 
-**Tại sao điều này quan trọng với BA:** In a futures product, an incorrect business rule is not just a UI bug — it can create direct financial risk for users. Requirements needed to be complete, consistent and team-agreed before development began.
-
-> Chi tiết implementation (margin engine, liquidation engine, risk calculation) thuộc phạm vi Engineering và Risk team. Vai trò BA tập trung vào làm rõ product behavior, business rules, edge cases và validation expectation — đảm bảo Dev và QA có đủ context để xây dựng đúng.
+> Chi tiết implementation như margin engine, liquidation engine, risk calculation thuộc phạm vi Engineering và Risk team. Vai trò BA tập trung vào làm rõ product behavior, Business Rules, Edge Cases và validation expectation — đảm bảo Dev và QA có đủ context để xây dựng đúng.
 
 ---
 
-## Vai trò của tôi trong dự án
+## Vai trò / Phạm vi công việc BA
 
-- Clarified product requirements with Product Owner and Product team
-- Defined business rules for order behavior, margin, leverage and position lifecycle
-- Wrote PRD, Business Rule Register, Functional Specifications and User Guide
-- Designed user flows for order placement and position management
-- Worked with Dev, QA and UI/UX to clarify edge cases and expected system behavior
-- Supported UAT and release validation
+Phạm vi công việc trong dự án này gồm:
+
+- Làm rõ yêu cầu với Product Owner và các team liên quan
+- Định nghĩa Business Rules cho order behavior, margin, leverage và position lifecycle
+- Viết PRD, Business Rule Register, Functional Specifications và User Guide
+- Thiết kế User Flow cho order placement và position management
+- Phối hợp với Dev, QA và UI/UX để làm rõ Edge Cases và expected behavior
+- Hỗ trợ UAT và validation trước release
 
 ---
 
 ## Kết quả dự án
 
-- 6,000+ active users in early rollout
-- ~$10M trading volume in early months of operation
+- 6,000+ active users trong giai đoạn early rollout
+- ~$10M trading volume trong những tháng đầu vận hành
 
-> Kết quả phản ánh hiệu suất của cả team. Đóng góp của BA tập trung vào làm rõ yêu cầu, định nghĩa business rules, alignment đa team và hỗ trợ release validation — không phải ownership cá nhân về business metrics.
-
----
-
-## Bài toán BA cần giải quyết
-
-- **Domain ambiguity** — Futures concepts such as margin mode, liquidation price and position status needed a shared, consistent understanding across Product, Engineering, QA and UI/UX. Misalignment in domain vocabulary leads to hard-to-detect bugs in a financial product.
-- **Edge case density** — Each combination of order type, margin mode, leverage level and position status creates a distinct scenario. A structured approach was needed.
-- **Risk visibility** — Users needed to see key risk information (required margin, estimated liquidation price) at order placement time, not only after submission.
-- **Stakeholder alignment** — Product wanted a clean UX for new traders; Engineering was concerned about complexity; Risk required strict guardrails. BA needed to find a position all three teams could work from.
+> Kết quả phản ánh hiệu quả chung của team. Đóng góp BA nằm ở requirement clarity, Business Rule alignment và validation support — không phải ownership cá nhân về business metrics.
 
 ---
 
-## Cách tiếp cận của BA
+## Bài toán BA cần xử lý
+
+- **Domain ambiguity** — Các khái niệm futures như margin mode, liquidation price, position status cần được hiểu thống nhất giữa Product, Engineering, QA và UI/UX. Nhầm lẫn về domain vocabulary trong sản phẩm tài chính dẫn đến lỗi khó phát hiện.
+- **Mật độ Edge Cases cao** — Mỗi tổ hợp order type, margin mode, leverage level và position status tạo ra một tình huống riêng. Cần cách tiếp cận có cấu trúc.
+- **Risk visibility** — Người dùng cần thấy thông tin rủi ro quan trọng (required margin, estimated liquidation price) ngay tại bước đặt lệnh, không phải sau khi đã submit.
+- **Alignment đa stakeholder** — Product muốn UX đơn giản cho trader mới; Engineering lo ngại về độ phức tạp; Risk yêu cầu guardrails chặt chẽ. BA cần tìm điểm chung cả ba team có thể đồng ý.
+
+---
+
+## Cách tiếp cận
 
 ### Business Rule Register từ đầu dự án
 
-Futures has many interdependent rules. I proposed building a centralized Business Rule Register instead of scattering rules across multiple documents. Each rule included an ID, description, dependency list and a numeric example. Engineering used it to track: "if this rule changes, what else needs to update?"
+Futures có nhiều rule liên quan chặt chẽ với nhau. Thay vì để rule rải rác trong nhiều tài liệu, đề xuất xây dựng một Business Rule Register tập trung. Mỗi rule có ID, mô tả, danh sách dependency và ví dụ số cụ thể. Engineering dùng register này để theo dõi: "nếu rule này thay đổi, những gì khác bị ảnh hưởng?"
 
-### User story trước, technical spec sau
+### User Story trước, technical spec sau
 
-I wrote user stories for each trader type before defining the corresponding business rules. This kept the team aligned on user value and prevented early focus on technical details before agreeing on what was being built.
+Viết User Story cho từng loại trader trước khi đi vào Business Rules chi tiết. Cách này giúp team giữ được góc nhìn người dùng và tránh sa vào chi tiết kỹ thuật trước khi đã thống nhất được điều cần xây dựng.
 
-### Review Prototype trước khi viết PRD
+### Review prototype trước khi viết PRD
 
-I reviewed Figma prototypes with Design before writing the detailed PRD. Most inconsistencies between UX and business rules were identified at this stage — not after development had started.
+Review Figma prototype cùng Design trước khi viết PRD chi tiết. Phần lớn điểm không nhất quán giữa UX và Business Rules được phát hiện ở bước này — không phải sau khi Dev đã bắt đầu.
 
 ---
 
 ## Business Rules cốt lõi
 
-| Rule | Expected Behavior |
-|---|---|
-| **Leverage selection** | User selects leverage within allowed range. High leverage triggers an additional confirmation step. |
-| **Required margin** | System calculates and displays required margin before order submission. |
-| **Estimated liquidation price** | Displayed in real-time on Order Form, updating as user adjusts leverage or quantity. |
-| **Order submission validation** | Submit is disabled if required margin exceeds available balance. |
-| **Margin mode** | Isolated Margin supported in MVP. Cross Margin documented as out of scope for v1 with rationale. |
-| **Position status transitions** | Open → Partially Filled / Filled / Cancelled / Rejected. If filled, position is created or updated. |
-| **Risk warning** | High leverage orders require explicit user acknowledgement before submission. |
+| Rule | Hành vi mong đợi |
+| --- | --- |
+| **Chọn leverage** | Người dùng chọn leverage trong phạm vi cho phép. Leverage cao yêu cầu thêm bước xác nhận. |
+| **Required margin** | Hệ thống tính và hiển thị required margin trước khi submit lệnh. |
+| **Estimated liquidation price** | Hiển thị real-time trên Order Form, cập nhật khi người dùng điều chỉnh leverage hoặc số lượng. |
+| **Validate khi submit** | Nút Submit bị disable nếu required margin vượt available balance. |
+| **Margin mode** | Isolated Margin hỗ trợ trong MVP. Cross Margin ghi rõ Out of Scope cho v1 kèm lý do. |
+| **Position status transitions** | Open → Partially Filled / Filled / Cancelled / Rejected. Nếu Filled, position được tạo hoặc cập nhật. |
+| **Cảnh báo rủi ro** | Lệnh leverage cao yêu cầu người dùng xác nhận rõ ràng trước khi submit. |
 
 ---
 
-## Quyết định BA quan trọng
+## Một số quyết định BA quan trọng
 
-### Decision 1 — Isolated Margin Only for MVP
+### Quyết định 1 — Chỉ Isolated Margin trong MVP
 
-**Context:** Product initially wanted both Isolated and Cross Margin in the first release.
+**Bối cảnh:** Product ban đầu muốn hỗ trợ cả Isolated và Cross Margin ngay từ release đầu tiên.
 
-**Problem / Risk:** Cross Margin has significantly more complex liquidation rules and edge cases. Supporting both modes in MVP would increase specification scope and QA coverage considerably.
+**Vấn đề / Rủi ro:** Cross Margin có liquidation rule và Edge Cases phức tạp hơn đáng kể. Hỗ trợ cả hai mode trong MVP làm tăng đáng kể scope spec và QA coverage.
 
-**BA Recommendation:** MVP supports Isolated Margin only. Cross Margin documented in Out of Scope with rationale and a planned timeline for v2.
+**Đề xuất BA:** MVP chỉ hỗ trợ Isolated Margin. Cross Margin được ghi vào Out of Scope với lý do rõ ràng và timeline dự kiến cho v2.
 
-**Trade-off:** Users wanting Cross Margin needed to wait. Isolated Margin covers the majority of trader needs and substantially reduces launch risk.
+**Trade-off:** Người dùng muốn Cross Margin phải chờ. Isolated Margin đáp ứng phần lớn nhu cầu của trader và giảm đáng kể rủi ro khi launch.
 
-**Expected Impact:** Engineering confirmed a significant reduction in estimate. Timeline was maintained.
+**Kết quả dự kiến:** Engineering xác nhận estimate giảm đáng kể. Timeline được duy trì.
 
-### Decision 2 — Show Estimated Liquidation Price on Order Form
+---
 
-**Context:** Initial design only showed liquidation price in Position Management — after an order was already placed.
+### Quyết định 2 — Hiển thị estimated liquidation price ngay trên Order Form
 
-**Problem / Risk:** New traders first saw their liquidation price when margin ratio was already near the threshold. "Why was I liquidated unexpectedly?" was a recurring CS ticket pattern.
+**Bối cảnh:** Thiết kế ban đầu chỉ hiển thị liquidation price trong Position Management — sau khi lệnh đã được đặt.
 
-**BA Recommendation:** Display estimated liquidation price in real-time on the Order Form, updating as the user adjusts leverage or quantity.
+**Vấn đề / Rủi ro:** Trader mới lần đầu thấy liquidation price khi margin ratio đã gần ngưỡng. "Tại sao tôi bị liquidate bất ngờ?" là dạng CS ticket xuất hiện thường xuyên nhất.
 
-**Trade-off:** Additional computation and UI complexity. Engineering confirmed client-side calculation was feasible.
+**Đề xuất BA:** Hiển thị estimated liquidation price real-time trên Order Form, cập nhật theo leverage và số lượng người dùng nhập.
 
-**Expected Impact:** Traders see risk information before confirming an order — directly addressing the most common CS complaint type.
+**Trade-off:** Thêm tính toán và UI complexity. Engineering xác nhận client-side calculation khả thi.
 
-### Decision 3 — Mandatory Confirmation for High Leverage Orders
+**Kết quả dự kiến:** Trader thấy thông tin rủi ro trước khi xác nhận lệnh — xử lý trực tiếp dạng CS complaint phổ biến nhất.
 
-**Context:** Nami had no confirmation step for high leverage selection. Major exchanges already had this pattern.
+---
 
-**Problem / Risk:** Users selecting high leverage without understanding the risk leads to early liquidations and CS complaints.
+### Quyết định 3 — Bắt buộc xác nhận khi chọn leverage cao
 
-**BA Recommendation:** Mandatory confirmation popup for leverage at or above a configured threshold.
+**Bối cảnh:** Nami chưa có bước xác nhận khi chọn leverage cao. Các sàn lớn đã có pattern này.
 
-**Trade-off:** Adds friction for experienced traders. Mitigated by: popup appears once per session, not on every adjustment.
+**Vấn đề / Rủi ro:** Người dùng chọn leverage cao mà không hiểu rủi ro dẫn đến early liquidation và CS complaints.
 
-**Expected Impact:** Balances protecting new traders without creating excessive friction for experienced users.
+**Đề xuất BA:** Popup xác nhận bắt buộc khi leverage đạt hoặc vượt ngưỡng đã cấu hình.
+
+**Trade-off:** Thêm friction cho trader có kinh nghiệm. Giảm thiểu bằng cách: popup chỉ xuất hiện một lần mỗi session, không phải mỗi lần điều chỉnh.
+
+**Kết quả dự kiến:** Bảo vệ trader mới mà không tạo friction quá mức cho trader có kinh nghiệm.
 
 ---
 
 ## Luồng nghiệp vụ chính
 
-1. User selects trading pair
-2. User selects order type (Limit / Market / Stop-Limit)
-3. User selects margin mode and leverage
-4. System displays required margin and estimated liquidation price in real-time
-5. User enters quantity and price
-6. System validates balance and order parameters
-7. If leverage is above threshold — mandatory confirmation popup appears
-8. User confirms order
-9. System submits order
-10. Order transitions: Open → Filled / Partially Filled / Cancelled / Rejected
-11. If filled, position is created or updated
+1. Người dùng chọn trading pair
+2. Người dùng chọn order type (Limit / Market / Stop-Limit)
+3. Người dùng chọn margin mode và leverage
+4. Hệ thống hiển thị required margin và estimated liquidation price real-time
+5. Người dùng nhập quantity và price
+6. Hệ thống validate balance và order parameters
+7. Nếu leverage vượt ngưỡng — popup xác nhận bắt buộc
+8. Người dùng xác nhận lệnh
+9. Hệ thống submit lệnh
+10. Lệnh chuyển trạng thái: Open → Filled / Partially Filled / Cancelled / Rejected
+11. Nếu Filled, position được tạo hoặc cập nhật
 
 ---
 
-## Edge Cases quan trọng
+## Edge Cases cần chú ý
 
-- Insufficient available balance → Submit button disabled; clear error message displayed
-- High leverage order → Mandatory confirmation required before submission
-- Order partially filled → PARTIALLY_FILLED state; user can cancel remaining quantity
-- Position updated after a filled order → Position status reflects correctly in real-time
-- User cancels an open order → Order moves to Cancelled; margin is released
-- System rejects invalid order parameters → Rejected state with reason displayed
-- Leverage = 1 → No liquidation price displayed (no liquidation risk at 1x leverage)
-- Margin ratio approaching liquidation threshold → Warning state shown; position not yet liquidated
+- Available balance không đủ → Submit button disabled; hiển thị thông báo rõ ràng
+- Lệnh leverage cao → Bắt buộc xác nhận trước khi submit
+- Lệnh partially filled → Trạng thái PARTIALLY_FILLED; người dùng có thể hủy phần còn lại
+- Position cập nhật sau lệnh filled → Position status phản chiếu đúng real-time
+- Người dùng hủy lệnh đang mở → Lệnh chuyển sang Cancelled; margin được giải phóng
+- Hệ thống reject order parameter không hợp lệ → Trạng thái Rejected kèm lý do hiển thị
+- Leverage = 1 → Không hiển thị liquidation price (không có rủi ro liquidation ở 1x)
+- Margin ratio gần ngưỡng liquidation → Hiển thị warning state; vị thế chưa bị liquidate
 
 ---
 
 ## Tài liệu BA đã xây dựng
 
-- **BRS** — overall scope and core business rules for the futures trading feature
-- **PRD** — user flows, screen specifications, acceptance criteria and edge cases
-- **Business Rule Register** — all rules, dependencies and numeric examples, maintained throughout the project
-- **Functional Specifications** — detailed system behavior per screen and key API interactions
-- **User Guide** — end-user documentation for CS and Marketing
+- **BRS** — phạm vi tổng thể và Business Rules cốt lõi của tính năng futures trading
+- **PRD** — User Flow, screen spec, acceptance criteria và Edge Cases
+- **Business Rule Register** — toàn bộ rules, dependencies và ví dụ số, được duy trì xuyên suốt dự án
+- **Functional Specifications** — chi tiết hành vi hệ thống theo từng màn hình và các API interaction chính
+- **User Guide** — tài liệu hướng dẫn người dùng cho CS và Marketing
 
 ---
 
@@ -184,49 +188,49 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 ### Phối hợp với Engineering
 
-Funding rate was a concept where each team had a different understanding initially. I wrote a short internal explainer and facilitated a walkthrough session before any team began their work — so Engineering, UX and CS could ask their respective questions in one place.
+Funding rate là khái niệm mà mỗi team hiểu khác nhau ban đầu. Giải pháp: viết một internal explainer ngắn và tổ chức walkthrough session trước khi bất kỳ team nào bắt đầu công việc của mình — để Engineering, UX và CS có thể đặt câu hỏi cùng lúc tại một nơi.
 
 ### UX và Risk requirements
 
-UX wanted a clean, minimal Order Form. Risk required key information to be visible: required margin, estimated liquidation price, leverage warning. Agreed approach: critical risk fields always visible; secondary information accessible via expand or tooltip — not hidden, not cluttering the primary screen.
+UX muốn Order Form gọn, sạch. Risk yêu cầu các thông tin quan trọng phải hiển thị rõ: required margin, estimated liquidation price, leverage warning. Hướng giải quyết được thống nhất: các trường rủi ro quan trọng luôn hiển thị; thông tin phụ truy cập qua expand hoặc tooltip — không ẩn, không làm rối màn hình chính.
 
 ### Giảm thiểu mơ hồ trước release
 
-I provided QA with an edge case list and specific numeric test data for each case — for example, leverage = 1 means no liquidation price should appear; margin ratio = 99.9% is warning state, not yet liquidated. QA used this directly to build test scenarios without having to derive the logic independently.
+QA được cung cấp danh sách Edge Cases kèm test data số cụ thể cho từng case — ví dụ: leverage = 1 thì không hiển thị liquidation price; margin ratio = 99.9% là warning state, chưa bị liquidate. QA dùng trực tiếp để build test scenarios mà không cần tự suy luận lại logic.
 
 ---
 
 ## Kiểm tra trước release
 
-- Reviewed order placement flow end-to-end with QA
-- Verified margin calculation and risk display logic against business rules
-- Validated key edge cases using specific numeric test data
-- Supported UAT sign-off for each screen flow
-- Assisted with user guide and release communication preparation
+- Review order placement flow end-to-end cùng QA
+- Xác nhận margin calculation và risk display logic theo Business Rules
+- Validate Edge Cases quan trọng bằng test data số cụ thể
+- Hỗ trợ UAT sign-off cho từng screen flow
+- Hỗ trợ chuẩn bị User Guide và communication trước release
 
-The platform launched without critical bugs related to trading logic — a shared result of BA, Engineering and QA through structured specification, cross-functional review and testing.
+Platform launch không có critical bug liên quan đến trading logic — kết quả chung của BA, Engineering và QA thông qua specification có cấu trúc, cross-functional review và kiểm tra kỹ lưỡng.
 
 ---
 
 ## Bài học rút ra
 
-- **Domain takes real time** — Spending two weeks on domain research before writing any requirements made a significant difference in spec quality.
-- **Map rule dependencies from day one** — Changing one assumption can cascade into many other rules. A Business Rule Register with explicit dependency mapping from kickoff prevents late-stage conflicts.
-- **Prototype review before PRD** — Most UX vs. business rule inconsistencies surfaced during prototype review, not during development.
-- **Edge cases belong in Acceptance Criteria** — Edge cases placed in document appendices often don't get fully tested. Moving critical edge cases directly into AC ensures they reach QA.
+- **Domain cần thời gian thật** — Dành hai tuần nghiên cứu domain trước khi viết bất kỳ requirement nào tạo ra sự khác biệt rõ ràng trong chất lượng spec.
+- **Map rule dependency từ đầu** — Thay đổi một assumption có thể cascade sang nhiều rule khác. Business Rule Register với dependency mapping từ kickoff tránh được conflict muộn.
+- **Review prototype trước PRD** — Phần lớn điểm không nhất quán giữa UX và Business Rules xuất hiện khi review prototype, không phải trong quá trình phát triển.
+- **Edge Cases phải nằm trong Acceptance Criteria** — Edge Cases để ở appendix thường không được test đủ. Đưa Edge Cases quan trọng trực tiếp vào AC giúp chúng đến được tay QA.
 
 ---
 
-## Kỹ năng thể hiện
+## Kỹ năng thể hiện qua dự án
 
-- Requirement clarification and gap analysis
-- Business rule definition and dependency mapping
-- User flow design
-- Edge case analysis and structured documentation
-- Cross-functional collaboration (Product / Engineering / QA / UI/UX)
-- UAT support and release validation
-- Trading domain research and knowledge transfer
+- Làm rõ yêu cầu và phân tích gap
+- Định nghĩa Business Rules và dependency mapping
+- Thiết kế User Flow
+- Phân tích Edge Cases và viết tài liệu có cấu trúc
+- Phối hợp đa team (Product / Engineering / QA / UI/UX)
+- Hỗ trợ UAT và validation trước release
+- Nghiên cứu trading domain và chia sẻ kiến thức
 
 <Note>
-  **Real project at Nami Innovation.** Specific business rules, internal metrics and technical specifications have not been disclosed to protect company information. The above is a case study-level summary.
+  **Dự án thực tế tại Nami Innovation.** Business Rules chi tiết, số liệu nội bộ và technical specifications không được công bố để bảo vệ thông tin công ty. Trang này là case study tóm tắt ở cấp độ portfolio.
 </Note>

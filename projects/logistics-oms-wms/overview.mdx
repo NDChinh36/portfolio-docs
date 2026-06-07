@@ -12,7 +12,7 @@ Tất cả dữ liệu, tên công ty, tên nhân vật và số liệu trong t�
 
 ---
 
-## Project Overview
+## Thông tin tổng quan dự án
 
 **VietFulfill** là công ty 3PL (Third-Party Logistics) hoạt động tại Việt Nam, cung cấp dịch vụ fulfillment cho các seller kinh doanh trên Shopee, TikTok Shop, Lazada và website riêng. Với tốc độ tăng trưởng của thương mại điện tử nội địa, VietFulfill xử lý trung bình 8.000–12.000 đơn hàng/ngày từ hàng trăm seller khác nhau, vận hành 2 kho tại Hà Nội và TP.HCM.
 
@@ -22,9 +22,11 @@ Project này thiết kế một **OMS/WMS Fulfillment Platform** tích hợp —
 
 ---
 
-## Business Context & Problem
+## Bối cảnh & Bài toán
 
 ### Hiện trạng (As-Is Pain Points)
+
+5 pain point cốt lõi được xác định qua phân tích as-is:
 
 ### Order trùng / bỏ sót do thiếu deduplication
 
@@ -58,7 +60,7 @@ VietFulfill dùng 4 carrier (GHN, GHTK, J&T Express, Viettel Post) nhưng không
 
 ---
 
-## Actors
+## Actors trong hệ thống
 
 <Info>
 Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống nội bộ và đối tác bên ngoài. Mỗi actor có quyền hạn và thông tin cần truy cập khác nhau.
@@ -80,7 +82,7 @@ Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống n�
 
 ---
 
-## Scope
+## Phạm vi dự án
 
 ### In Scope
 
@@ -114,7 +116,7 @@ Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống n�
 
 ---
 
-## Key BA Decisions
+## Quyết định BA quan trọng
 
 <Info>
 4 quyết định dưới đây là các điểm BA phải đưa ra lập trường rõ ràng — không phải chỉ ghi lại yêu cầu mà phải chủ động recommend giải pháp sau khi phân tích trade-off.
@@ -168,7 +170,7 @@ Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống n�
 
 ---
 
-## Case Study Summary
+## Tóm tắt Case Study
 
 ### Project
 
@@ -186,11 +188,11 @@ Multi-channel: Shopee, TikTok Shop, Lazada, Website riêng
 
 VietFulfill tăng trưởng nhanh (3x volume trong 6 tháng) nhưng hệ thống vận hành vẫn dựa trên Excel, Google Sheet và Zalo. Hệ quả: order trùng, status không nhất quán, cancel gây lãng phí, exception xử lý chậm và không có visibility về carrier performance. Không thể scale tiếp mà không có platform tích hợp.
 
-### My Role as BA
+### Vai trò / Phạm vi công việc BA
 
 Phân tích hiện trạng (as-is process mapping), xác định pain points có data, thiết kế to-be flow cho toàn bộ order lifecycle và warehouse operation, định nghĩa data model cốt lõi (3 status field, naming convention), viết business rules cho cancel flow và exception handling, và ra quyết định trade-off có lập trường rõ ràng cho 4 vấn đề phức tạp nhất.
 
-### Why This Case Is Challenging
+### Tại sao case này thách thức
 
 <Steps>
   <Step title="Multi-system, multi-actor complexity">
@@ -221,7 +223,7 @@ Phân tích hiện trạng (as-is process mapping), xác định pain points có
 
 ---
 
-### Main Artifacts
+### Tài liệu BA đã xây dựng
 
 | Artifact | Mô tả |
 |---|---|
@@ -235,7 +237,7 @@ Phân tích hiện trạng (as-is process mapping), xác định pain points có
 | `exception-queue.mdx` | Exception Queue design, UI requirements, dashboard wireframes |
 | `uat.mdx` | 37 UAT test scenarios trong 11 nhóm |
 
-### What This Demonstrates (BA Capabilities)
+### Case này thể hiện kỹ năng gì
 
 - **Domain analysis:** Hiểu logistics domain đủ sâu để phát hiện vấn đề mà stakeholder không tự articulate được
 - **Decision-making under ambiguity:** 4 Key BA Decisions đều không có câu trả lời đúng duy nhất — demonstrate khả năng frame vấn đề, evaluate trade-off và recommend có lập trường
@@ -243,7 +245,7 @@ Phân tích hiện trạng (as-is process mapping), xác định pain points có
 - **Cross-functional thinking:** Mỗi decision đều xem xét impact đến tất cả actors liên quan, không chỉ người yêu cầu
 - **Scope management:** Out of scope list cụ thể và có lý do — không phải "chúng tôi sẽ làm sau" chung chung
 
-### Lessons Learned
+### Bài học rút ra
 
 ### Status design phải làm đầu tiên, không phải sau
 

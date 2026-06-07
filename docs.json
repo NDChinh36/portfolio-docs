@@ -57,7 +57,7 @@
         "tab": "BA Projects",
         "groups": [
           {
-            "group": "Dự án thực tế — Nami Innovation",
+            "group": "Dự án thực tế tại Nami Innovation",
             "pages": [
               "projects/nami-futures-trading",
               "projects/nami-reward-program-v2",
@@ -66,7 +66,7 @@
             ]
           },
           {
-            "group": "Tài liệu mẫu — Futures Calculator (Nâng cao)",
+            "group": "Tài liệu mẫu — Futures Position Calculator",
             "pages": [
               {
                 "group": "Futures Position Calculator",
@@ -130,7 +130,7 @@
             "group": "Tài liệu mẫu — E-wallet / Payment System",
             "pages": [
               {
-                "group": "FinPay E-Wallet — Overview & Modules",
+                "group": "FinPay E-Wallet — Tổng quan & Modules",
                 "icon": "wallet",
                 "pages": [
                   "projects/ewallet/overview",
@@ -146,7 +146,7 @@
                 ]
               },
               {
-                "group": "Digital Payment & Reconciliation",
+                "group": "QR Payment & Reconciliation",
                 "icon": "credit-card",
                 "pages": [
                   "projects/ewallet/payment-case-study",

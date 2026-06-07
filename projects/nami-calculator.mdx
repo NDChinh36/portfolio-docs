@@ -1,116 +1,119 @@
 ---
 title: "Calculator Trading Feature"
-description: "Real Project — Business Analyst · Nami Innovation · 2024"
+description: "Dự án thực tế — Business Analyst · Nami Innovation · 6/2024 – 10/2024"
 icon: "calculator"
 ---
 
 <Info>
-  **Real Project — Nami Innovation** · Business Analyst  
-  **Timeline:** 6/2024 – 10/2024 · **Platform:** Web / Mobile · **Team:** ~10 people
+  **Dự án thực tế — Nami Innovation** · Business Analyst  
+  **Thời gian:** 6/2024 – 10/2024 · **Nền tảng:** Web / Mobile · **Quy mô team:** ~10 người
 </Info>
 
 <Note>
-  This case is based on my real work as a Business Analyst at Nami Innovation. Sensitive information has been generalized or anonymized.
+  Trang này là case study tóm tắt dựa trên công việc thực tế tại Nami Innovation. Thông tin nhạy cảm đã được khái quát hóa hoặc ẩn danh.
 </Note>
 
 ---
 
-## Thông tin tổng quan dự án
+## Thông tin nhanh về dự án
 
 - **Dự án:** Calculator Trading Feature
-- **Loại dự án:** Dự án thực tế — Nami Innovation
+- **Loại:** Dự án thực tế tại Nami Innovation
 - **Vai trò:** Business Analyst
 - **Thời gian:** 6/2024 – 10/2024
 - **Domain:** Trading Tools
 - **Nền tảng:** Web / Mobile
 - **Quy mô team:** ~10 người
-- **Phương pháp làm việc:** Agile / Scrum
-- **Trách nhiệm chính:** CS feedback, competitor research, formula definition, PRD, UX/logic alignment, QA formula validation
+- **Cách làm việc:** Agile / Scrum
+- **Phạm vi BA:** CS feedback, competitor research, formula definition, PRD, UX/logic alignment, QA formula validation
 
 ---
 
 ## Kết quả dự án
 
-- CS tickets about PnL and liquidation price calculation decreased after launch
-- Calculator designed to serve three trader groups: new traders (liquidation price), regular traders (PnL and ROE) and advanced traders (full parameter set)
+- CS ticket về tính toán PnL và liquidation price giảm sau khi launch
+- Calculator được thiết kế để phục vụ ba nhóm trader: trader mới (liquidation price), trader thường (PnL và ROE) và trader nâng cao (full parameter set)
+- Đây là feature đầu tiên giúp làm quen rõ hơn với vai trò BA trong sản phẩm trading tại Nami Innovation.
 
 ---
 
-## Bối cảnh nghiệp vụ
+## Bối cảnh dự án
 
-Users needed a calculation tool to estimate trading outcomes before placing orders. Many users — especially new traders — were leaving the platform to use external tools to calculate PnL or liquidation price, then returning to trade.
+Người dùng cần công cụ tính toán để ước tính kết quả giao dịch trước khi đặt lệnh. Nhiều trader — đặc biệt trader mới — đang rời platform để dùng công cụ bên ngoài tính PnL hoặc liquidation price, rồi mới quay lại giao dịch.
 
-This was the first feature I owned as a BA at Nami Innovation, immediately after transitioning from a marketing role.
-
----
-
-## Vai trò của tôi trong dự án
-
-- Collected user feedback through CS team interviews
-- Analyzed competitor calculator tools (Binance, OKX, Bybit)
-- Defined feature scope and formula requirements
-- Wrote PRD and supported functional specification
-- Aligned UI/UX flow with Design and formula logic with Development
-- Supported QA testing for formula accuracy
+Đây cũng là feature đầu tiên được phụ trách với tư cách BA tại Nami Innovation, ngay sau khi chuyển từ vai trò marketing.
 
 ---
 
-## Bài toán BA cần giải quyết
+## Vai trò / Phạm vi công việc BA
 
-- **User need validation** — Before defining scope, I needed to confirm what calculation problems users actually had, not what Product assumed.
-- **Formula specification** — PnL, liquidation price and required margin formulas needed to be defined precisely enough for Dev to implement correctly and QA to verify.
-- **Scope prioritization** — Multiple trader groups had different needs. Scope had to be prioritized to avoid building too much for MVP.
-- **Formula accuracy** — Calculator outputs must match trading product rules. Wrong formulas would undermine user trust in the platform.
+Phạm vi công việc trong dự án này gồm:
+
+- Thu thập user feedback thông qua phỏng vấn CS team
+- Phân tích công cụ calculator của competitor (Binance, OKX, Bybit)
+- Định nghĩa scope tính năng và yêu cầu formula
+- Viết PRD và hỗ trợ Functional Specification
+- Align User Flow với Design và formula logic với Development
+- Hỗ trợ QA kiểm tra độ chính xác formula
 
 ---
 
-## Cách tiếp cận của BA
+## Bài toán BA cần xử lý
+
+- **Xác nhận nhu cầu người dùng** — Trước khi define scope, cần xác nhận người dùng thực sự đang gặp vấn đề tính toán gì, không phải dựa trên giả định của Product.
+- **Spec formula** — Formula PnL, liquidation price và required margin cần được định nghĩa đủ chính xác để Dev implement đúng và QA có thể verify.
+- **Ưu tiên hóa scope** — Nhiều nhóm trader có nhu cầu khác nhau. Scope cần được ưu tiên để tránh xây quá nhiều cho MVP.
+- **Độ chính xác formula** — Kết quả calculator phải khớp với trading rules của sản phẩm. Formula sai làm mất niềm tin của người dùng vào platform.
+
+---
+
+## Cách tiếp cận
 
 ### Bắt đầu từ CS team
 
-Instead of starting from assumptions, I interviewed the CS team to identify the most common user calculation questions. This revealed three distinct trader groups with different needs — driving the scope and tab-based layout.
+Thay vì bắt đầu từ giả định, phỏng vấn CS team để xác định những câu hỏi tính toán phổ biến nhất của người dùng. Kết quả cho thấy ba nhóm trader riêng biệt với nhu cầu khác nhau — định hướng scope và tab-based layout.
 
 ### Nghiên cứu competitor trước khi define scope
 
-I analyzed calculators on Binance, OKX and Bybit to benchmark features, identify UX patterns and understand what Nami needed to include or could simplify.
+Phân tích calculator trên Binance, OKX và Bybit để benchmark tính năng, xác định UX patterns và hiểu Nami cần bao gồm gì hoặc có thể đơn giản hóa gì.
 
 ### Formula definition là deliverable của BA
 
-I documented each formula explicitly as a BA deliverable — not just as implementation notes. This gave Dev a clear reference and gave QA expected values to validate against.
+Ghi rõ từng formula dưới dạng BA deliverable — không chỉ là implementation note. Dev có tài liệu tham chiếu rõ ràng; QA có expected values để verify.
 
 ---
 
 ## Business Rules cốt lõi
 
-| Rule | Behavior |
+| Rule | Hành vi |
 | --- | --- |
-| **Required fields** | All required inputs must be completed before calculation runs |
-| **Input validation** | Invalid numeric inputs are blocked; appropriate error message shown |
-| **Real-time calculation** | Results update automatically when any input changes — no submit button needed |
-| **Formula alignment** | Calculator formulas must match the trading product's underlying calculation logic |
-| **Result labeling** | Results are clearly labeled as estimates, not guaranteed outcomes |
-| **Edge case: leverage = 1** | No liquidation price displayed at 1x leverage (no liquidation risk) |
+| **Required fields** | Tất cả input bắt buộc phải được điền trước khi tính toán chạy |
+| **Input validation** | Input số không hợp lệ bị block; hiển thị thông báo lỗi phù hợp |
+| **Tính toán real-time** | Kết quả cập nhật tự động khi bất kỳ input nào thay đổi — không cần nút Submit |
+| **Alignment formula** | Formula của calculator phải khớp với logic tính toán trong trading product |
+| **Ghi chú kết quả** | Kết quả được ghi rõ là ước tính, không phải kết quả đảm bảo |
+| **Edge case: leverage = 1** | Không hiển thị liquidation price ở leverage 1x (không có rủi ro liquidation) |
 
 ---
 
 ## Luồng nghiệp vụ chính
 
-1. User selects calculator type (PnL / Liquidation Price / Required Margin)
-2. User enters trading parameters (entry price, exit price, quantity, leverage, margin mode)
-3. System validates inputs
-4. System calculates and displays estimated result in real-time
-5. User adjusts parameters as needed
-6. User uses result as reference before placing an order
+1. Người dùng chọn loại calculator (PnL / Liquidation Price / Required Margin)
+2. Người dùng nhập trading parameters (entry price, exit price, quantity, leverage, margin mode)
+3. Hệ thống validate inputs
+4. Hệ thống tính toán và hiển thị kết quả ước tính real-time
+5. Người dùng điều chỉnh parameters theo nhu cầu
+6. Người dùng dùng kết quả làm tham chiếu trước khi đặt lệnh
 
 ---
 
 ## Tài liệu BA đã xây dựng
 
-- **PRD** — feature scope, user flows and screen specifications
-- **Formula Definition Document** — PnL, liquidation price and required margin formulas for Long/Short and Isolated/Cross variants
-- **Competitor Research Notes** — Binance, OKX and Bybit feature comparison
-- **Input/Output Field Spec** — field definitions, validation rules and error messages
-- **QA Formula Checklist** — expected outputs for key input combinations
+- **PRD** — scope tính năng, User Flow và screen spec
+- **Formula Definition Document** — formula PnL, liquidation price và required margin cho Long/Short và Isolated/Cross variants
+- **Competitor Research Notes** — so sánh tính năng Binance, OKX và Bybit
+- **Input/Output Field Spec** — định nghĩa field, validation rules và error messages
+- **QA Formula Checklist** — expected outputs cho các tổ hợp input chính
 - **User Flow**
 
 ---
@@ -119,46 +122,44 @@ I documented each formula explicitly as a BA deliverable — not just as impleme
 
 ### Clarify formula với Dev
 
-I walked Dev through each formula in a dedicated session — including edge cases like Cross Margin liquidation (which depends on full account equity, not just position margin) and the difference between ROE and PnL percentage. This prevented misunderstanding during implementation.
+Walkthrough từng formula với Dev trong một session riêng — bao gồm Edge Cases như Cross Margin liquidation (phụ thuộc vào toàn bộ equity của account, không chỉ position margin) và sự khác nhau giữa ROE và PnL percentage. Ngăn hiểu nhầm trong quá trình implementation.
 
 ### Hỗ trợ QA kiểm tra formula
 
-I prepared a formula checklist with specific numeric examples — input values and expected outputs — so QA could verify formula accuracy without deriving the expected results themselves.
+Chuẩn bị formula checklist với ví dụ số cụ thể — input values và expected outputs — để QA verify độ chính xác formula mà không cần tự suy luận lại expected result.
 
 ### Quyết định UX với Design
 
-I worked with Design on two key UX decisions: real-time calculation (no submit button needed) and the "Fill from position" button (lets users pull parameters from an open order directly into the calculator). Both came from competitor analysis and CS feedback.
+Phối hợp với Design về hai quyết định UX: tính toán real-time (không cần nút Submit) và nút "Fill from position" (cho phép người dùng kéo parameters từ lệnh đang mở vào calculator). Cả hai xuất phát từ competitor analysis và CS feedback.
 
 ---
 
 ## Kiểm tra trước release
 
-- Reviewed formula outputs against expected values from the formula spec
-- Confirmed edge case behavior (leverage = 1, Cross mode disclaimer)
-- Validated real-time calculation trigger behavior across input types
-- Supported QA sign-off
+- Review kết quả formula theo expected values từ formula spec
+- Xác nhận hành vi Edge Cases (leverage = 1, Cross mode disclaimer)
+- Validate trigger tính toán real-time theo từng loại input
+- Hỗ trợ QA sign-off
 
 ---
 
 ## Bài học rút ra
 
-- **CS team is the fastest path to user insight** — for a utility tool like a calculator, CS feedback was more accurate and faster than user surveys or assumptions.
-- **Formula specification is a core BA deliverable** — even for a "simple" calculation feature, formula definitions need to be explicit, testable and owned by BA from the start.
-- **Domain knowledge before spec writing** — transitioning from marketing, I had to quickly learn futures calculation concepts before I could write correct requirements. Time spent on domain research first paid off in spec quality.
+- **CS team là đường ngắn nhất đến user insight** — với công cụ utility như calculator, CS feedback chính xác và nhanh hơn user surveys hay giả định.
+- **Formula spec là core BA deliverable** — dù là feature "đơn giản", formula definitions cần rõ ràng, testable và được BA ownership từ đầu.
+- **Domain knowledge trước khi viết spec** — chuyển từ marketing sang BA, cần học nhanh các khái niệm tính toán futures trước khi viết requirement. Thời gian đầu tư cho domain research tạo ra sự khác biệt rõ ràng trong chất lượng spec.
 
 ---
 
-## Kỹ năng thể hiện
+## Kỹ năng thể hiện qua dự án
 
-- User feedback analysis via CS team
-- Competitor research and feature benchmarking
-- Formula requirement definition
-- User flow design
-- QA support and formula validation
-- Trading domain research
-
----
+- Phân tích user feedback qua CS team
+- Nghiên cứu competitor và benchmark tính năng
+- Định nghĩa yêu cầu formula
+- Thiết kế User Flow
+- Hỗ trợ QA và formula validation
+- Nghiên cứu trading domain
 
 <Note>
-  **Real project at Nami Innovation.** Specific formula implementations and internal business rules have not been disclosed to protect company information. The above is a case study-level summary.
+  **Dự án thực tế tại Nami Innovation.** Formula implementation chi tiết và Business Rules nội bộ không được công bố để bảo vệ thông tin công ty. Trang này là case study tóm tắt ở cấp độ portfolio.
 </Note>

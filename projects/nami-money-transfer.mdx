@@ -1,166 +1,166 @@
 ---
 title: "Money Transfer Feature"
-description: "Real Project — Business Analyst · Nami Innovation · 2024"
+description: "Dự án thực tế — Business Analyst · Nami Innovation · 10/2024 – 12/2024"
 icon: "arrow-right-arrow-left"
 ---
 
 <Info>
-  **Real Project — Nami Innovation** · Business Analyst  
-  **Timeline:** 10/2024 – 12/2024 · **Platform:** Mobile · **Team:** ~10 people
+  **Dự án thực tế — Nami Innovation** · Business Analyst  
+  **Thời gian:** 10/2024 – 12/2024 · **Nền tảng:** Mobile · **Quy mô team:** ~10 người
 </Info>
 
 <Note>
-  This is a real internal transfer feature in the Nami ecosystem — not the same as the fictional e-wallet transfer module in the practice section. Sensitive information has been generalized or anonymized.
+  Đây là tính năng chuyển tiền nội bộ trong hệ sinh thái Nami — không phải module transfer giả định trong practice case. Thông tin nhạy cảm đã được khái quát hóa hoặc ẩn danh.
 </Note>
 
 ---
 
-## Thông tin tổng quan dự án
+## Thông tin nhanh về dự án
 
 - **Dự án:** Money Transfer Feature
-- **Loại dự án:** Dự án thực tế — Nami Innovation
+- **Loại:** Dự án thực tế tại Nami Innovation
 - **Vai trò:** Business Analyst
 - **Thời gian:** 10/2024 – 12/2024
 - **Domain:** Fintech / Internal Transfer
 - **Nền tảng:** Mobile
 - **Quy mô team:** ~10 người
-- **Phương pháp làm việc:** Agile / Scrum
-- **Trách nhiệm chính:** Transfer rules, validation logic, user constraints, user flow, edge cases, QA validation
+- **Cách làm việc:** Agile / Scrum
+- **Phạm vi BA:** Transfer rules, validation logic, user constraints, User Flow, Edge Cases, QA validation
 
 ---
 
 ## Kết quả dự án
 
-- Released on schedule — 3-month timeline maintained
-- No critical bugs related to transfer logic after launch
-- First BA project completed with full end-to-end ownership
-
-> Đây là dự án có ý nghĩa quan trọng trong quá trình phát triển của tôi với vai trò BA — dự án đầu tiên tôi có full ownership từ elicitation đến UAT và sign-off trước khi release.
+- Release đúng timeline — giữ được timeline 3 tháng
+- Không có critical bug liên quan đến transfer logic sau launch
+- Đây là một trong những dự án đầu tiên có ownership BA end-to-end rõ hơn, từ làm rõ yêu cầu và viết PRD đến phối hợp QA validation và sign-off trước release.
 
 ---
 
-## Bối cảnh nghiệp vụ
+## Bối cảnh dự án
 
-Nami Innovation needed an **internal transfer feature** to allow users to move assets between accounts within the Nami ecosystem — without withdrawing to an external platform.
+Nami Innovation cần tính năng **chuyển tiền nội bộ** để người dùng có thể di chuyển tài sản giữa các tài khoản trong hệ sinh thái Nami mà không cần rút ra ngoài.
 
-The feature involved multiple account types (Spot, Futures), validation rules, balance locking logic and clear user flows despite complex backend behavior.
+Tính năng liên quan đến nhiều loại tài khoản (Spot, Futures), validation rules, balance locking logic và User Flow rõ ràng dù backend phức tạp.
 
-**Tại sao BA cần làm kỹ:** A wrong validation rule in a financial transfer feature can allow invalid transfers or block legitimate ones. Rules needed to be precise, agreed upon and fully tested before launch.
-
----
-
-## Vai trò của tôi trong dự án
-
-- Defined transfer rules and user constraint logic
-- Wrote PRD, transfer rule matrix and user guide
-- Designed user flows for all transfer scenarios
-- Clarified edge cases with Dev and QA
-- Led UAT and supported release sign-off
+**Tại sao cần làm kỹ:** Một validation rule sai trong tính năng chuyển tiền tài chính có thể cho phép giao dịch không hợp lệ hoặc block giao dịch hợp lệ. Rules cần chính xác, được toàn team đồng ý và kiểm tra kỹ trước launch.
 
 ---
 
-## Bài toán BA cần giải quyết
+## Vai trò / Phạm vi công việc BA
 
-- **Transfer path rules** — Not all account-to-account combinations were supported. Clear rules were needed to define what was allowed and what was blocked.
-- **Available vs. total balance** — Users with open Futures positions have locked margin. Using total balance for validation would allow invalid transfers that could trigger unexpected position liquidation.
-- **Receiver validation** — Invalid or inactive receiver accounts needed to be detected before confirmation, not after submission.
-- **Edge case coverage** — Financial transactions have many failure scenarios. Dev and QA needed a complete edge case spec to ensure full coverage.
+Phạm vi công việc trong dự án này gồm:
+
+- Định nghĩa transfer rules và user constraint logic
+- Viết PRD, transfer rule matrix và user guide
+- Thiết kế User Flow cho tất cả transfer scenarios
+- Làm rõ Edge Cases với Dev và QA
+- Lead UAT và hỗ trợ release sign-off
+
+---
+
+## Bài toán BA cần xử lý
+
+- **Transfer path rules** — Không phải mọi tổ hợp tài khoản đều được hỗ trợ. Cần rules rõ ràng để định nghĩa đường nào được phép và đường nào bị block.
+- **Available vs. total balance** — Người dùng có Futures position đang mở sẽ có margin bị lock. Dùng total balance để validate có thể cho phép giao dịch dẫn đến liquidation position không mong muốn.
+- **Validate receiver** — Tài khoản nhận không hợp lệ hoặc không hoạt động cần được phát hiện trước bước xác nhận, không phải sau khi submit.
+- **Edge Case coverage** — Giao dịch tài chính có nhiều failure scenarios. Dev và QA cần edge case spec đầy đủ để đảm bảo coverage toàn diện.
 
 ---
 
 ## Business Rules cốt lõi
 
-| Rule | Behavior |
+| Rule | Hành vi |
 | --- | --- |
-| **Eligible transfer paths** | Spot → Spot (same user), Spot → Spot (other user P2P), Spot ↔ Futures (same user) |
-| **Blocked paths** | Futures → Futures cross-user is blocked to reduce risk control complexity |
-| **Balance validation** | Transfer amount is validated against available balance, not total balance |
-| **Minimum amount** | Each asset has a configured minimum transfer amount |
-| **Receiver validation** | Receiver account must be active; validated before confirmation screen |
-| **Threshold verification** | P2P transfers above a configured threshold require additional verification |
-| **Duplicate prevention** | Duplicate submissions are rejected |
+| **Đường transfer được phép** | Spot → Spot (cùng user), Spot → Spot (P2P sang user khác), Spot ↔ Futures (cùng user) |
+| **Đường transfer bị block** | Futures → Futures cross-user bị block để giảm độ phức tạp risk control |
+| **Validate balance** | Số tiền transfer được validate theo available balance, không phải total balance |
+| **Số tiền tối thiểu** | Mỗi asset có mức tối thiểu được cấu hình |
+| **Validate receiver** | Tài khoản nhận phải đang active; được validate trước màn hình xác nhận |
+| **Xác thực ngưỡng** | P2P transfer vượt ngưỡng đã cấu hình yêu cầu thêm bước xác thực |
+| **Ngăn trùng lặp** | Submission trùng lặp bị từ chối |
 
 ---
 
-## Quyết định BA quan trọng
+## Một số quyết định BA quan trọng
 
-### Decision 1 — Block Futures-to-Futures Cross-user Transfer
+### Quyết định 1 — Block Futures-to-Futures cross-user transfer
 
-**Context:** The team discussed whether Futures accounts should support P2P transfers, similar to Spot accounts.
+**Bối cảnh:** Team thảo luận về việc Futures account có hỗ trợ P2P như Spot account không.
 
-**Problem / Risk:** Futures margin is partially locked when positions are open. Cross-user Futures transfer creates risk control complexity and potential for margin manipulation. Engineering raised concerns about race conditions in margin validation.
+**Vấn đề / Rủi ro:** Futures margin bị lock một phần khi có position đang mở. Cross-user Futures transfer tạo ra complexity trong risk control và tiềm ẩn margin manipulation. Engineering lo ngại race condition trong margin validation.
 
-**BA Recommendation:** Block Futures-to-Futures cross-user transfers entirely. Supported paths: Spot ↔ Spot cross-user P2P, Futures ↔ Spot same-user rebalance only.
+**Đề xuất BA:** Block hoàn toàn Futures-to-Futures cross-user transfer. Đường hỗ trợ: Spot ↔ Spot cross-user P2P, Futures ↔ Spot cùng user để rebalance.
 
-**Trade-off:** Removes an edge use case for traders wanting to move margin directly between different accounts. Trade-off accepted — the use case is rare.
+**Trade-off:** Bỏ một use case edge của trader muốn chuyển margin trực tiếp giữa các account khác nhau. Trade-off được chấp nhận — use case này hiếm.
 
-**Expected Impact:** Simpler validation rules, alignment with Futures risk model, removes a class of potential bugs.
-
----
-
-### Decision 2 — Validate Against Available Balance, Not Total Balance
-
-**Context:** An early Dev draft validated transfers against total balance.
-
-**Problem / Risk:** Users with open Futures positions have locked margin included in their total balance. Validating against total balance would allow a transfer that leaves insufficient margin to maintain open positions — potentially triggering unexpected liquidation.
-
-**BA Recommendation:** Validate against available balance, calculated as total balance minus locked margin. Requires a call to the Futures engine before the validation step.
-
-**Trade-off:** Adds one API call to the validation flow, slightly increasing latency.
-
-**Expected Impact:** Prevents users from accidentally liquidating Futures positions when transferring funds.
+**Kết quả dự kiến:** Validation rules đơn giản hơn, alignment với Futures risk model, loại bỏ một class bug tiềm ẩn.
 
 ---
 
-### Decision 3 — Threshold-based Verification for P2P Transfers
+### Quyết định 2 — Validate theo available balance, không phải total balance
 
-**Context:** Security team wanted OTP for all P2P transfers. UX team wanted minimal friction.
+**Bối cảnh:** Draft đầu tiên của Dev validate theo total balance.
 
-**Problem / Risk:** Requiring OTP for all P2P transfers adds unnecessary friction for small amounts. Removing OTP entirely creates security risk for large transfers if an account is compromised.
+**Vấn đề / Rủi ro:** Người dùng có Futures position đang mở có margin bị lock nằm trong total balance. Validate theo total balance có thể cho phép transfer làm margin không còn đủ để duy trì position — tiềm ẩn liquidation không mong muốn.
 
-**BA Recommendation:** Apply verification only when transfer amount exceeds a configured threshold. Internal same-user transfers (Spot ↔ Futures rebalance) do not require verification.
+**Đề xuất BA:** Validate theo available balance = total balance trừ locked margin. Yêu cầu gọi Futures engine trước bước validation.
 
-**Trade-off:** Threshold value needs to be defined and maintained over time.
+**Trade-off:** Thêm một API call trong validation flow, tăng nhẹ latency.
 
-**Expected Impact:** Balances security with UX — low friction for small transfers, stronger verification for large ones.
+**Kết quả dự kiến:** Ngăn người dùng vô tình liquidate Futures position khi chuyển tiền.
+
+---
+
+### Quyết định 3 — Xác thực theo ngưỡng cho P2P transfer
+
+**Bối cảnh:** Security team muốn OTP cho mọi P2P transfer. UX muốn hạn chế friction.
+
+**Vấn đề / Rủi ro:** Yêu cầu OTP cho mọi transfer nhỏ tạo friction không cần thiết. Bỏ OTP hoàn toàn tạo rủi ro bảo mật cho transfer lớn nếu account bị compromise.
+
+**Đề xuất BA:** Chỉ áp dụng xác thực khi số tiền vượt ngưỡng đã cấu hình. Internal same-user transfers không cần xác thực thêm.
+
+**Trade-off:** Giá trị ngưỡng cần được định nghĩa và duy trì theo thời gian.
+
+**Kết quả dự kiến:** Cân bằng bảo mật với UX — ít friction cho transfer nhỏ, xác thực mạnh hơn cho transfer lớn.
 
 ---
 
 ## Luồng nghiệp vụ chính
 
-1. User selects transfer type (internal same-user or P2P to another user)
-2. User selects source account and asset
-3. For P2P: user enters receiver UID or email; system validates receiver
-4. User enters transfer amount
-5. System validates available balance and transfer rules
-6. Preview screen shows: from, to, asset, amount and fee if applicable
-7. For amounts above threshold: verification step is required
-8. User confirms transfer
-9. System processes transaction
-10. Result screen shows Success or Failure with reason
+1. Người dùng chọn loại transfer (nội bộ cùng user hoặc P2P sang user khác)
+2. Người dùng chọn tài khoản nguồn và asset
+3. Với P2P: nhập UID hoặc email người nhận; hệ thống validate receiver
+4. Người dùng nhập số tiền transfer
+5. Hệ thống validate available balance và transfer rules
+6. Màn hình preview hiển thị: từ, đến, asset, số tiền và phí nếu có
+7. Với số tiền vượt ngưỡng: yêu cầu thêm bước xác thực
+8. Người dùng xác nhận transfer
+9. Hệ thống xử lý giao dịch
+10. Màn hình kết quả hiển thị Thành công hoặc Thất bại kèm lý do
 
 ---
 
-## Edge Cases quan trọng
+## Edge Cases cần chú ý
 
-- Invalid or inactive receiver → error shown before confirmation; transfer blocked
-- Insufficient available balance → Submit disabled; clear message displayed
-- Blocked transfer path → option hidden or disabled; no confusing error message
-- User has open Futures position → available balance reduced by locked margin amount
-- Transfer amount equal to full available balance → allowed
-- Duplicate submission → second request rejected
-- Debit succeeds but credit fails → rollback triggered; incident logged; user notified
-- User exits app before result screen → transfer status retrievable on return
+- Receiver không hợp lệ hoặc không active → hiển thị lỗi trước màn hình xác nhận; transfer bị block
+- Available balance không đủ → Submit disabled; hiển thị thông báo rõ ràng
+- Đường transfer bị block → option bị ẩn hoặc disable; không hiển thị thông báo lỗi gây nhầm lẫn
+- Người dùng có Futures position đang mở → available balance bị giảm theo locked margin
+- Số tiền transfer bằng toàn bộ available balance → được phép
+- Submission trùng lặp → request thứ hai bị từ chối
+- Debit thành công nhưng credit thất bại → rollback được kích hoạt; incident được log; người dùng được thông báo
+- Người dùng thoát app trước màn hình kết quả → trạng thái transfer có thể tra cứu khi quay lại
 
 ---
 
 ## Tài liệu BA đã xây dựng
 
-- **PRD** — user flows, screen specs, validation logic and edge cases
-- **Transfer Rule Matrix** — supported paths, blocked paths, available vs. total balance distinction
-- **User Flow Diagrams** — same-user internal and P2P cross-user scenarios
-- **Edge Case Matrix** — all failure scenarios with expected system behavior
-- **User Guide** — CS-facing documentation on account types, FAQ and troubleshooting
+- **PRD** — User Flow, screen spec, validation logic và Edge Cases
+- **Transfer Rule Matrix** — đường được phép, đường bị block, phân biệt available vs. total balance
+- **User Flow Diagrams** — internal cùng user và P2P cross-user scenarios
+- **Edge Case Matrix** — tất cả failure scenarios với expected behavior của hệ thống
+- **User Guide** — tài liệu cho CS về các loại tài khoản, FAQ và xử lý sự cố
 - **UAT Checklist**
 
 ---
@@ -169,47 +169,45 @@ The feature involved multiple account types (Spot, Futures), validation rules, b
 
 ### Phối hợp với Engineering
 
-I clarified the available balance calculation requirement early — specifically that validation must call the Futures engine to retrieve locked margin before the validation step. Catching this before development started prevented a late-stage change that would have required significant rework.
+Làm rõ sớm yêu cầu tính available balance — cụ thể là validation phải gọi Futures engine để lấy locked margin trước bước validate. Phát hiện điều này trước khi phát triển bắt đầu tránh được thay đổi muộn yêu cầu rework đáng kể.
 
 ### Hỗ trợ QA
 
-I provided QA with a complete edge case matrix including specific test scenarios — for example, the exact behavior when a user has a locked Futures position and transfers the maximum available amount. QA used this to build test cases without deriving the logic independently.
+Cung cấp cho QA edge case matrix đầy đủ với test scenario cụ thể — ví dụ: hành vi chính xác khi người dùng có Futures position đang lock và transfer hết available balance. QA dùng trực tiếp để build test cases mà không cần tự suy luận lại logic.
 
 ### Phối hợp với Growth và Brand
 
-This project included a launch communication review with Brand and a metric definition session with Growth to determine how transfer adoption would be measured after release.
+Dự án bao gồm review launch communication với Brand và session định nghĩa metrics với Growth để xác định cách đo lường adoption sau release.
 
 ---
 
 ## Kiểm tra trước release
 
-- Reviewed transfer flow end-to-end with QA
-- Validated available balance calculation logic against transfer rules
-- Confirmed blocked paths were correctly enforced
-- Checked edge case behavior with specific test data
-- Led UAT sign-off and supported release communication
+- Review transfer flow end-to-end cùng QA
+- Xác nhận logic tính available balance theo transfer rules
+- Kiểm tra các đường bị block được enforce đúng
+- Kiểm tra Edge Cases bằng test data cụ thể
+- Lead UAT sign-off và hỗ trợ release communication
 
 ---
 
 ## Bài học rút ra
 
-- **Invest in user flow before PRD** — having a clear flow before writing the full PRD reduced revision cycles and saved communication overhead across the team.
-- **Available vs. total balance must be explicit** — this distinction is easy to miss in early drafts but critical in fintech. It should be an early clarification question in any transfer spec.
-- **End-to-end ownership requires follow-through** — ownership means staying involved through QA, UAT and release, not just completing the PRD.
+- **Đầu tư vào User Flow trước khi viết PRD** — có flow rõ ràng trước khi viết PRD giúp giảm revision cycles và tiết kiệm overhead giao tiếp giữa các team.
+- **Available vs. total balance phải được nêu rõ** — điểm này dễ bỏ qua trong draft đầu nhưng rất quan trọng trong fintech. Nên là câu hỏi làm rõ sớm trong bất kỳ transfer spec nào.
+- **Ownership end-to-end cần follow-through** — ownership có nghĩa là tiếp tục tham gia qua QA, UAT và release, không phải chỉ hoàn thành PRD.
 
 ---
 
-## Kỹ năng thể hiện
+## Kỹ năng thể hiện qua dự án
 
-- Requirement clarification and end-to-end feature ownership
-- Validation rule definition
-- User flow design
-- Edge case analysis
-- QA collaboration and UAT lead
-- Fintech transaction domain thinking
-
----
+- Làm rõ yêu cầu và ownership end-to-end tính năng
+- Định nghĩa validation rule
+- Thiết kế User Flow
+- Phân tích Edge Cases
+- Phối hợp với QA và lead UAT
+- Tư duy domain fintech transaction
 
 <Note>
-  **Real project at Nami Innovation.** Transfer logic, validation rules and internal system details have not been disclosed to protect company information. The above is a case study-level summary.
+  **Dự án thực tế tại Nami Innovation.** Transfer logic, validation rules và chi tiết hệ thống nội bộ không được công bố để bảo vệ thông tin công ty. Trang này là case study tóm tắt ở cấp độ portfolio.
 </Note>

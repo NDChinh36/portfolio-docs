@@ -12,7 +12,7 @@ icon: "hospital"
 
 Hệ thống đặt lịch khám ngoại trú, check-in QR/kiosk và đồng bộ HIS (Hospital Information System) tại CityHealth General Hospital — một bệnh viện đa khoa hạng I tại TP.HCM với hơn 800 giường bệnh (fictional).
 
-## Project Overview
+## Thông tin tổng quan dự án
 
 - **18 Chuyên Khoa** — Phủ toàn bộ 18 chuyên khoa ngoại trú, từ Nội tổng quát đến Nhi, Mắt, Tai Mũi Họng, và Ung bướu
 - **1.200 Lượt/Ngày** — Công suất tối đa 1.200 lượt đặt lịch/ngày, phân bổ theo ca sáng (07:00–11:30) và ca chiều (13:00–16:30)
@@ -23,7 +23,7 @@ Patient registration, visit creation, queue assignment, và visit status update 
 
 ---
 
-## Business Context
+## Bối cảnh nghiệp vụ
 
 ### As-Is: Quy trình hiện tại và pain points
 
@@ -47,7 +47,7 @@ MedBook được thiết kế để trở thành **single source of truth** cho 
 
 ---
 
-## Problem Statement (BA Perspective)
+## Bài toán BA cần xử lý
 
 Bài toán thực sự khó của MedBook không nằm ở booking — mà nằm ở **vùng giao thoa giữa booking app và HIS legacy**. Đây là 4 bài toán cốt lõi:
 
@@ -61,7 +61,7 @@ Bài toán thực sự khó của MedBook không nằm ở booking — mà nằm
 
 ---
 
-## My Role as BA
+## Vai trò / Phạm vi công việc BA
 
 - **Discovery & stakeholder interviews:** Phỏng vấn trưởng phòng khám, nhân viên lễ tân, đội IT bệnh viện, đại diện bệnh nhân
 - **Process mapping:** Vẽ as-is process và thiết kế to-be flow với swimlane diagram
@@ -74,7 +74,7 @@ Scope không bao gồm: thiết kế UI/UX, database schema, API design, hoặc 
 
 ---
 
-## Why This Case Is Challenging
+## Tại sao case này thách thức
 
 **1. Multi-system orchestration với eventual consistency.** MedBook là orchestrator giữa patient app, HIS legacy, reception portal, notification service, và kiosk hardware. Mỗi hệ thống có SLA khác nhau, failure mode khác nhau, và data model khác nhau.
 
@@ -84,7 +84,7 @@ Scope không bao gồm: thiết kế UI/UX, database schema, API design, hoặc 
 
 ---
 
-## Core Flow Summary
+## Tóm tắt luồng chính
 
 Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
@@ -98,7 +98,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ---
 
-## 5 Key BA Decisions
+## 5 Quyết định BA quan trọng
 
 ### Decision 1 — Tách thành 3 status fields riêng biệt
 
@@ -152,7 +152,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ---
 
-## Main Artifacts / Deliverables
+## Tài liệu BA đã xây dựng
 
 | Artifact | Nội dung | Người đọc chính |
 |---|---|---|
@@ -170,7 +170,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ---
 
-## What This Case Demonstrates
+## Case này thể hiện kỹ năng gì
 
 - Khả năng xác định và phân tích **bài toán integration phức tạp** giữa hệ thống hiện đại và HIS legacy, không chỉ dừng ở mô tả UI/UX flow
 - Tư duy **defensive BA** — thiết kế cho failure cases (HIS timeout, duplicate registration, QR scan ngoài window) từ đầu thay vì xử lý sau
@@ -181,7 +181,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ---
 
-## Lessons Learned
+## Bài học rút ra
 
 ### HIS constraint phát sinh muộn
 
@@ -209,13 +209,13 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ---
 
-## Visual Artifacts
+## Màn hình minh họa
 
 *Hai màn hình quan trọng nhất trong workflow: Reception Dashboard (quản lý danh sách bệnh nhân, check-in status real-time, HIS sync status) và Appointment Detail with QR (chi tiết lịch hẹn kèm QR code check-in cho patient app).*
 
 ---
 
-## Supporting Documents
+## Tài liệu chi tiết
 
 ### [Appointment Booking & Check-in Flow](/projects/healthcare-appointment/booking-flow)
 
