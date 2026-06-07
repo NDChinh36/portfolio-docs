@@ -1,6 +1,13 @@
 {
-  "theme": "linden",
+  "theme": "sequoia",
   "name": "Nguyễn Đức Chinh — BA Portfolio",
+  "font": {
+    "headings": { "family": "Montserrat" },
+    "body": { "family": "Montserrat" }
+  },
+  "background": {
+    "style": "gradient"
+  },
   "colors": {
     "primary": "#1D4ED8",
     "light": "#3B82F6",
@@ -34,7 +41,7 @@
         "icon": "bank",
         "groups": [
           {
-            "group": "Giới thiệu",
+            "group": "Tổng quan",
             "pages": [
               "introduction"
             ]
