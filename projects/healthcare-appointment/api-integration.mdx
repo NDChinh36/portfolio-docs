@@ -38,9 +38,7 @@ flowchart TD
 
 ## 16 Core APIs
 
-<AccordionGroup>
-
-<Accordion title="API 01 — GET /specialties — List Available Specialties">
+### API 01 — GET /specialties — List Available Specialties
 
 | | |
 |---|---|
@@ -55,9 +53,7 @@ flowchart TD
 | **Idempotency** | N/A — GET, read-only |
 | **Impact on Status** | None |
 
-</Accordion>
-
-<Accordion title="API 02 — GET /doctors — List Doctors by Specialty/Date">
+### API 02 — GET /doctors — List Doctors by Specialty/Date
 
 | | |
 |---|---|
@@ -72,9 +68,7 @@ flowchart TD
 | **Idempotency** | N/A — GET |
 | **Impact on Status** | None |
 
-</Accordion>
-
-<Accordion title="API 03 — GET /slots — Available Slots (Real-time)">
+### API 03 — GET /slots — Available Slots (Real-time)
 
 | | |
 |---|---|
@@ -91,9 +85,7 @@ flowchart TD
 
 **BA Note:** Slot bị held bởi patient khác (đang điền form) hiển thị `is_held: true` và không thể chọn. Sau khi TTL 10 phút hết, slot được release và `is_held` trở về `false`.
 
-</Accordion>
-
-<Accordion title="API 04 — POST /appointments — Create Appointment">
+### API 04 — POST /appointments — Create Appointment
 
 | | |
 |---|---|
@@ -110,9 +102,7 @@ flowchart TD
 
 **BA Note:** API này là điểm quan trọng nhất — phải chống duplicate booking (BR-BOOK-04) và soft lock slot (BR-BOOK-02) trong cùng 1 transaction DB.
 
-</Accordion>
-
-<Accordion title="API 05 — PATCH /appointments/{id}/confirm — Confirm Appointment (Manual)">
+### API 05 — PATCH /appointments/{id}/confirm — Confirm Appointment (Manual)
 
 | | |
 |---|---|
@@ -127,9 +117,7 @@ flowchart TD
 | **Idempotency** | No — action có side effect |
 | **Impact on Status** | PENDING_CONFIRMATION → CONFIRMED (nếu confirm) hoặc CANCELLED_BY_HOSPITAL (nếu reject) |
 
-</Accordion>
-
-<Accordion title="API 06 — PATCH /appointments/{id}/cancel — Cancel Appointment">
+### API 06 — PATCH /appointments/{id}/cancel — Cancel Appointment
 
 | | |
 |---|---|
@@ -144,9 +132,7 @@ flowchart TD
 | **Idempotency** | No |
 | **Impact on Status** | CONFIRMED/REMINDER_SENT → CANCELLED_BY_PATIENT hoặc CANCELLED_BY_HOSPITAL |
 
-</Accordion>
-
-<Accordion title="API 07 — PATCH /appointments/{id}/reschedule — Reschedule Appointment">
+### API 07 — PATCH /appointments/{id}/reschedule — Reschedule Appointment
 
 | | |
 |---|---|
@@ -161,9 +147,7 @@ flowchart TD
 | **Idempotency** | No — tạo appointment mới mỗi lần |
 | **Impact on Status** | Original → RESCHEDULED; New → PENDING_CONFIRMATION |
 
-</Accordion>
-
-<Accordion title="API 08 — GET /appointments/{id}/qr — Generate QR Check-in Code">
+### API 08 — GET /appointments/{id}/qr — Generate QR Check-in Code
 
 | | |
 |---|---|
@@ -178,9 +162,7 @@ flowchart TD
 | **Idempotency** | Yes — nếu QR còn valid, trả về QR hiện tại thay vì tạo mới. QR bị invalidated ngay khi check-in thành công |
 | **Impact on Status** | None (QR generation không thay đổi appointment_status) |
 
-</Accordion>
-
-<Accordion title="API 09 — POST /checkin/validate-qr — Validate QR at Kiosk/Reception">
+### API 09 — POST /checkin/validate-qr — Validate QR at Kiosk/Reception
 
 | | |
 |---|---|
@@ -197,9 +179,7 @@ flowchart TD
 
 **BA Note:** Đây là API quan trọng nhất về mặt nghiệp vụ. Phải validate đủ 4 điều kiện (BR-CHECKIN-01 đến BR-CHECKIN-07) trước khi trigger HIS sync.
 
-</Accordion>
-
-<Accordion title="API 10 — POST /checkin/manual — Manual Check-in by Receptionist">
+### API 10 — POST /checkin/manual — Manual Check-in by Receptionist
 
 | | |
 |---|---|
@@ -214,9 +194,7 @@ flowchart TD
 | **Idempotency** | No |
 | **Impact on Status** | `checkin_status = CHECKED_IN` + trigger HIS sync |
 
-</Accordion>
-
-<Accordion title="API 11 — POST /his/register — Create HIS Registration (Critical)">
+### API 11 — POST /his/register — Create HIS Registration (Critical)
 
 | | |
 |---|---|
@@ -233,9 +211,7 @@ flowchart TD
 
 **BA Note:** Đây là API nguy hiểm nhất nếu không có idempotency — retry sau timeout có thể tạo duplicate visit record trong HIS, ảnh hưởng đến hồ sơ bệnh án.
 
-</Accordion>
-
-<Accordion title="API 12 — POST /his/retry-sync — Retry Failed HIS Sync">
+### API 12 — POST /his/retry-sync — Retry Failed HIS Sync
 
 | | |
 |---|---|
@@ -250,9 +226,7 @@ flowchart TD
 | **Idempotency** | Yes — inherits from API 11 |
 | **Impact on Status** | `his_sync_status: FAILED → RETRYING → SUCCESS` hoặc `FAILED` |
 
-</Accordion>
-
-<Accordion title="API 13 — GET /queue/number — Get Queue Number Status">
+### API 13 — GET /queue/number — Get Queue Number Status
 
 | | |
 |---|---|
@@ -267,9 +241,7 @@ flowchart TD
 | **Idempotency** | N/A — GET |
 | **Impact on Status** | None |
 
-</Accordion>
-
-<Accordion title="API 14 — PATCH /appointments/{id}/status — Update Visit Status">
+### API 14 — PATCH /appointments/{id}/status — Update Visit Status
 
 | | |
 |---|---|
@@ -284,9 +256,7 @@ flowchart TD
 | **Idempotency** | No |
 | **Impact on Status** | CHECKED_IN → WAITING_FOR_CONSULTATION → IN_CONSULTATION → COMPLETED |
 
-</Accordion>
-
-<Accordion title="API 15 — POST /notifications/send — Trigger Notification">
+### API 15 — POST /notifications/send — Trigger Notification
 
 | | |
 |---|---|
@@ -301,9 +271,7 @@ flowchart TD
 | **Idempotency** | Yes — với `(appointment_id, event_type)`. Prevent duplicate reminder nếu scheduled job chạy 2 lần |
 | **Impact on Status** | Sau khi reminder được gửi thành công: `appointment_status → REMINDER_SENT` |
 
-</Accordion>
-
-<Accordion title="API 16 — GET /appointments/daily — Reception Daily Appointment List">
+### API 16 — GET /appointments/daily — Reception Daily Appointment List
 
 | | |
 |---|---|
@@ -319,10 +287,6 @@ flowchart TD
 | **Impact on Status** | None |
 
 **BA Note:** API này là backbone của Reception Dashboard. Filter theo `his_sync_status = FAILED` giúp Receptionist phát hiện và xử lý exception kịp thời.
-
-</Accordion>
-
-</AccordionGroup>
 
 ---
 

@@ -495,52 +495,50 @@ sequenceDiagram
   Các mục dưới đây yêu cầu làm rõ từ phía đối tác ngân hàng, Security Team và Compliance trước Sprint tương ứng. Một số quyết định ảnh hưởng đến kiến trúc tích hợp và không thể dễ dàng đảo ngược sau launch.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 1] Xác định danh sách ngân hàng hỗ trợ & Chiến lược Aggregator" icon="building-columns">
-    **Team:** Tech Lead + Business Dev · **Ưu tiên:** Critical
+### [Sprint 1] Xác định danh sách ngân hàng hỗ trợ & Chiến lược Aggregator
 
-    Xác định danh sách chính thức các **ngân hàng hỗ trợ Open Banking OAuth** trong MVP. Quyết định kiến trúc tích hợp: mỗi ngân hàng có adapter riêng (direct integration) hay tích hợp tập trung qua **aggregator** (BankHub, Finplex hoặc tương đương) để giảm effort thêm bank mới sau này.
+**Team:** Tech Lead + Business Dev · **Ưu tiên:** Critical
 
-    **Yêu cầu chính:** Business Dev confirm partnership; Tech Lead thiết kế Bank Adapter pattern; cập nhật SCR-BANK-01 với list ngân hàng chính thức và logo.  
-    **Phụ thuộc:** Thỏa thuận thương mại với từng ngân hàng hoặc aggregator; timeline ký kết hợp đồng API.
-  </Accordion>
+Xác định danh sách chính thức các **ngân hàng hỗ trợ Open Banking OAuth** trong MVP. Quyết định kiến trúc tích hợp: mỗi ngân hàng có adapter riêng (direct integration) hay tích hợp tập trung qua **aggregator** (BankHub, Finplex hoặc tương đương) để giảm effort thêm bank mới sau này.
 
-  <Accordion title="[Sprint 1] Fuzzy Name Match — Policy cho score 75–84%" icon="user-check">
-    **Team:** Compliance + Risk · **Ưu tiên:** High
+**Yêu cầu chính:** Business Dev confirm partnership; Tech Lead thiết kế Bank Adapter pattern; cập nhật SCR-BANK-01 với list ngân hàng chính thức và logo.  
+**Phụ thuộc:** Thỏa thuận thương mại với từng ngân hàng hoặc aggregator; timeline ký kết hợp đồng API.
 
-    Xác định xử lý khi tên chủ tài khoản ngân hàng match **75–84%** với tên KYC: (A) **Auto-reject** và yêu cầu user kiểm tra lại; hoặc (B) Đưa vào **manual review queue** để CS xác nhận. Ảnh hưởng đến tỷ lệ link thành công và rủi ro định danh sai.
+### [Sprint 1] Fuzzy Name Match — Policy cho score 75–84%
 
-    **Yêu cầu chính:** Compliance + Risk quyết định phương án; BA cập nhật BR-BANK-04 và Validation Rules; thiết kế thông báo lỗi / trạng thái phù hợp cho từng phương án.  
-    **Phụ thuộc:** Phân tích dữ liệu tên người Việt (biến thể dấu, viết tắt họ, tên đệm) để calibrate fuzzy threshold.
-  </Accordion>
+**Team:** Compliance + Risk · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 1] Kiến trúc lưu trữ Bank Token — HSM vs Encrypted DB" icon="database">
-    **Team:** Security · **Ưu tiên:** Critical
+Xác định xử lý khi tên chủ tài khoản ngân hàng match **75–84%** với tên KYC: (A) **Auto-reject** và yêu cầu user kiểm tra lại; hoặc (B) Đưa vào **manual review queue** để CS xác nhận. Ảnh hưởng đến tỷ lệ link thành công và rủi ro định danh sai.
 
-    Quyết định nơi lưu trữ `bank_access_token` và `bank_refresh_token`: (A) **HSM** — bảo mật cao nhất, chi phí cao; (B) **Encrypted DB** với KMS-managed key — cân bằng bảo mật và chi phí. Đây là quyết định kiến trúc không thể đảo ngược dễ dàng sau launch.
+**Yêu cầu chính:** Compliance + Risk quyết định phương án; BA cập nhật BR-BANK-04 và Validation Rules; thiết kế thông báo lỗi / trạng thái phù hợp cho từng phương án.  
+**Phụ thuộc:** Phân tích dữ liệu tên người Việt (biến thể dấu, viết tắt họ, tên đệm) để calibrate fuzzy threshold.
 
-    **Yêu cầu chính:** Security Team ra ADR; thiết kế key rotation policy; document vào Security NFR của module; cập nhật hướng dẫn triển khai cho DevOps.  
-    **Phụ thuộc:** Infrastructure team đánh giá cost HSM; Compliance xác nhận yêu cầu tối thiểu theo quy định.
-  </Accordion>
+### [Sprint 1] Kiến trúc lưu trữ Bank Token — HSM vs Encrypted DB
 
-  <Accordion title="[Sprint 2] Fallback cho ngân hàng chưa hỗ trợ Open Banking OAuth" icon="rotate">
-    **Team:** Product · **Ưu tiên:** Medium
+**Team:** Security · **Ưu tiên:** Critical
 
-    Thiết kế luồng liên kết thay thế cho ngân hàng chưa có Open Banking API: nhập **STK + tên chủ tài khoản** rồi verify qua **NAPAS lookup** hoặc **micro-transaction** (nạp 1,000đ, xác nhận số tiền). Mở rộng độ phủ ngân hàng mà không cần chờ ngân hàng mở API.
+Quyết định nơi lưu trữ `bank_access_token` và `bank_refresh_token`: (A) **HSM** — bảo mật cao nhất, chi phí cao; (B) **Encrypted DB** với KMS-managed key — cân bằng bảo mật và chi phí. Đây là quyết định kiến trúc không thể đảo ngược dễ dàng sau launch.
 
-    **Yêu cầu chính:** BA thiết kế thêm luồng fallback cho SCR-BANK-02; kết nối NAPAS name lookup API; document vào module Bank Linking.  
-    **Phụ thuộc:** NAPAS cấp quyền truy cập API lookup; Compliance xác nhận validity của phương thức xác minh thay thế.
-  </Accordion>
+**Yêu cầu chính:** Security Team ra ADR; thiết kế key rotation policy; document vào Security NFR của module; cập nhật hướng dẫn triển khai cho DevOps.  
+**Phụ thuộc:** Infrastructure team đánh giá cost HSM; Compliance xác nhận yêu cầu tối thiểu theo quy định.
 
-  <Accordion title="[Sprint 2] Thông báo chủ động trước khi Bank Token hết hạn" icon="bell-slash">
-    **Team:** Product + Tech · **Ưu tiên:** Medium
+### [Sprint 2] Fallback cho ngân hàng chưa hỗ trợ Open Banking OAuth
 
-    Implement cơ chế **proactive notification** gửi cho user trước khi `bank_refresh_token` hết hạn, nhắc nhở re-link để tránh gián đoạn dịch vụ nạp tiền. Thời gian cảnh báo: đề xuất **7 ngày** và **1 ngày** trước khi hết hạn.
+**Team:** Product · **Ưu tiên:** Medium
 
-    **Yêu cầu chính:** Background job kiểm tra token expiry hàng ngày; gửi push + email reminder với link deep link vào màn re-link; cập nhật Notification spec của module.  
-    **Phụ thuộc:** Tech xác nhận lịch expire của từng bank token; Product xác nhận messaging và CTA cho notification.
-  </Accordion>
-</AccordionGroup>
+Thiết kế luồng liên kết thay thế cho ngân hàng chưa có Open Banking API: nhập **STK + tên chủ tài khoản** rồi verify qua **NAPAS lookup** hoặc **micro-transaction** (nạp 1,000đ, xác nhận số tiền). Mở rộng độ phủ ngân hàng mà không cần chờ ngân hàng mở API.
+
+**Yêu cầu chính:** BA thiết kế thêm luồng fallback cho SCR-BANK-02; kết nối NAPAS name lookup API; document vào module Bank Linking.  
+**Phụ thuộc:** NAPAS cấp quyền truy cập API lookup; Compliance xác nhận validity của phương thức xác minh thay thế.
+
+### [Sprint 2] Thông báo chủ động trước khi Bank Token hết hạn
+
+**Team:** Product + Tech · **Ưu tiên:** Medium
+
+Implement cơ chế **proactive notification** gửi cho user trước khi `bank_refresh_token` hết hạn, nhắc nhở re-link để tránh gián đoạn dịch vụ nạp tiền. Thời gian cảnh báo: đề xuất **7 ngày** và **1 ngày** trước khi hết hạn.
+
+**Yêu cầu chính:** Background job kiểm tra token expiry hàng ngày; gửi push + email reminder với link deep link vào màn re-link; cập nhật Notification spec của module.  
+**Phụ thuộc:** Tech xác nhận lịch expire của từng bank token; Product xác nhận messaging và CTA cho notification.
 
 ---
 

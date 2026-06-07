@@ -176,107 +176,105 @@ erDiagram
 
 ## 3. Mô Tả Chi Tiết Các Entity
 
-<AccordionGroup>
-  <Accordion title="USER — Tài khoản người dùng">
-    | Cột | Kiểu | Nullable | Mô tả |
-    |---|---|---|---|
-    | user\_id | UUID | No | Primary key |
-    | phone\_number | VARCHAR(15) | No | Unique; SĐT đăng ký; dùng để tra cứu recipient |
-    | full\_name | VARCHAR(200) | No | Tên hiển thị khi confirm GD |
-    | kyc\_status | ENUM | No | `UNVERIFIED`, `eKYC_VERIFIED`, `FULL_KYC` |
-    | account\_status | ENUM | No | `ACTIVE`, `SUSPENDED`, `CLOSED` |
+### USER — Tài khoản người dùng
 
-    **Notes:**
-    - `kyc_status` quyết định hạn mức tháng: eKYC → 200M VND; UNVERIFIED → 20M VND
-    - `account_status = SUSPENDED` → không thể gửi hoặc nhận tiền
-  </Accordion>
+| Cột | Kiểu | Nullable | Mô tả |
+|---|---|---|---|
+| user\_id | UUID | No | Primary key |
+| phone\_number | VARCHAR(15) | No | Unique; SĐT đăng ký; dùng để tra cứu recipient |
+| full\_name | VARCHAR(200) | No | Tên hiển thị khi confirm GD |
+| kyc\_status | ENUM | No | `UNVERIFIED`, `eKYC_VERIFIED`, `FULL_KYC` |
+| account\_status | ENUM | No | `ACTIVE`, `SUSPENDED`, `CLOSED` |
 
-  <Accordion title="WALLET — Ví điện tử">
-    | Cột | Kiểu | Nullable | Mô tả |
-    |---|---|---|---|
-    | wallet\_id | UUID | No | Primary key |
-    | user\_id | UUID | Yes | FK → USER; null nếu là ví doanh nghiệp |
-    | balance | DECIMAL(18,2) | No | Số dư hiện tại; không âm |
-    | currency | CHAR(3) | No | Mặc định `VND` |
-    | wallet\_status | ENUM | No | `ACTIVE`, `FROZEN`, `CLOSED` |
+**Notes:**
+- `kyc_status` quyết định hạn mức tháng: eKYC → 200M VND; UNVERIFIED → 20M VND
+- `account_status = SUSPENDED` → không thể gửi hoặc nhận tiền
 
-    **Constraint:** `balance >= 0` enforce tại DB level. Debit/Credit phải là atomic operation.
-  </Accordion>
+### WALLET — Ví điện tử
 
-  <Accordion title="TRANSACTION — Bản ghi giao dịch">
-    | Cột | Kiểu | Nullable | Mô tả |
-    |---|---|---|---|
-    | transaction\_id | UUID | No | PK; trả về client sau confirm |
-    | idempotency\_key | VARCHAR(128) | No | **UNIQUE**; ngăn duplicate debit |
-    | sender\_wallet\_id | UUID | No | FK → WALLET |
-    | recipient\_wallet\_id | UUID | No | FK → WALLET |
-    | amount | DECIMAL(18,2) | No | 1,000 ≤ amount ≤ 20,000,000 |
-    | transaction\_type | ENUM | No | `P2P`, `BUSINESS_SINGLE`, `BUSINESS_BATCH` |
-    | status | ENUM | No | `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED` |
-    | auth\_level | ENUM | No | `1FA`, `2FA`, `3FA` |
-    | batch\_item\_id | UUID | Yes | FK → BATCH\_ITEM; null nếu không phải batch |
+| Cột | Kiểu | Nullable | Mô tả |
+|---|---|---|---|
+| wallet\_id | UUID | No | Primary key |
+| user\_id | UUID | Yes | FK → USER; null nếu là ví doanh nghiệp |
+| balance | DECIMAL(18,2) | No | Số dư hiện tại; không âm |
+| currency | CHAR(3) | No | Mặc định `VND` |
+| wallet\_status | ENUM | No | `ACTIVE`, `FROZEN`, `CLOSED` |
 
-    **Notes:** Immutable sau khi status = `COMPLETED` hoặc `FAILED`. Không có UPDATE.
-  </Accordion>
+**Constraint:** `balance >= 0` enforce tại DB level. Debit/Credit phải là atomic operation.
 
-  <Accordion title="TRANSACTION_LIMIT_TRACKER — Theo dõi hạn mức">
-    | Cột | Kiểu | Mô tả |
-    |---|---|---|
-    | wallet\_id | UUID | FK → WALLET; unique per wallet per day |
-    | daily\_sent\_amount | DECIMAL | Tổng gửi trong ngày; reset 00:00 |
-    | monthly\_sent\_amount | DECIMAL | Tổng gửi trong tháng; reset ngày 1 |
-    | rolling\_1h\_amount | DECIMAL | Tổng gửi 60 phút gần nhất (sliding window) |
-    | tracking\_date | DATE | Ngày theo dõi (partition key) |
+### TRANSACTION — Bản ghi giao dịch
 
-    **Notes:** `rolling_1h_amount` dùng sliding window, không phải fixed hour bucket.
-  </Accordion>
+| Cột | Kiểu | Nullable | Mô tả |
+|---|---|---|---|
+| transaction\_id | UUID | No | PK; trả về client sau confirm |
+| idempotency\_key | VARCHAR(128) | No | **UNIQUE**; ngăn duplicate debit |
+| sender\_wallet\_id | UUID | No | FK → WALLET |
+| recipient\_wallet\_id | UUID | No | FK → WALLET |
+| amount | DECIMAL(18,2) | No | 1,000 ≤ amount ≤ 20,000,000 |
+| transaction\_type | ENUM | No | `P2P`, `BUSINESS_SINGLE`, `BUSINESS_BATCH` |
+| status | ENUM | No | `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED` |
+| auth\_level | ENUM | No | `1FA`, `2FA`, `3FA` |
+| batch\_item\_id | UUID | Yes | FK → BATCH\_ITEM; null nếu không phải batch |
 
-  <Accordion title="AUTH_SESSION + OTP_RECORD — Xác thực">
-    **AUTH_SESSION:**
+**Notes:** Immutable sau khi status = `COMPLETED` hoặc `FAILED`. Không có UPDATE.
 
-    | Cột | Kiểu | Mô tả |
-    |---|---|---|
-    | session\_id | UUID | PK |
-    | user\_id | UUID | FK → USER |
-    | auth\_level\_required | ENUM | `1FA`, `2FA`, `3FA` |
-    | pin\_status | ENUM | `PENDING`, `PASSED`, `FAILED` |
-    | face\_id\_status | ENUM | `PENDING`, `PASSED`, `FAILED`, `NOT_REQUIRED` |
-    | otp\_status | ENUM | `PENDING`, `PASSED`, `FAILED`, `NOT_REQUIRED` |
-    | failed\_attempts | SMALLINT | Khóa khi = 3 |
-    | expires\_at | TIMESTAMP | Hết hạn sau 10 phút |
+### TRANSACTION_LIMIT_TRACKER — Theo dõi hạn mức
 
-    **OTP_RECORD:**
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| wallet\_id | UUID | FK → WALLET; unique per wallet per day |
+| daily\_sent\_amount | DECIMAL | Tổng gửi trong ngày; reset 00:00 |
+| monthly\_sent\_amount | DECIMAL | Tổng gửi trong tháng; reset ngày 1 |
+| rolling\_1h\_amount | DECIMAL | Tổng gửi 60 phút gần nhất (sliding window) |
+| tracking\_date | DATE | Ngày theo dõi (partition key) |
 
-    | Cột | Kiểu | Mô tả |
-    |---|---|---|
-    | otp\_code\_hash | VARCHAR(256) | Bcrypt hash; không lưu plaintext |
-    | expires\_at | TIMESTAMP | Hết hạn sau 5 phút |
-    | is\_used | BOOLEAN | True sau verify; ngăn reuse |
-    | send\_count | SMALLINT | Tối đa 3 lần/phiên |
-  </Accordion>
+**Notes:** `rolling_1h_amount` dùng sliding window, không phải fixed hour bucket.
 
-  <Accordion title="BATCH_JOB + BATCH_ITEM — Xử lý batch">
-    **BATCH_JOB:**
+### AUTH_SESSION + OTP_RECORD — Xác thực
 
-    | Cột | Kiểu | Mô tả |
-    |---|---|---|
-    | batch\_id | UUID | PK |
-    | maker\_user\_id | UUID | FK → USER |
-    | checker\_user\_id | UUID | FK → USER; null cho đến khi approved |
-    | status | ENUM | `DRAFT` → `PENDING_APPROVAL` → `PROCESSING` → `COMPLETED` |
-    | total\_rows / success\_rows / failed\_rows | INT | Tracking tiến độ |
+**AUTH_SESSION:**
 
-    **Constraint:** `CHECK (maker_user_id != checker_user_id)`
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| session\_id | UUID | PK |
+| user\_id | UUID | FK → USER |
+| auth\_level\_required | ENUM | `1FA`, `2FA`, `3FA` |
+| pin\_status | ENUM | `PENDING`, `PASSED`, `FAILED` |
+| face\_id\_status | ENUM | `PENDING`, `PASSED`, `FAILED`, `NOT_REQUIRED` |
+| otp\_status | ENUM | `PENDING`, `PASSED`, `FAILED`, `NOT_REQUIRED` |
+| failed\_attempts | SMALLINT | Khóa khi = 3 |
+| expires\_at | TIMESTAMP | Hết hạn sau 10 phút |
 
-    **BATCH_ITEM:**
+**OTP_RECORD:**
 
-    | Cột | Kiểu | Mô tả |
-    |---|---|---|
-    | reference\_id | VARCHAR(128) | UNIQUE per batch; idempotency key |
-    | status | ENUM | `PENDING`, `SUCCESS`, `FAILED`, `INVALID` |
-    | failure\_reason | VARCHAR(500) | Null nếu SUCCESS |
-  </Accordion>
-</AccordionGroup>
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| otp\_code\_hash | VARCHAR(256) | Bcrypt hash; không lưu plaintext |
+| expires\_at | TIMESTAMP | Hết hạn sau 5 phút |
+| is\_used | BOOLEAN | True sau verify; ngăn reuse |
+| send\_count | SMALLINT | Tối đa 3 lần/phiên |
+
+### BATCH_JOB + BATCH_ITEM — Xử lý batch
+
+**BATCH_JOB:**
+
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| batch\_id | UUID | PK |
+| maker\_user\_id | UUID | FK → USER |
+| checker\_user\_id | UUID | FK → USER; null cho đến khi approved |
+| status | ENUM | `DRAFT` → `PENDING_APPROVAL` → `PROCESSING` → `COMPLETED` |
+| total\_rows / success\_rows / failed\_rows | INT | Tracking tiến độ |
+
+**Constraint:** `CHECK (maker_user_id != checker_user_id)`
+
+**BATCH_ITEM:**
+
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| reference\_id | VARCHAR(128) | UNIQUE per batch; idempotency key |
+| status | ENUM | `PENDING`, `SUCCESS`, `FAILED`, `INVALID` |
+| failure\_reason | VARCHAR(500) | Null nếu SUCCESS |
 
 ---
 

@@ -231,9 +231,7 @@ stateDiagram-v2
 
 ## Key BA Decisions
 
-<AccordionGroup>
-
-<Accordion title="Decision 1 — Tách payment_status và reconciliation_status thành 2 fields riêng biệt">
+### Decision 1 — Tách payment_status và reconciliation_status thành 2 fields riêng biệt
 
 | | |
 |---|---|
@@ -243,9 +241,7 @@ stateDiagram-v2
 | **Trade-off** | Schema phức tạp hơn. Query cần filter theo cả hai fields. CS tool cần hiển thị rõ ràng để tránh nhầm lẫn. |
 | **Expected Impact** | CS có thể giải thích chính xác tình trạng giao dịch. Finance có filter chính xác cho reconciliation. Operation không nhầm `SUCCESS` với "đã settlement". |
 
-</Accordion>
-
-<Accordion title="Decision 2 — Timeout → UNKNOWN (không phải FAILED)">
+### Decision 2 — Timeout → UNKNOWN (không phải FAILED)
 
 | | |
 |---|---|
@@ -255,9 +251,7 @@ stateDiagram-v2
 | **Trade-off** | Operation phải xử lý exception queue hàng ngày. User bị hold tiền tạm thời, cần được notify rõ ràng. CS cần script xử lý câu hỏi "tại sao giao dịch tôi không thấy kết quả". |
 | **Expected Impact** | Loại bỏ nguy cơ double charge do timeout. Tạo operation overhead có thể quản lý được với SLA 24 giờ cho UNKNOWN resolution. |
 
-</Accordion>
-
-<Accordion title="Decision 3 — Bắt buộc idempotency_key cho mọi payment request">
+### Decision 3 — Bắt buộc idempotency_key cho mọi payment request
 
 | | |
 |---|---|
@@ -267,9 +261,7 @@ stateDiagram-v2
 | **Trade-off** | Cần Redis/distributed cache để lưu key nhanh. 5 phút window cần calibrate. User scan lại cùng QR sau window → tạo transaction mới bình thường. |
 | **Expected Impact** | Loại bỏ duplicate charges do double tap và app retry. Giảm CS ticket liên quan đến "bị trừ tiền hai lần". |
 
-</Accordion>
-
-<Accordion title="Decision 4 — Reconciliation mismatch queue real-time thay vì chỉ batch export cuối ngày">
+### Decision 4 — Reconciliation mismatch queue real-time thay vì chỉ batch export cuối ngày
 
 | | |
 |---|---|
@@ -279,9 +271,7 @@ stateDiagram-v2
 | **Trade-off** | Cần build internal tool — không phải zero effort. Cần define matching logic rõ ràng. Intraday settlement phụ thuộc vào NAPAS có cung cấp intraday file hay không. |
 | **Expected Impact** | Giảm thời gian Finance từ 2-3 giờ/ngày xuống còn review + approve. Mismatch được phát hiện và assigned trong vòng 1-2 giờ thay vì 24 giờ. |
 
-</Accordion>
-
-<Accordion title="Decision 5 — Biometric = convenience shortcut, PIN = primary auth layer">
+### Decision 5 — Biometric = convenience shortcut, PIN = primary auth layer
 
 | | |
 |---|---|
@@ -291,10 +281,6 @@ stateDiagram-v2
 | **Trade-off** | UX kém hơn so với full biometric — user phải nhớ PIN. Cần onboarding rõ ràng về lý do. |
 | **Expected Impact** | Giảm rủi ro unauthorized payment khi mất thiết bị. Biometric vẫn được giữ cho phần lớn giao dịch thông thường → UX không ảnh hưởng đáng kể trong practice. |
 
-</Accordion>
-
-</AccordionGroup>
-
 ---
 
 ## Visual Artifacts
@@ -302,13 +288,6 @@ stateDiagram-v2
 ### Artifact 1 — QR Payment Confirmation Screen
 
 *Annotated UI showing validation, authentication and duplicate-prevention rules.*
-
-<iframe
-  src="/artifacts/digital-payment/qr-payment-confirmation.html"
-  width="100%"
-  height="720"
-  style="border:1px solid #e5e7eb;border-radius:12px;"
-></iframe>
 
 ---
 
@@ -350,13 +329,6 @@ flowchart TD
 
 *Operation view for detecting mismatched transaction states between wallet and payment gateway.*
 
-<iframe
-  src="/artifacts/digital-payment/reconciliation-dashboard.html"
-  width="100%"
-  height="760"
-  style="border:1px solid #e5e7eb;border-radius:12px;"
-></iframe>
-
 ---
 
 ## What This Case Demonstrates
@@ -372,25 +344,21 @@ flowchart TD
 
 ## Supporting Documents
 
-<CardGroup cols={2}>
+### [QR Payment Flow](/projects/ewallet/qr-payment)
 
-<Card title="QR Payment Flow" icon="qrcode" href="/projects/ewallet/qr-payment">
-  EMV/VietQR parsing, validation rules chi tiết, confirmation UX, và edge cases: expired QR, merchant inactive, amount mismatch.
-</Card>
+EMV/VietQR parsing, validation rules chi tiết, confirmation UX, và edge cases: expired QR, merchant inactive, amount mismatch.
 
-<Card title="Transaction State Machine" icon="diagram-project" href="/projects/ewallet/transaction-state-machine">
-  15 states đầy đủ, tất cả transitions với business rules, actor permissions trên từng transition, và money state tại mỗi bước.
-</Card>
+### [Transaction State Machine](/projects/ewallet/transaction-state-machine)
 
-<Card title="Reconciliation Dashboard" icon="chart-bar" href="/projects/ewallet/reconciliation-dashboard">
-  Dashboard wireframe chi tiết, mismatch queue design, manual resolve workflow, audit trail spec, và reporting requirements cho Finance.
-</Card>
+15 states đầy đủ, tất cả transitions với business rules, actor permissions trên từng transition, và money state tại mỗi bước.
 
-<Card title="Exception Handling" icon="triangle-exclamation" href="/projects/ewallet/exception-handling">
-  Decision trees cho timeout/retry/idempotency, late callback handling, escalation paths, SLA definitions và UAT scenarios.
-</Card>
+### [Reconciliation Dashboard](/projects/ewallet/reconciliation-dashboard)
 
-</CardGroup>
+Dashboard wireframe chi tiết, mismatch queue design, manual resolve workflow, audit trail spec, và reporting requirements cho Finance.
+
+### [Exception Handling](/projects/ewallet/exception-handling)
+
+Decision trees cho timeout/retry/idempotency, late callback handling, escalation paths, SLA definitions và UAT scenarios.
 
 ---
 

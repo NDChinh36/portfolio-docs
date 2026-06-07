@@ -26,20 +26,19 @@ icon: "wallet"
 
 Bộ tài liệu này được tổ chức theo hai tầng:
 
-<CardGroup cols={2}>
-  <Card title="🎯 Hero Case — QR Payment & Reconciliation" icon="credit-card" href="/projects/ewallet/payment-case-study">
-    **Đây là case study chính.** Tập trung vào: transaction state machine, timeout/unknown handling, idempotency, callback failure, reconciliation dashboard, exception queue và mismatch resolution.
+### [🎯 Hero Case — QR Payment & Reconciliation](/projects/ewallet/payment-case-study)
 
-    Đọc trang này trước nếu bạn là hiring manager muốn hiểu BA thinking trong 3–5 phút.
+**Đây là case study chính.** Tập trung vào: transaction state machine, timeout/unknown handling, idempotency, callback failure, reconciliation dashboard, exception queue và mismatch resolution.
 
-    [→ Đọc Payment Case Study](/projects/ewallet/payment-case-study)
-  </Card>
-  <Card title="📚 Background System — 8 E-wallet Modules" icon="wallet">
-    Auth · KYC · Wallet Core · Bank Linking · Transfer · QR Payment · Transaction History · Notifications — 8 module tạo nên context của toàn bộ hệ thống FinPay.
+Đọc trang này trước nếu bạn là hiring manager muốn hiểu BA thinking trong 3–5 phút.
 
-    Dùng như supporting documents — mỗi module là một Hybrid PRD đầy đủ.
-  </Card>
-</CardGroup>
+[→ Đọc Payment Case Study](/projects/ewallet/payment-case-study)
+
+### 📚 Background System — 8 E-wallet Modules
+
+Auth · KYC · Wallet Core · Bank Linking · Transfer · QR Payment · Transaction History · Notifications — 8 module tạo nên context của toàn bộ hệ thống FinPay.
+
+Dùng như supporting documents — mỗi module là một Hybrid PRD đầy đủ.
 
 ---
 
@@ -112,42 +111,37 @@ flowchart TB
 
 ## Quy định áp dụng
 
-<AccordionGroup>
-  <Accordion title="Nghị định 52/2024/NĐ-CP — Thanh toán không dùng tiền mặt">
+### Nghị định 52/2024/NĐ-CP — Thanh toán không dùng tiền mặt
 
-  Thay thế Nghị định 101/2012. Áp dụng cho ví điện tử từ 01/07/2024.
+Thay thế Nghị định 101/2012. Áp dụng cho ví điện tử từ 01/07/2024.
 
-  | Quy định | Chi tiết |
-  |---|---|
-  | Hạn mức nạp/rút | Cá nhân ≤ 100M VND/tháng; Tổ chức ≤ 500M VND/tháng |
-  | Liên kết ngân hàng | Bắt buộc liên kết ít nhất 1 tài khoản ngân hàng |
-  | Xác minh danh tính | Bắt buộc eKYC để mở tài khoản; CCCD/CMND + ảnh selfie |
-  | Tuổi tối thiểu | 15 tuổi (có sự đồng ý của phụ huynh nếu < 18) |
-  | Lưu trữ log | Tối thiểu 5 năm cho mọi giao dịch |
-  </Accordion>
+| Quy định | Chi tiết |
+|---|---|
+| Hạn mức nạp/rút | Cá nhân ≤ 100M VND/tháng; Tổ chức ≤ 500M VND/tháng |
+| Liên kết ngân hàng | Bắt buộc liên kết ít nhất 1 tài khoản ngân hàng |
+| Xác minh danh tính | Bắt buộc eKYC để mở tài khoản; CCCD/CMND + ảnh selfie |
+| Tuổi tối thiểu | 15 tuổi (có sự đồng ý của phụ huynh nếu < 18) |
+| Lưu trữ log | Tối thiểu 5 năm cho mọi giao dịch |
 
-  <Accordion title="Thông tư 39/2014/TT-NHNN — Dịch vụ trung gian thanh toán">
+### Thông tư 39/2014/TT-NHNN — Dịch vụ trung gian thanh toán
 
-  Quy định về hoạt động của tổ chức cung ứng dịch vụ trung gian thanh toán (TGTT).
+Quy định về hoạt động của tổ chức cung ứng dịch vụ trung gian thanh toán (TGTT).
 
-  | Yêu cầu | Chi tiết |
-  |---|---|
-  | Giấy phép | Phải có giấy phép NHNN cấp |
-  | Vốn tối thiểu | 50 tỷ VND |
-  | Báo cáo NHNN | Định kỳ hàng tháng/quý về giao dịch |
-  | Bảo đảm thanh toán | Số dư ví phải có bảo đảm tương đương tại ngân hàng |
-  </Accordion>
+| Yêu cầu | Chi tiết |
+|---|---|
+| Giấy phép | Phải có giấy phép NHNN cấp |
+| Vốn tối thiểu | 50 tỷ VND |
+| Báo cáo NHNN | Định kỳ hàng tháng/quý về giao dịch |
+| Bảo đảm thanh toán | Số dư ví phải có bảo đảm tương đương tại ngân hàng |
 
-  <Accordion title="Hạn mức giao dịch theo KYC tier">
+### Hạn mức giao dịch theo KYC tier
 
-  | Tier | Xác minh | Hạn mức GD/lần | Hạn mức tháng | Ghi chú |
-  |---|---|---|---|---|
-  | **Tier 0** | Chưa KYC | 0 VND | 0 VND | Chỉ xem; không giao dịch |
-  | **Tier 1** | SĐT verified | 1M VND | 10M VND | Chỉ nạp; không rút |
-  | **Tier 2** | eKYC (CCCD + Selfie) | 20M VND | 100M VND | Đủ chức năng cơ bản |
-  | **Tier 3** | Full KYC (có phê duyệt) | 100M VND | 500M VND | Business / VIP account |
-  </Accordion>
-</AccordionGroup>
+| Tier | Xác minh | Hạn mức GD/lần | Hạn mức tháng | Ghi chú |
+|---|---|---|---|---|
+| **Tier 0** | Chưa KYC | 0 VND | 0 VND | Chỉ xem; không giao dịch |
+| **Tier 1** | SĐT verified | 1M VND | 10M VND | Chỉ nạp; không rút |
+| **Tier 2** | eKYC (CCCD + Selfie) | 20M VND | 100M VND | Đủ chức năng cơ bản |
+| **Tier 3** | Full KYC (có phê duyệt) | 100M VND | 500M VND | Business / VIP account |
 
 ---
 

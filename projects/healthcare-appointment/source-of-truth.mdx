@@ -81,14 +81,10 @@ CONFIRMED_SYNC_RETRYING_NOT_CHECKED_IN
 
 ### Nguyên Tắc Thiết Kế Áp Dụng
 
-<CardGroup cols={3}>
-  <Card title="Single Responsibility" icon="circle-1">
-    Mỗi field chịu trách nhiệm cho đúng 1 concern. Không mix business logic với integration status.
-  </Card>
-  <Card title="Independent Evolvability" icon="circle-2">
-    Mỗi concern có thể thêm states mới mà không ảnh hưởng 2 concerns còn lại. Vd: thêm `HIS_SYNC_QUEUED` không làm ảnh hưởng `appointment_status` logic.
-  </Card>
-  <Card title="Clear Ownership" icon="circle-3">
-    Mỗi field có đúng 1 owner rõ ràng. Tránh tranh giành quyền update từ nhiều services.
-  </Card>
-</CardGroup>
+- **Single Responsibility** — Mỗi field chịu trách nhiệm cho đúng 1 concern. Không mix business logic với integration status.
+### Independent Evolvability
+
+Mỗi concern có thể thêm states mới mà không ảnh hưởng 2 concerns còn lại. Vd: thêm `HIS_SYNC_QUEUED` không làm ảnh hưởng `appointment_status` logic.
+
+- **Clear Ownership** — Mỗi field có đúng 1 owner rõ ràng. Tránh tranh giành quyền update từ nhiều services.
+

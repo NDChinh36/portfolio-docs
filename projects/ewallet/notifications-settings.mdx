@@ -24,20 +24,10 @@ icon: "bell"
 
 ## 1. Tổng quan module
 
-<CardGroup cols={2}>
-  <Card title="Hộp thông báo" icon="bell">
-    Lưu tất cả notification trong app. Unread badge. Tap để điều hướng đến GD/màn liên quan.
-  </Card>
-  <Card title="Hồ sơ cá nhân" icon="user">
-    Sửa avatar, tên hiển thị, email dự phòng, ngôn ngữ. Họ tên KYC và SĐT là read-only.
-  </Card>
-  <Card title="Bảo mật" icon="shield">
-    Đổi PIN, bật/tắt Biometric. Xem thiết bị đang dùng. Đăng xuất.
-  </Card>
-  <Card title="Chính sách 1 thiết bị" icon="mobile">
-    Chỉ 1 thiết bị active/lúc. Thiết bị mới cần được xác nhận từ thiết bị hiện tại. Mất máy → CSKH.
-  </Card>
-</CardGroup>
+- **Hộp thông báo** — Lưu tất cả notification trong app. Unread badge. Tap để điều hướng đến GD/màn liên quan.
+- **Hồ sơ cá nhân** — Sửa avatar, tên hiển thị, email dự phòng, ngôn ngữ. Họ tên KYC và SĐT là read-only.
+- **Bảo mật** — Đổi PIN, bật/tắt Biometric. Xem thiết bị đang dùng. Đăng xuất.
+- **Chính sách 1 thiết bị** — Chỉ 1 thiết bị active/lúc. Thiết bị mới cần được xác nhận từ thiết bị hiện tại. Mất máy → CSKH.
 
 ### 1.1 Phạm vi (Scope)
 
@@ -730,49 +720,48 @@ sequenceDiagram
   Các tính năng dưới đây bổ sung cho phạm vi MVP (Notification inbox + Profile + Security + 1-device policy). Một số mục liên quan đến quy trình CSKH và native mobile development cần confirm sớm với team tương ứng.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 7] Email Verification khi thêm Email dự phòng" icon="envelope-circle-check">
-    **Team:** Product · **Ưu tiên:** High
+### [Sprint 7] Email Verification khi thêm Email dự phòng
 
-    Khi user nhập email dự phòng trên SCR-SETTINGS-02, hệ thống gửi **email xác minh** (verification link TTL 24 giờ) và chỉ lưu email sau khi verified. Ngăn user nhập sai email và không nhận được thông báo bảo mật quan trọng.
+**Team:** Product · **Ưu tiên:** High
 
-    **Yêu cầu chính:** Gửi verification email khi save; hiển thị trạng thái "Đang xác minh" với badge vàng; resend option sau 60 giây; tự xóa email pending nếu không verify sau 7 ngày.  
-    **Phụ thuộc:** Email service hỗ trợ transactional email (khác marketing email); UX thiết kế trạng thái pending verification trên SCR-SETTINGS-02.
-  </Accordion>
+Khi user nhập email dự phòng trên SCR-SETTINGS-02, hệ thống gửi **email xác minh** (verification link TTL 24 giờ) và chỉ lưu email sau khi verified. Ngăn user nhập sai email và không nhận được thông báo bảo mật quan trọng.
 
-  <Accordion title="[Sprint 7] Approval Notification — Action Buttons trên Notification Shade" icon="mobile-screen-button">
-    **Team:** Tech Lead (iOS + Android) · **Ưu tiên:** High
+**Yêu cầu chính:** Gửi verification email khi save; hiển thị trạng thái "Đang xác minh" với badge vàng; resend option sau 60 giây; tự xóa email pending nếu không verify sau 7 ngày.  
+**Phụ thuộc:** Email service hỗ trợ transactional email (khác marketing email); UX thiết kế trạng thái pending verification trên SCR-SETTINGS-02.
 
-    Thêm nút **"Cho phép" / "Từ chối"** trực tiếp trên notification shade (không cần mở app) khi Device A nhận approval request từ Device B. Giảm friction đáng kể trong luồng 1-device approval — đặc biệt quan trọng khi user đang dùng app khác.
+### [Sprint 7] Approval Notification — Action Buttons trên Notification Shade
 
-    **Yêu cầu chính:** iOS: UNNotificationCategory với UNNotificationAction; Android: addAction() với PendingIntent; deep link vào SCR-SETTINGS-05 nếu tap vào body notification; xử lý edge case action tap sau khi approval_token đã expire.  
-    **Phụ thuộc:** Native Dev confirm feasibility trong React Native (có thể cần native module); Security Team review xem action button có thể bị kích hoạt bởi phần mềm độc hại không.
-  </Accordion>
+**Team:** Tech Lead (iOS + Android) · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 8] CSKH SOP — Force-Logout Device A khi mất thiết bị" icon="headset">
-    **Team:** CSKH + Product · **Ưu tiên:** Critical
+Thêm nút **"Cho phép" / "Từ chối"** trực tiếp trên notification shade (không cần mở app) khi Device A nhận approval request từ Device B. Giảm friction đáng kể trong luồng 1-device approval — đặc biệt quan trọng khi user đang dùng app khác.
 
-    Thiết kế đầy đủ **SOP và công cụ admin cho CSKH** để xử lý khi user mất điện thoại hoàn toàn (Device A offline, không thể tự approve Device B): xác minh danh tính qua video call hoặc giấy tờ, force-logout Device A, cấp quyền cho thiết bị mới.
+**Yêu cầu chính:** iOS: UNNotificationCategory với UNNotificationAction; Android: addAction() với PendingIntent; deep link vào SCR-SETTINGS-05 nếu tap vào body notification; xử lý edge case action tap sau khi approval_token đã expire.  
+**Phụ thuộc:** Native Dev confirm feasibility trong React Native (có thể cần native module); Security Team review xem action button có thể bị kích hoạt bởi phần mềm độc hại không.
 
-    **Yêu cầu chính:** Admin tool: `POST /admin/devices/force-logout` với audit trail đầy đủ; user nhận email + SMS xác nhận; SOP document cho CSKH training; logging ai thực hiện action và thời gian.  
-    **Phụ thuộc:** Security Team thiết kế identity verification checklist cho CSKH; Legal review trách nhiệm pháp lý nếu xác minh sai dẫn đến mất tài khoản.
-  </Accordion>
+### [Sprint 8] CSKH SOP — Force-Logout Device A khi mất thiết bị
 
-  <Accordion title="[Sprint 8] Nickname hiển thị trong Transaction History" icon="user-tag">
-    **Team:** Product + Tech · **Ưu tiên:** Medium
+**Team:** CSKH + Product · **Ưu tiên:** Critical
 
-    Khi user có **nickname**, hiển thị nickname thay vì họ tên đầy đủ KYC trong Transaction History (SCR-HIST-04) và các màn hình liên quan. Tăng tính cá nhân hóa; phù hợp với user không muốn hiện họ tên thật.
+Thiết kế đầy đủ **SOP và công cụ admin cho CSKH** để xử lý khi user mất điện thoại hoàn toàn (Device A offline, không thể tự approve Device B): xác minh danh tính qua video call hoặc giấy tờ, force-logout Device A, cấp quyền cho thiết bị mới.
 
-    **Yêu cầu chính:** Quyết định kiến trúc: (A) snapshot nickname vào transaction record tại thời điểm GD — không bị ảnh hưởng khi đổi nickname sau; hoặc (B) join từ user_profile khi display — đơn giản hơn nhưng nickname cũ bị mất.  
-    **Phụ thuộc:** Phương án (A) yêu cầu thêm field `sender_display_name` vào transaction table — cần migration; UX xác nhận cách hiển thị khi user chưa có nickname.
-  </Accordion>
+**Yêu cầu chính:** Admin tool: `POST /admin/devices/force-logout` với audit trail đầy đủ; user nhận email + SMS xác nhận; SOP document cho CSKH training; logging ai thực hiện action và thời gian.  
+**Phụ thuộc:** Security Team thiết kế identity verification checklist cho CSKH; Legal review trách nhiệm pháp lý nếu xác minh sai dẫn đến mất tài khoản.
 
-  <Accordion title="[Sprint 10] Archive & Export Notification Inbox" icon="box-archive">
-    **Team:** Product + Compliance · **Ưu tiên:** Low
+### [Sprint 8] Nickname hiển thị trong Transaction History
 
-    Sau khi notification tự xóa sau **90 ngày** (hiển thị), user có thể cần lưu lại biên lai thông báo GD. Tính năng này cho phép **export toàn bộ inbox** dưới dạng PDF hoặc CSV qua email, phục vụ compliance và user cần đối soát.
+**Team:** Product + Tech · **Ưu tiên:** Medium
 
-    **Yêu cầu chính:** Async export job tương tự Transaction History sao kê; giới hạn 1 export / tháng / user; email PDF với full notification list; Compliance xác nhận có cần lưu raw data lâu hơn 90 ngày ở DB không.  
-    **Phụ thuộc:** Compliance xác nhận regulatory requirement; DB retention policy phải giữ raw notification data đủ lâu dù inbox display chỉ 90 ngày.
-  </Accordion>
-</AccordionGroup>
+Khi user có **nickname**, hiển thị nickname thay vì họ tên đầy đủ KYC trong Transaction History (SCR-HIST-04) và các màn hình liên quan. Tăng tính cá nhân hóa; phù hợp với user không muốn hiện họ tên thật.
+
+**Yêu cầu chính:** Quyết định kiến trúc: (A) snapshot nickname vào transaction record tại thời điểm GD — không bị ảnh hưởng khi đổi nickname sau; hoặc (B) join từ user_profile khi display — đơn giản hơn nhưng nickname cũ bị mất.  
+**Phụ thuộc:** Phương án (A) yêu cầu thêm field `sender_display_name` vào transaction table — cần migration; UX xác nhận cách hiển thị khi user chưa có nickname.
+
+### [Sprint 10] Archive & Export Notification Inbox
+
+**Team:** Product + Compliance · **Ưu tiên:** Low
+
+Sau khi notification tự xóa sau **90 ngày** (hiển thị), user có thể cần lưu lại biên lai thông báo GD. Tính năng này cho phép **export toàn bộ inbox** dưới dạng PDF hoặc CSV qua email, phục vụ compliance và user cần đối soát.
+
+**Yêu cầu chính:** Async export job tương tự Transaction History sao kê; giới hạn 1 export / tháng / user; email PDF với full notification list; Compliance xác nhận có cần lưu raw data lâu hơn 90 ngày ở DB không.  
+**Phụ thuộc:** Compliance xác nhận regulatory requirement; DB retention policy phải giữ raw notification data đủ lâu dù inbox display chỉ 90 ngày.
+

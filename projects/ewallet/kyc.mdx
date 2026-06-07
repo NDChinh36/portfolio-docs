@@ -624,61 +624,59 @@ Màn hình điện thoại chiếu một chuỗi ánh sáng màu ngẫu nhiên l
   Các mục dưới đây yêu cầu làm rõ với Compliance, Risk và CS Ops trước Sprint tương ứng. BA chịu trách nhiệm điều phối để nhận quyết định chính thức và cập nhật vào Business Rules.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 1] Xác nhận ngưỡng Confidence Score với Compliance & Risk" icon="chart-bar">
-    **Team:** Compliance + Risk · **Ưu tiên:** Critical
+### [Sprint 1] Xác nhận ngưỡng Confidence Score với Compliance & Risk
 
-    Làm rõ và nhận sign-off chính thức từ Compliance và Risk Team cho ngưỡng phân loại KYC hiện tại: **≥ 0.85 auto-approve**, **0.70–0.84 manual review**, **< 0.70 auto-reject**. Ngưỡng này ảnh hưởng trực tiếp đến tỷ lệ thông qua KYC và rủi ro pháp lý.
+**Team:** Compliance + Risk · **Ưu tiên:** Critical
 
-    **Yêu cầu chính:** Họp review threshold với Compliance và Risk; document quyết định vào BR-KYC-04; điều chỉnh AutoDecisionEngine nếu có thay đổi ngưỡng.  
-    **Phụ thuộc:** Dữ liệu backtest từ tập mẫu CCCD thực (VNPTeID cung cấp sandbox test data).
-  </Accordion>
+Làm rõ và nhận sign-off chính thức từ Compliance và Risk Team cho ngưỡng phân loại KYC hiện tại: **≥ 0.85 auto-approve**, **0.70–0.84 manual review**, **< 0.70 auto-reject**. Ngưỡng này ảnh hưởng trực tiếp đến tỷ lệ thông qua KYC và rủi ro pháp lý.
 
-  <Accordion title="[Sprint 1] Policy rút tiền trong Grace Period — CCCD hết hạn & Freeze" icon="wallet">
-    **Team:** Compliance + Product · **Ưu tiên:** High
+**Yêu cầu chính:** Họp review threshold với Compliance và Risk; document quyết định vào BR-KYC-04; điều chỉnh AutoDecisionEngine nếu có thay đổi ngưỡng.  
+**Phụ thuộc:** Dữ liệu backtest từ tập mẫu CCCD thực (VNPTeID cung cấp sandbox test data).
 
-    Xác định rõ rule: khi CCCD hết hạn và tài khoản bị đưa vào diện freeze, user có được **rút toàn bộ số dư về ngân hàng đã liên kết** trong thời gian grace period không? Ảnh hưởng đến quyền lợi người dùng và nghĩa vụ pháp lý.
+### [Sprint 1] Policy rút tiền trong Grace Period — CCCD hết hạn & Freeze
 
-    **Yêu cầu chính:** Document policy vào BR-KYC; cập nhật Wallet Core module nếu cần giới hạn GD trong freeze period; thông báo rõ cho user qua notification trước khi freeze.  
-    **Phụ thuộc:** Tham chiếu Nghị định 52/2024 và hướng dẫn của NHNN về ví điện tử.
-  </Accordion>
+**Team:** Compliance + Product · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 1] Thông báo User cũ khi phát hiện CCCD trùng" icon="bell">
-    **Team:** Security + Legal · **Ưu tiên:** High
+Xác định rõ rule: khi CCCD hết hạn và tài khoản bị đưa vào diện freeze, user có được **rút toàn bộ số dư về ngân hàng đã liên kết** trong thời gian grace period không? Ảnh hưởng đến quyền lợi người dùng và nghĩa vụ pháp lý.
 
-    Khi hệ thống phát hiện CCCD đã được đăng ký ở tài khoản khác, ngoài việc CS được alert, cần quyết định: có **thông báo cho chủ tài khoản cũ** không, hay chỉ xử lý nội bộ? Cân nhắc giữa transparency và rủi ro lộ thông tin.
+**Yêu cầu chính:** Document policy vào BR-KYC; cập nhật Wallet Core module nếu cần giới hạn GD trong freeze period; thông báo rõ cho user qua notification trước khi freeze.  
+**Phụ thuộc:** Tham chiếu Nghị định 52/2024 và hướng dẫn của NHNN về ví điện tử.
 
-    **Yêu cầu chính:** Document policy vào BR-KYC-10; implement notification (push + email) nếu được chọn; ghi audit trail đầy đủ.  
-    **Phụ thuộc:** Legal Team xác nhận góc độ pháp lý; Security Team đánh giá risk information disclosure.
-  </Accordion>
+### [Sprint 1] Thông báo User cũ khi phát hiện CCCD trùng
 
-  <Accordion title="[Sprint 1] Quyết định iProov SDK — Native vs Web" icon="mobile">
-    **Team:** Tech Lead · **Ưu tiên:** Critical
+**Team:** Security + Legal · **Ưu tiên:** High
 
-    Lựa chọn giữa **iProov Native SDK** (tích hợp sâu vào iOS/Android, hiệu năng cao) và **iProov Web SDK** (Webview, triển khai nhanh hơn nhưng giới hạn UX). Quyết định ảnh hưởng đến iOS/Android build pipeline và thời gian tích hợp.
+Khi hệ thống phát hiện CCCD đã được đăng ký ở tài khoản khác, ngoài việc CS được alert, cần quyết định: có **thông báo cho chủ tài khoản cũ** không, hay chỉ xử lý nội bộ? Cân nhắc giữa transparency và rủi ro lộ thông tin.
 
-    **Yêu cầu chính:** Tech Lead ra quyết định và document vào Architecture Decision Record (ADR); cập nhật scope KYC module nếu có thay đổi phương án.  
-    **Phụ thuộc:** iProov cung cấp demo cả hai SDK; Tech Lead test trên thiết bị mid-range mục tiêu.
-  </Accordion>
+**Yêu cầu chính:** Document policy vào BR-KYC-10; implement notification (push + email) nếu được chọn; ghi audit trail đầy đủ.  
+**Phụ thuộc:** Legal Team xác nhận góc độ pháp lý; Security Team đánh giá risk information disclosure.
 
-  <Accordion title="[Sprint 2] Quy trình KYC Tier 3 — Full KYC / Business Account" icon="building">
-    **Team:** Compliance · **Ưu tiên:** Medium
+### [Sprint 1] Quyết định iProov SDK — Native vs Web
 
-    Thiết kế luồng KYC nâng cao cho **Tier 3**: tài khoản doanh nghiệp hoặc cá nhân có hạn mức cao. Xác định: có thể tự thực hiện online (upload giấy phép kinh doanh, CCCD người đại diện) hay phải **gặp trực tiếp tại điểm giao dịch**?
+**Team:** Tech Lead · **Ưu tiên:** Critical
 
-    **Yêu cầu chính:** BA viết PRD Tier 3 KYC module riêng; xác định danh sách giấy tờ, quy trình review, SLA duyệt; tích hợp với hạn mức Tier 3 ở Wallet Core.  
-    **Phụ thuộc:** Compliance xác nhận yêu cầu pháp lý cho tài khoản business; Product xác nhận roadmap Tier 3 vào Sprint nào.
-  </Accordion>
+Lựa chọn giữa **iProov Native SDK** (tích hợp sâu vào iOS/Android, hiệu năng cao) và **iProov Web SDK** (Webview, triển khai nhanh hơn nhưng giới hạn UX). Quyết định ảnh hưởng đến iOS/Android build pipeline và thời gian tích hợp.
 
-  <Accordion title="[Sprint 2] Quy trình Manual Review khi NFC Chip hỏng" icon="clipboard-check">
-    **Team:** Product + CS Ops · **Ưu tiên:** Medium
+**Yêu cầu chính:** Tech Lead ra quyết định và document vào Architecture Decision Record (ADR); cập nhật scope KYC module nếu có thay đổi phương án.  
+**Phụ thuộc:** iProov cung cấp demo cả hai SDK; Tech Lead test trên thiết bị mid-range mục tiêu.
 
-    Xác định SOP và checklist cho **manual reviewer** khi NFC fail và hồ sơ vào hàng đợi review: dữ liệu OCR có đủ để duyệt không? Trường hợp nào cần yêu cầu user nộp thêm giấy tờ bổ sung?
+### [Sprint 2] Quy trình KYC Tier 3 — Full KYC / Business Account
 
-    **Yêu cầu chính:** Document checklist reviewer; cập nhật rejection flow để request additional documents; thêm trạng thái `DOCS_REQUIRED` vào KYC state machine; cập nhật SCR-KYC-08.  
-    **Phụ thuộc:** CS Ops xây dựng training material cho reviewer; Product định nghĩa SLA cho trạng thái DOCS_REQUIRED (đề xuất 48h).
-  </Accordion>
-</AccordionGroup>
+**Team:** Compliance · **Ưu tiên:** Medium
+
+Thiết kế luồng KYC nâng cao cho **Tier 3**: tài khoản doanh nghiệp hoặc cá nhân có hạn mức cao. Xác định: có thể tự thực hiện online (upload giấy phép kinh doanh, CCCD người đại diện) hay phải **gặp trực tiếp tại điểm giao dịch**?
+
+**Yêu cầu chính:** BA viết PRD Tier 3 KYC module riêng; xác định danh sách giấy tờ, quy trình review, SLA duyệt; tích hợp với hạn mức Tier 3 ở Wallet Core.  
+**Phụ thuộc:** Compliance xác nhận yêu cầu pháp lý cho tài khoản business; Product xác nhận roadmap Tier 3 vào Sprint nào.
+
+### [Sprint 2] Quy trình Manual Review khi NFC Chip hỏng
+
+**Team:** Product + CS Ops · **Ưu tiên:** Medium
+
+Xác định SOP và checklist cho **manual reviewer** khi NFC fail và hồ sơ vào hàng đợi review: dữ liệu OCR có đủ để duyệt không? Trường hợp nào cần yêu cầu user nộp thêm giấy tờ bổ sung?
+
+**Yêu cầu chính:** Document checklist reviewer; cập nhật rejection flow để request additional documents; thêm trạng thái `DOCS_REQUIRED` vào KYC state machine; cập nhật SCR-KYC-08.  
+**Phụ thuộc:** CS Ops xây dựng training material cho reviewer; Product định nghĩa SLA cho trạng thái DOCS_REQUIRED (đề xuất 48h).
 
 ---
 

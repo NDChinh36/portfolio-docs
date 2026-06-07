@@ -33,20 +33,10 @@ Một startup Fintech tại Việt Nam — **FinPay JSC** — nhận vòng đầ
 
 ### 1.2 Ràng buộc ban đầu
 
-<CardGroup cols={2}>
-  <Card title="Thời gian" icon="calendar">
-    **6 tháng** từ kick-off đến production launch. MVP gồm 6 module cốt lõi.
-  </Card>
-  <Card title="Ngân sách nhân sự" icon="users">
-    **6 người** — không có nguồn lực để build merchant portal hoặc tính năng nâng cao.
-  </Card>
-  <Card title="Pháp lý" icon="scale-balanced">
-    Phải có KYC hợp lệ trước launch. NHNN yêu cầu eKYC với CCCD gắn chip.
-  </Card>
-  <Card title="Kỹ thuật" icon="code">
-    React Native để ship iOS + Android cùng lúc. Backend microservice trên Go + Node.js.
-  </Card>
-</CardGroup>
+- **Thời gian** — **6 tháng** từ kick-off đến production launch. MVP gồm 6 module cốt lõi.
+- **Ngân sách nhân sự** — **6 người** — không có nguồn lực để build merchant portal hoặc tính năng nâng cao.
+- **Pháp lý** — Phải có KYC hợp lệ trước launch. NHNN yêu cầu eKYC với CCCD gắn chip.
+- **Kỹ thuật** — React Native để ship iOS + Android cùng lúc. Backend microservice trên Go + Node.js.
 
 ---
 
@@ -102,41 +92,39 @@ Tháng 6    [UAT, Hardening, Launch]
 
 ### 4.1 Những gì BA đã làm trong dự án này
 
-<AccordionGroup>
-  <Accordion title="Thu thập & phân tích yêu cầu">
-    - Phỏng vấn **8 stakeholder** (PM, Tech Lead, Compliance, CS Lead, 2 Dev, QA, Legal advisor)
-    - Tổng hợp 47 yêu cầu ban đầu → phân loại Must-have / Should-have / Nice-to-have (MoSCoW)
-    - Loại bỏ 12 yêu cầu khỏi MVP scope sau khi xác nhận không đủ nguồn lực / không phù hợp timeline
-    - Conduct competitor analysis: MoMo, ZaloPay, VNPay — map feature parity
-  </Accordion>
+### Thu thập & phân tích yêu cầu
 
-  <Accordion title="Viết tài liệu PRD">
-    - Viết **8 PRD đầy đủ** (6 module MVP + 2 supporting features), mỗi PRD gồm: User Flow, Sequence Diagram, Screen Spec, Validation Rules, Business Rules, Notification Spec, API Summary, Error Codes, Edge Cases
-    - Tổng cộng khoảng **500+ Business Rules và Validation Rules** được xác định và document
-    - Maintian **traceability matrix** — mỗi requirement link đến screen spec, business rule, và test case
-  </Accordion>
+- Phỏng vấn **8 stakeholder** (PM, Tech Lead, Compliance, CS Lead, 2 Dev, QA, Legal advisor)
+- Tổng hợp 47 yêu cầu ban đầu → phân loại Must-have / Should-have / Nice-to-have (MoSCoW)
+- Loại bỏ 12 yêu cầu khỏi MVP scope sau khi xác nhận không đủ nguồn lực / không phù hợp timeline
+- Conduct competitor analysis: MoMo, ZaloPay, VNPay — map feature parity
 
-  <Accordion title="Phối hợp với vendor eKYC">
-    - Đánh giá 3 vendor: **FPT.AI**, **VNPTeID**, **VNPT eKYC**
-    - Quyết định chọn VNPTeID + iProov (xem quyết định chi tiết bên dưới)
-    - Làm việc với VNPTeID để hiểu SDK limitation, sandbox environment, SLA cam kết
-    - Thiết kế fallback flow khi provider down (manual review queue)
-  </Accordion>
+### Viết tài liệu PRD
 
-  <Accordion title="Compliance & Regulatory">
-    - Đọc và extract requirement từ Nghị định 52/2024/NĐ-CP, Thông tư 39/2014/TT-NHNN
-    - Map compliance requirement vào từng Business Rule (BR-KYC-11: 5-year retention)
-    - Phối hợp với Legal advisor để confirm: KYC tier thresholds, hạn mức giao dịch, tuổi tối thiểu 15
-    - Đảm bảo CCCD chip NFC đúng theo yêu cầu NHNN về eKYC cấp ngân hàng
-  </Accordion>
+- Viết **8 PRD đầy đủ** (6 module MVP + 2 supporting features), mỗi PRD gồm: User Flow, Sequence Diagram, Screen Spec, Validation Rules, Business Rules, Notification Spec, API Summary, Error Codes, Edge Cases
+- Tổng cộng khoảng **500+ Business Rules và Validation Rules** được xác định và document
+- Maintian **traceability matrix** — mỗi requirement link đến screen spec, business rule, và test case
 
-  <Accordion title="Hỗ trợ Sprint & UAT">
-    - Tham dự Sprint Planning: ưu tiên backlog, break down story, estimate complexity
-    - Viết 200+ test scenarios cho QA (happy path, edge case, negative case)
-    - Dẫn dắt UAT: tuyển beta users, viết UAT script, ghi nhận defect và triage
-    - Xử lý 34 change requests trong quá trình UAT; 8 requests defer sang Phase 2
-  </Accordion>
-</AccordionGroup>
+### Phối hợp với vendor eKYC
+
+- Đánh giá 3 vendor: **FPT.AI**, **VNPTeID**, **VNPT eKYC**
+- Quyết định chọn VNPTeID + iProov (xem quyết định chi tiết bên dưới)
+- Làm việc với VNPTeID để hiểu SDK limitation, sandbox environment, SLA cam kết
+- Thiết kế fallback flow khi provider down (manual review queue)
+
+### Compliance & Regulatory
+
+- Đọc và extract requirement từ Nghị định 52/2024/NĐ-CP, Thông tư 39/2014/TT-NHNN
+- Map compliance requirement vào từng Business Rule (BR-KYC-11: 5-year retention)
+- Phối hợp với Legal advisor để confirm: KYC tier thresholds, hạn mức giao dịch, tuổi tối thiểu 15
+- Đảm bảo CCCD chip NFC đúng theo yêu cầu NHNN về eKYC cấp ngân hàng
+
+### Hỗ trợ Sprint & UAT
+
+- Tham dự Sprint Planning: ưu tiên backlog, break down story, estimate complexity
+- Viết 200+ test scenarios cho QA (happy path, edge case, negative case)
+- Dẫn dắt UAT: tuyển beta users, viết UAT script, ghi nhận defect và triage
+- Xử lý 34 change requests trong quá trình UAT; 8 requests defer sang Phase 2
 
 ---
 
@@ -259,31 +247,29 @@ Thay vì viết PRD thuần business (không có diagram) hoặc thuần technic
 
 ## 7. Bài học Rút ra (Lessons Learned)
 
-<AccordionGroup>
-  <Accordion title="1. Define 'done' cho KYC sớm hơn">
-    Trong Sprint 2, Dev và QA có hiểu khác nhau về "KYC thành công" nghĩa là gì — Dev coi là khi API trả `approved`, QA coi là khi user nhận push notification và tier đã cập nhật trên màn hình. Tốn 1 ngày để align.
+### 1. Define 'done' cho KYC sớm hơn
 
-    **Fix**: Từ Sprint 3 trở đi, mỗi feature có "Definition of Done" rõ ràng trong PRD, bao gồm cả notification và UI state cuối cùng.
-  </Accordion>
+Trong Sprint 2, Dev và QA có hiểu khác nhau về "KYC thành công" nghĩa là gì — Dev coi là khi API trả `approved`, QA coi là khi user nhận push notification và tier đã cập nhật trên màn hình. Tốn 1 ngày để align.
 
-  <Accordion title="2. NAPAS integration phức tạp hơn dự kiến">
-    Ban đầu estimate 3 ngày cho NAPAS integration (pull topup). Thực tế mất 8 ngày vì: sandbox environment không ổn định, tài liệu NAPAS không cập nhật, và cần IP whitelist từ NAPAS (mất 3 ngày business để approve).
+**Fix**: Từ Sprint 3 trở đi, mỗi feature có "Definition of Done" rõ ràng trong PRD, bao gồm cả notification và UI state cuối cùng.
 
-    **Fix**: Đưa third-party integration risk vào planning. Tạo mock server để Dev có thể test độc lập mà không phụ thuộc NAPAS sandbox.
-  </Accordion>
+### 2. NAPAS integration phức tạp hơn dự kiến
 
-  <Accordion title="3. Edge cases phát hiện muộn trong UAT">
-    Race condition giữa hai lệnh rút tiền đồng thời (Wallet Core edge case) phát hiện trong UAT Week 1, dẫn đến 3 ngày fix + regression test. Đây là edge case nên được phát hiện trong design phase.
+Ban đầu estimate 3 ngày cho NAPAS integration (pull topup). Thực tế mất 8 ngày vì: sandbox environment không ổn định, tài liệu NAPAS không cập nhật, và cần IP whitelist từ NAPAS (mất 3 ngày business để approve).
 
-    **Fix**: BA bổ sung "Concurrency checklist" vào mỗi PRD trước khi handoff — liệt kê tất cả scenarios hai user/request cùng tác động một resource.
-  </Accordion>
+**Fix**: Đưa third-party integration risk vào planning. Tạo mock server để Dev có thể test độc lập mà không phụ thuộc NAPAS sandbox.
 
-  <Accordion title="4. Notification spec hay bị bỏ qua trong sprint">
-    Backend dev thường code notification "theo cảm tính" (tên gọi, timing, nội dung) vì notification spec viết mơ hồ. Dẫn đến 12 notification defects trong UAT.
+### 3. Edge cases phát hiện muộn trong UAT
 
-    **Fix**: Notification Spec section trong PRD bây giờ luôn bao gồm: exact content string với biến rõ ràng, trigger condition cụ thể (sau event nào), delay (ngay lập tức hay delay?), kênh, và fallback khi kênh chính fail.
-  </Accordion>
-</AccordionGroup>
+Race condition giữa hai lệnh rút tiền đồng thời (Wallet Core edge case) phát hiện trong UAT Week 1, dẫn đến 3 ngày fix + regression test. Đây là edge case nên được phát hiện trong design phase.
+
+**Fix**: BA bổ sung "Concurrency checklist" vào mỗi PRD trước khi handoff — liệt kê tất cả scenarios hai user/request cùng tác động một resource.
+
+### 4. Notification spec hay bị bỏ qua trong sprint
+
+Backend dev thường code notification "theo cảm tính" (tên gọi, timing, nội dung) vì notification spec viết mơ hồ. Dẫn đến 12 notification defects trong UAT.
+
+**Fix**: Notification Spec section trong PRD bây giờ luôn bao gồm: exact content string với biến rõ ràng, trigger condition cụ thể (sau event nào), delay (ngay lập tức hay delay?), kênh, và fallback khi kênh chính fail.
 
 ---
 

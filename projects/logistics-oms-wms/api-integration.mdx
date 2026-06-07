@@ -43,9 +43,7 @@ flowchart TD
 
 ## API List — 12 APIs Cốt Lõi
 
-<AccordionGroup>
-
-  <Accordion title="1. POST /orders — Nhận đơn hàng từ Sales Channel">
+### 1. POST /orders — Nhận đơn hàng từ Sales Channel
 
 | | |
 |---|---|
@@ -78,9 +76,7 @@ flowchart TD
 
 **Notes (BA):** API này là entry point của toàn bộ fulfillment flow. Dedup theo `(channel_code, channel_order_id)` cực kỳ quan trọng — Shopee và TikTok có thể gửi lại webhook nếu không nhận được ACK kịp thời.
 
-  </Accordion>
-
-  <Accordion title="2. POST /orders/{id}/validate — Trigger order validation">
+### 2. POST /orders/{id}/validate — Trigger order validation
 
 | | |
 |---|---|
@@ -101,9 +97,7 @@ flowchart TD
 - `409 INVALID_STATE_TRANSITION` — đơn đang ở trạng thái không cho phép validate
 - `500 VALIDATION_ENGINE_ERROR` — lỗi nội bộ; cần check log
 
-  </Accordion>
-
-  <Accordion title="3. GET /inventory/check — Kiểm tra tồn kho khả dụng">
+### 3. GET /inventory/check — Kiểm tra tồn kho khả dụng
 
 | | |
 |---|---|
@@ -128,9 +122,7 @@ flowchart TD
 
 **Notes (BA):** `available_qty = physical_qty - reserved_qty`. Đây là số OMS dùng để quyết định có allocate được không, không phải `physical_qty`.
 
-  </Accordion>
-
-  <Accordion title="4. POST /inventory/allocate — Khóa tồn kho cho đơn hàng">
+### 4. POST /inventory/allocate — Khóa tồn kho cho đơn hàng
 
 | | |
 |---|---|
@@ -154,9 +146,7 @@ flowchart TD
 - `409 ALREADY_ALLOCATED` — idempotency; response trả allocation hiện tại
 - `503 WMS_LOCK_TIMEOUT` — retry sau 5 giây
 
-  </Accordion>
-
-  <Accordion title="5. POST /fulfillments — Tạo Fulfillment Request (OMS → WMS)">
+### 5. POST /fulfillments — Tạo Fulfillment Request (OMS → WMS)
 
 | | |
 |---|---|
@@ -175,9 +165,7 @@ flowchart TD
 - `409 FULFILLMENT_EXISTS` — idempotency guard
 - `503 WMS_QUEUE_FULL` — retry sau 60 giây
 
-  </Accordion>
-
-  <Accordion title="6. PATCH /fulfillments/{id}/picking — Cập nhật trạng thái picking">
+### 6. PATCH /fulfillments/{id}/picking — Cập nhật trạng thái picking
 
 | | |
 |---|---|
@@ -194,9 +182,7 @@ flowchart TD
 
 **Notes (BA):** `timestamp` trong request là thời điểm thực tế picker thực hiện (do device WMS ghi lại), không phải thời điểm API call. Điều này quan trọng cho audit trail và tính SLA chính xác.
 
-  </Accordion>
-
-  <Accordion title="7. PATCH /fulfillments/{id}/packing — Cập nhật trạng thái packing">
+### 7. PATCH /fulfillments/{id}/packing — Cập nhật trạng thái packing
 
 | | |
 |---|---|
@@ -216,9 +202,7 @@ flowchart TD
 
 **Notes (BA):** `package_info` cực kỳ quan trọng — Carrier tính phí dựa trên actual weight vs dimensional weight (`L*W*H/5000`). Sai số lớn có thể dẫn đến charge thêm và tranh chấp với Seller.
 
-  </Accordion>
-
-  <Accordion title="8. POST /shipments — Tạo vận đơn với Carrier">
+### 8. POST /shipments — Tạo vận đơn với Carrier
 
 | | |
 |---|---|
@@ -242,9 +226,7 @@ flowchart TD
 
 **Notes (BA):** OMS không gọi trực tiếp từng Carrier API — cần có **Carrier Adapter layer** để chuẩn hóa request/response. Mỗi carrier có format address khác nhau.
 
-  </Accordion>
-
-  <Accordion title="9. POST /webhooks/carrier — Nhận tracking event từ Carrier">
+### 9. POST /webhooks/carrier — Nhận tracking event từ Carrier
 
 | | |
 |---|---|
@@ -265,9 +247,7 @@ flowchart TD
 
 **Notes (BA):** Việc trả `200` cho cả `DUPLICATE_EVENT` và `UNKNOWN_EVENT_CODE` là có chủ đích — nếu trả `4xx`, Carrier sẽ retry liên tục và tạo noise.
 
-  </Accordion>
-
-  <Accordion title="10. PATCH /orders/{id}/delivery-status — Đồng bộ trạng thái về Sales Channel">
+### 10. PATCH /orders/{id}/delivery-status — Đồng bộ trạng thái về Sales Channel
 
 | | |
 |---|---|
@@ -284,9 +264,7 @@ flowchart TD
 
 **Notes (BA):** Nếu Sales Channel API fail liên tục, OMS cần có queue để push lại sau — không được drop event.
 
-  </Accordion>
-
-  <Accordion title="11. POST /returns — Tạo yêu cầu hoàn hàng">
+### 11. POST /returns — Tạo yêu cầu hoàn hàng
 
 | | |
 |---|---|
@@ -306,9 +284,7 @@ flowchart TD
 
 **Notes (BA):** `return_type` ảnh hưởng đến toàn bộ quy trình xử lý và ai chịu chi phí vận chuyển hoàn.
 
-  </Accordion>
-
-  <Accordion title="12. PATCH /exceptions/{id}/resolve — Xử lý exception">
+### 12. PATCH /exceptions/{id}/resolve — Xử lý exception
 
 | | |
 |---|---|
@@ -328,10 +304,6 @@ flowchart TD
 - `next_action`, `resolved_at`, `audit_trail`
 
 **Notes (BA):** `MANUAL_OVERRIDE` là resolution code mạnh nhất — cần 2 lớp xác nhận (resolver + approver) và log đầy đủ. `ESCALATE` không đóng exception mà chuyển nó lên tier cao hơn.
-
-  </Accordion>
-
-</AccordionGroup>
 
 ---
 

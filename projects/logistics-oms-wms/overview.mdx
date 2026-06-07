@@ -26,27 +26,25 @@ Project này thiết kế một **OMS/WMS Fulfillment Platform** tích hợp —
 
 ### Hiện trạng (As-Is Pain Points)
 
-<AccordionGroup>
-  <Accordion title="Order trùng / bỏ sót do thiếu deduplication">
-    Mỗi sàn có API riêng, VietFulfill dùng 4 script Python khác nhau để pull order về. Không có cơ chế deduplication trung tâm — khi Shopee retry webhook, order bị insert 2 lần. Tháng 3/2026, có 47 đơn bị pick và pack 2 lần trước khi ai đó phát hiện ra.
-  </Accordion>
+### Order trùng / bỏ sót do thiếu deduplication
 
-  <Accordion title="Status order không nhất quán giữa các team">
-    Kho nhìn thấy một status, CS nhìn thấy status khác, seller lại nhìn thấy status khác nữa trên portal. Nguyên nhân: không có single source of truth — kho cập nhật Excel, CS cập nhật Google Sheet, OMS cũ pull từ cả hai nơi theo cron job 15 phút một lần.
-  </Accordion>
+Mỗi sàn có API riêng, VietFulfill dùng 4 script Python khác nhau để pull order về. Không có cơ chế deduplication trung tâm — khi Shopee retry webhook, order bị insert 2 lần. Tháng 3/2026, có 47 đơn bị pick và pack 2 lần trước khi ai đó phát hiện ra.
 
-  <Accordion title="Cancel order sau khi đã pick gây lãng phí lớn">
-    Seller cancel order trực tiếp trên Shopee mà không thông báo kho. Kho vẫn pick và pack xong rồi mới biết order đã cancel khi scan handover. Mỗi tháng ước tính ~200 đơn bị cancel sau khi đã hoàn tất picking, gây lãng phí nhân lực và chi phí hoàn hàng.
-  </Accordion>
+### Status order không nhất quán giữa các team
 
-  <Accordion title="Exception handling qua Zalo / Excel">
-    Khi có sự cố (hàng thiếu, địa chỉ sai, carrier từ chối nhận), nhân viên kho nhắn Zalo cho Supervisor, Supervisor nhắn CS, CS nhắn seller. Không có audit trail. Một số exception bị bỏ sót trong Zalo do tin nhắn trôi. SLA resolution trung bình cho exception là 6.2 giờ.
-  </Accordion>
+Kho nhìn thấy một status, CS nhìn thấy status khác, seller lại nhìn thấy status khác nữa trên portal. Nguyên nhân: không có single source of truth — kho cập nhật Excel, CS cập nhật Google Sheet, OMS cũ pull từ cả hai nơi theo cron job 15 phút một lần.
 
-  <Accordion title="Không có visibility về carrier performance">
-    VietFulfill dùng 4 carrier (GHN, GHTK, J&T Express, Viettel Post) nhưng không có dashboard theo dõi tỉ lệ giao thành công, thời gian transit trung bình theo tuyến, hay tỉ lệ hoàn hàng theo carrier. Quyết định chọn carrier cho từng đơn phần lớn dựa vào kinh nghiệm cá nhân của Supervisor.
-  </Accordion>
-</AccordionGroup>
+### Cancel order sau khi đã pick gây lãng phí lớn
+
+Seller cancel order trực tiếp trên Shopee mà không thông báo kho. Kho vẫn pick và pack xong rồi mới biết order đã cancel khi scan handover. Mỗi tháng ước tính ~200 đơn bị cancel sau khi đã hoàn tất picking, gây lãng phí nhân lực và chi phí hoàn hàng.
+
+### Exception handling qua Zalo / Excel
+
+Khi có sự cố (hàng thiếu, địa chỉ sai, carrier từ chối nhận), nhân viên kho nhắn Zalo cho Supervisor, Supervisor nhắn CS, CS nhắn seller. Không có audit trail. Một số exception bị bỏ sót trong Zalo do tin nhắn trôi. SLA resolution trung bình cho exception là 6.2 giờ.
+
+### Không có visibility về carrier performance
+
+VietFulfill dùng 4 carrier (GHN, GHTK, J&T Express, Viettel Post) nhưng không có dashboard theo dõi tỉ lệ giao thành công, thời gian transit trung bình theo tuyến, hay tỉ lệ hoàn hàng theo carrier. Quyết định chọn carrier cho từng đơn phần lớn dựa vào kinh nghiệm cá nhân của Supervisor.
 
 ### Mục tiêu dự án
 
@@ -84,36 +82,35 @@ Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống n�
 
 ## Scope
 
-<CardGroup cols={2}>
-  <Card title="In Scope" icon="circle-check">
-    - Order intake từ Shopee, TikTok Shop, Lazada, Website qua webhook/API
-    - Order deduplication và validation tại OMS
-    - Order lifecycle management: từ RECEIVED đến DELIVERED / RETURNED
-    - Fulfillment task management trong WMS (pick list, packing, label print)
-    - Barcode scan verification cho Picking và Packing
-    - Cancel flow với cutoff tại trạng thái PICKING
-    - Exception queue tập trung với SLA tracking
-    - Carrier integration: GHN, GHTK, J&T Express, Viettel Post (label generation + tracking webhook)
-    - Shipment status update từ carrier về OMS và sàn
-    - Seller portal: xem đơn, theo dõi fulfillment, báo cáo cơ bản
-    - CS dashboard: tra cứu đơn theo mọi ID, xem full timeline
-    - Operation dashboard: KPI, SLA, carrier performance
-    - Multi-warehouse support (Hà Nội, TP.HCM) — routing rule cơ bản
-    - Inventory visibility (stock on hand, reserved, available)
-  </Card>
-  <Card title="Out of Scope" icon="circle-xmark">
-    - Quản lý kế toán / hóa đơn / thanh toán COD đối soát
-    - Inbound / Receiving flow (nhập kho từ seller) — Phase 2
-    - Returns management / reverse logistics — Phase 2
-    - Carrier last-mile routing optimization
-    - Dự báo tồn kho (demand forecasting)
-    - Quản lý hợp đồng seller (CRM)
-    - Mobile app cho Warehouse Staff (Phase 1 dùng web-based)
-    - Integration với hệ thống ERP / kế toán nội bộ
-    - Tự động phân bổ bin location (slotting optimization)
-    - SLA tính phí / billing tự động cho seller
-  </Card>
-</CardGroup>
+### In Scope
+
+- Order intake từ Shopee, TikTok Shop, Lazada, Website qua webhook/API
+- Order deduplication và validation tại OMS
+- Order lifecycle management: từ RECEIVED đến DELIVERED / RETURNED
+- Fulfillment task management trong WMS (pick list, packing, label print)
+- Barcode scan verification cho Picking và Packing
+- Cancel flow với cutoff tại trạng thái PICKING
+- Exception queue tập trung với SLA tracking
+- Carrier integration: GHN, GHTK, J&T Express, Viettel Post (label generation + tracking webhook)
+- Shipment status update từ carrier về OMS và sàn
+- Seller portal: xem đơn, theo dõi fulfillment, báo cáo cơ bản
+- CS dashboard: tra cứu đơn theo mọi ID, xem full timeline
+- Operation dashboard: KPI, SLA, carrier performance
+- Multi-warehouse support (Hà Nội, TP.HCM) — routing rule cơ bản
+- Inventory visibility (stock on hand, reserved, available)
+
+### Out of Scope
+
+- Quản lý kế toán / hóa đơn / thanh toán COD đối soát
+- Inbound / Receiving flow (nhập kho từ seller) — Phase 2
+- Returns management / reverse logistics — Phase 2
+- Carrier last-mile routing optimization
+- Dự báo tồn kho (demand forecasting)
+- Quản lý hợp đồng seller (CRM)
+- Mobile app cho Warehouse Staff (Phase 1 dùng web-based)
+- Integration với hệ thống ERP / kế toán nội bộ
+- Tự động phân bổ bin location (slotting optimization)
+- SLA tính phí / billing tự động cho seller
 
 ---
 
@@ -173,18 +170,17 @@ Hệ thống có 11 actors bao gồm cả người dùng cuối, hệ thống n�
 
 ## Case Study Summary
 
-<CardGroup cols={2}>
-  <Card title="Project" icon="building">
-    **VietFulfill OMS/WMS Fulfillment Platform**
+### Project
 
-    Thiết kế hệ thống quản lý đơn hàng và kho vận tích hợp cho 3PL xử lý 8.000–12.000 đơn/ngày từ nhiều kênh bán hàng và nhiều carrier.
-  </Card>
-  <Card title="Industry" icon="truck">
-    3PL / E-commerce Logistics / Vietnam Market
+**VietFulfill OMS/WMS Fulfillment Platform**
 
-    Multi-channel: Shopee, TikTok Shop, Lazada, Website riêng
-  </Card>
-</CardGroup>
+Thiết kế hệ thống quản lý đơn hàng và kho vận tích hợp cho 3PL xử lý 8.000–12.000 đơn/ngày từ nhiều kênh bán hàng và nhiều carrier.
+
+### Industry
+
+3PL / E-commerce Logistics / Vietnam Market
+
+Multi-channel: Shopee, TikTok Shop, Lazada, Website riêng
 
 ### Business Problem
 
@@ -217,25 +213,11 @@ Phân tích hiện trạng (as-is process mapping), xác định pain points có
 
 *OMS/WMS operation view — tracking order status, SLA breach và exception queue.*
 
-<iframe
-  src="/artifacts/logistics/fulfillment-dashboard.html"
-  width="100%"
-  height="760"
-  style="border:1px solid #e5e7eb;border-radius:12px;"
-></iframe>
-
 ---
 
 #### Exception Queue
 
 *Centralized exception management — replacing Zalo/Excel with structured tracking.*
-
-<iframe
-  src="/artifacts/logistics/exception-queue.html"
-  width="100%"
-  height="680"
-  style="border:1px solid #e5e7eb;border-radius:12px;"
-></iframe>
 
 ---
 
@@ -263,17 +245,17 @@ Phân tích hiện trạng (as-is process mapping), xác định pain points có
 
 ### Lessons Learned
 
-<AccordionGroup>
-  <Accordion title="Status design phải làm đầu tiên, không phải sau">
-    Nếu không lock down status model trước khi viết bất kỳ flow nào, mọi diagram và spec sẽ phải viết lại. Trong case này, quyết định tách 3 status field là foundation của toàn bộ hệ thống. BA nên yêu cầu workshop riêng về data model trước khi đi vào chi tiết flow.
-  </Accordion>
-  <Accordion title="Exception là feature, không phải edge case">
-    Xu hướng tự nhiên của mọi người là focus vào happy path. Trong logistics, exception không phải "hiếm khi xảy ra" — với 10.000 đơn/ngày, dù chỉ 2% gặp vấn đề là 200 exception mỗi ngày cần xử lý. Exception queue không phải nice-to-have — đó là core feature.
-  </Accordion>
-  <Accordion title="Policy change cần BA làm trọng tài, không phải kỹ thuật">
-    Câu hỏi "cancel được phép đến bao giờ?" là câu hỏi business policy, không phải kỹ thuật. Nếu BA không đưa ra recommendation rõ ràng, Engineering sẽ implement một logic tùy tiện và seller/kho sẽ tranh chấp mãi mãi. BA phải dám ra quyết định và defend nó bằng data.
-  </Accordion>
-</AccordionGroup>
+### Status design phải làm đầu tiên, không phải sau
+
+Nếu không lock down status model trước khi viết bất kỳ flow nào, mọi diagram và spec sẽ phải viết lại. Trong case này, quyết định tách 3 status field là foundation của toàn bộ hệ thống. BA nên yêu cầu workshop riêng về data model trước khi đi vào chi tiết flow.
+
+### Exception là feature, không phải edge case
+
+Xu hướng tự nhiên của mọi người là focus vào happy path. Trong logistics, exception không phải "hiếm khi xảy ra" — với 10.000 đơn/ngày, dù chỉ 2% gặp vấn đề là 200 exception mỗi ngày cần xử lý. Exception queue không phải nice-to-have — đó là core feature.
+
+### Policy change cần BA làm trọng tài, không phải kỹ thuật
+
+Câu hỏi "cancel được phép đến bao giờ?" là câu hỏi business policy, không phải kỹ thuật. Nếu BA không đưa ra recommendation rõ ràng, Engineering sẽ implement một logic tùy tiện và seller/kho sẽ tranh chấp mãi mãi. BA phải dám ra quyết định và defend nó bằng data.
 
 ---
 

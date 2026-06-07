@@ -536,52 +536,50 @@ sequenceDiagram
   Các tính năng dưới đây được identify từ phân tích luồng chuyển tiền MVP. Một số mục ảnh hưởng đến Risk Engine và UX — cần Product và Risk Team xác nhận trước Sprint tương ứng.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 1] Rate Limit theo Tier — Tier 3 cao hơn 5 GD/phút" icon="sliders">
-    **Team:** Risk + Product · **Ưu tiên:** High
+### [Sprint 1] Rate Limit theo Tier — Tier 3 cao hơn 5 GD/phút
 
-    Nâng cấp rate limit chuyển tiền từ **flat 5 GD/phút** thành **rate limit theo tier KYC**: Tier 1 = 3 GD/phút, Tier 2 = 5 GD/phút, Tier 3 = 10 GD/phút. Phục vụ nhu cầu hợp lệ của user đã KYC đầy đủ mà không gây friction không cần thiết.
+**Team:** Risk + Product · **Ưu tiên:** High
 
-    **Yêu cầu chính:** Risk Team phê duyệt ngưỡng từng tier; LimitEngine đọc tier từ user_profile; cập nhật BR-TRANS-06 và error message hiển thị đúng limit theo tier của user.  
-    **Phụ thuộc:** Wallet Core LimitEngine hỗ trợ dynamic limit config per tier; KYC module expose tier field qua API.
-  </Accordion>
+Nâng cấp rate limit chuyển tiền từ **flat 5 GD/phút** thành **rate limit theo tier KYC**: Tier 1 = 3 GD/phút, Tier 2 = 5 GD/phút, Tier 3 = 10 GD/phút. Phục vụ nhu cầu hợp lệ của user đã KYC đầy đủ mà không gây friction không cần thiết.
 
-  <Accordion title="[Sprint 1] Auto-Resolve GD PENDING — Timeout Policy" icon="clock-rotate-left">
-    **Team:** Tech Lead · **Ưu tiên:** High
+**Yêu cầu chính:** Risk Team phê duyệt ngưỡng từng tier; LimitEngine đọc tier từ user_profile; cập nhật BR-TRANS-06 và error message hiển thị đúng limit theo tier của user.  
+**Phụ thuộc:** Wallet Core LimitEngine hỗ trợ dynamic limit config per tier; KYC module expose tier field qua API.
 
-    Xác định và implement **thời gian tự động resolve GD PENDING**: đề xuất 1 giờ cho lỗi kỹ thuật nội bộ, 24 giờ cho GD đang chờ phía đối tác. Hiện tại PENDING có thể tồn tại vô thời hạn gây rủi ro số dư bị treo.
+### [Sprint 1] Auto-Resolve GD PENDING — Timeout Policy
 
-    **Yêu cầu chính:** Background job scan và resolve expired PENDING transactions; cập nhật ledger Wallet Core; gửi notification kết quả (COMPLETED hoặc FAILED) cho cả Sender và Recipient.  
-    **Phụ thuộc:** Risk Team xác nhận timeout threshold cho từng loại PENDING; CS xây dựng SOP cho case cần manual resolve.
-  </Accordion>
+**Team:** Tech Lead · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 2] Recent Recipients — Số lượng & TTL lưu trữ" icon="users">
-    **Team:** Product · **Ưu tiên:** Medium
+Xác định và implement **thời gian tự động resolve GD PENDING**: đề xuất 1 giờ cho lỗi kỹ thuật nội bộ, 24 giờ cho GD đang chờ phía đối tác. Hiện tại PENDING có thể tồn tại vô thời hạn gây rủi ro số dư bị treo.
 
-    Xác định policy lưu **lịch sử người nhận gần đây** trên SCR-TRANS-01: số lượng tối đa (đề xuất 10 người) và thời gian lưu (đề xuất 90 ngày kể từ GD gần nhất). Giúp user gửi tiền cho người thường xuyên giao dịch nhanh hơn.
+**Yêu cầu chính:** Background job scan và resolve expired PENDING transactions; cập nhật ledger Wallet Core; gửi notification kết quả (COMPLETED hoặc FAILED) cho cả Sender và Recipient.  
+**Phụ thuộc:** Risk Team xác nhận timeout threshold cho từng loại PENDING; CS xây dựng SOP cho case cần manual resolve.
 
-    **Yêu cầu chính:** API `GET /transfers/recipients/recent`; UI avatar + tên + SĐT rút gọn trên horizontal scroll; xóa cache khi user xóa GD history.  
-    **Phụ thuộc:** Privacy review — cần user consent cho việc lưu lịch sử người nhận theo Nghị định 13/2023.
-  </Accordion>
+### [Sprint 2] Recent Recipients — Số lượng & TTL lưu trữ
 
-  <Accordion title="[Sprint 2] Favorite Contacts — Đánh dấu thủ công hoặc tự động từ tần suất" icon="star">
-    **Team:** Product · **Ưu tiên:** Low
+**Team:** Product · **Ưu tiên:** Medium
 
-    Tính năng **Người nhận yêu thích**: user chủ động đánh dấu (star icon) hoặc hệ thống tự động gợi ý dựa trên tần suất (ví dụ: người nhận ≥ 3 GD/tháng). Hiển thị ưu tiên trên SCR-TRANS-01 phía trên Recent list.
+Xác định policy lưu **lịch sử người nhận gần đây** trên SCR-TRANS-01: số lượng tối đa (đề xuất 10 người) và thời gian lưu (đề xuất 90 ngày kể từ GD gần nhất). Giúp user gửi tiền cho người thường xuyên giao dịch nhanh hơn.
 
-    **Yêu cầu chính:** Model lưu favorites per user; star icon trên recipient card; màn hình quản lý danh sách yêu thích; API `GET /transfers/recipients/favorites`.  
-    **Phụ thuộc:** Product quyết định manual vs auto-detect; nếu auto cần frequency counter hoặc ML recommendation.
-  </Accordion>
+**Yêu cầu chính:** API `GET /transfers/recipients/recent`; UI avatar + tên + SĐT rút gọn trên horizontal scroll; xóa cache khi user xóa GD history.  
+**Phụ thuộc:** Privacy review — cần user consent cho việc lưu lịch sử người nhận theo Nghị định 13/2023.
 
-  <Accordion title="[Sprint 2] SMS Fallback khi Recipient tắt Push Notification" icon="comment-sms">
-    **Team:** Product · **Ưu tiên:** Medium
+### [Sprint 2] Favorite Contacts — Đánh dấu thủ công hoặc tự động từ tần suất
 
-    Khi người nhận **tắt push notification**, hệ thống gửi **SMS thông báo** báo đã nhận tiền. Đảm bảo recipient không bỏ lỡ GD quan trọng ngay cả khi push bị vô hiệu hóa.
+**Team:** Product · **Ưu tiên:** Low
 
-    **Yêu cầu chính:** NotifService kiểm tra `push_enabled` của Recipient trước khi gửi; fallback SMS nếu push disabled; template SMS ngắn gọn cho GD nhận tiền.  
-    **Phụ thuộc:** OTP Gateway hỗ trợ transactional SMS (khác với OTP SMS); ước tính chi phí SMS per notification và ngưỡng kích hoạt.
-  </Accordion>
-</AccordionGroup>
+Tính năng **Người nhận yêu thích**: user chủ động đánh dấu (star icon) hoặc hệ thống tự động gợi ý dựa trên tần suất (ví dụ: người nhận ≥ 3 GD/tháng). Hiển thị ưu tiên trên SCR-TRANS-01 phía trên Recent list.
+
+**Yêu cầu chính:** Model lưu favorites per user; star icon trên recipient card; màn hình quản lý danh sách yêu thích; API `GET /transfers/recipients/favorites`.  
+**Phụ thuộc:** Product quyết định manual vs auto-detect; nếu auto cần frequency counter hoặc ML recommendation.
+
+### [Sprint 2] SMS Fallback khi Recipient tắt Push Notification
+
+**Team:** Product · **Ưu tiên:** Medium
+
+Khi người nhận **tắt push notification**, hệ thống gửi **SMS thông báo** báo đã nhận tiền. Đảm bảo recipient không bỏ lỡ GD quan trọng ngay cả khi push bị vô hiệu hóa.
+
+**Yêu cầu chính:** NotifService kiểm tra `push_enabled` của Recipient trước khi gửi; fallback SMS nếu push disabled; template SMS ngắn gọn cho GD nhận tiền.  
+**Phụ thuộc:** OTP Gateway hỗ trợ transactional SMS (khác với OTP SMS); ước tính chi phí SMS per notification và ngưỡng kích hoạt.
 
 ---
 

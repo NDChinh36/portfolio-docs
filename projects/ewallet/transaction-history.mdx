@@ -527,50 +527,49 @@ sequenceDiagram
   Các tính năng dưới đây bổ sung cho phạm vi MVP hiện tại (xem chi tiết, lọc, tìm kiếm cơ bản). Phân loại theo Sprint dự kiến — cần Product và UX xác nhận trước khi đưa vào backlog.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 7] Deep Link — Tap Notification mở thẳng Chi tiết GD" icon="link">
-    **Team:** Tech + Product · **Ưu tiên:** High
+### [Sprint 7] Deep Link — Tap Notification mở thẳng Chi tiết GD
 
-    Khi user tap vào push notification liên quan đến giao dịch (ví dụ: "Nhận 500,000đ từ Minh"), app điều hướng thẳng đến **SCR-HIST-04** của GD đó mà không qua màn danh sách. Cải thiện đáng kể UX từ notification.
+**Team:** Tech + Product · **Ưu tiên:** High
 
-    **Yêu cầu chính:** Notification payload chứa `tx_id`; deep link router xử lý scheme `finpay://history/{tx_id}`; fallback về SCR-HIST-01 nếu tx_id không tồn tại hoặc đã hơn 6 tháng.  
-    **Phụ thuộc:** Xác nhận deep link scheme với Notifications module (PRD-EW-NOTIF-001); iOS Universal Links + Android App Links cần cấu hình.
-  </Accordion>
+Khi user tap vào push notification liên quan đến giao dịch (ví dụ: "Nhận 500,000đ từ Minh"), app điều hướng thẳng đến **SCR-HIST-04** của GD đó mà không qua màn danh sách. Cải thiện đáng kể UX từ notification.
 
-  <Accordion title="[Sprint 8] Badge số GD mới trên Tab Lịch sử" icon="bell">
-    **Team:** UX + Tech · **Ưu tiên:** Medium
+**Yêu cầu chính:** Notification payload chứa `tx_id`; deep link router xử lý scheme `finpay://history/{tx_id}`; fallback về SCR-HIST-01 nếu tx_id không tồn tại hoặc đã hơn 6 tháng.  
+**Phụ thuộc:** Xác nhận deep link scheme với Notifications module (PRD-EW-NOTIF-001); iOS Universal Links + Android App Links cần cấu hình.
 
-    Hiển thị **badge số đếm** trên bottom tab "Lịch sử" khi có giao dịch mới kể từ lần mở màn cuối. Tương tự unread badge notification — giúp user biết có GD mới mà không cần chủ động vào tab.
+### [Sprint 8] Badge số GD mới trên Tab Lịch sử
 
-    **Yêu cầu chính:** Redis counter tăng khi có GD mới cho user đó; reset về 0 khi user mở SCR-HIST-01; hiển thị tối đa "99+" nếu vượt ngưỡng; sync khi app về foreground.  
-    **Phụ thuộc:** Wallet Core phải emit event khi GD completed; UX xác nhận vị trí và style badge trên bottom tab bar.
-  </Accordion>
+**Team:** UX + Tech · **Ưu tiên:** Medium
 
-  <Accordion title="[Sprint 8] Hiển thị Số dư sau GD trên danh sách (SCR-HIST-01)" icon="wallet">
-    **Team:** UX + Product · **Ưu tiên:** Low
+Hiển thị **badge số đếm** trên bottom tab "Lịch sử" khi có giao dịch mới kể từ lần mở màn cuối. Tương tự unread badge notification — giúp user biết có GD mới mà không cần chủ động vào tab.
 
-    Thêm trường **"Số dư sau GD"** hiển thị trực tiếp trên mỗi row trong danh sách lịch sử. Cho phép user theo dõi lịch sử thay đổi số dư ngay trên list view mà không cần mở từng GD.
+**Yêu cầu chính:** Redis counter tăng khi có GD mới cho user đó; reset về 0 khi user mở SCR-HIST-01; hiển thị tối đa "99+" nếu vượt ngưỡng; sync khi app về foreground.  
+**Phụ thuộc:** Wallet Core phải emit event khi GD completed; UX xác nhận vị trí và style badge trên bottom tab bar.
 
-    **Lưu ý kỹ thuật:** Field `balance_after` đã được lưu vào DB tại thời điểm commit per BR-HIST-08, và đã hiển thị trên SCR-HIST-04 (chi tiết GD) trong MVP. Sprint 8 chỉ bổ sung hiển thị trường này lên **SCR-HIST-01 (danh sách)** — không cần thay đổi schema DB.  
-    **Yêu cầu chính:** API `/transactions` trả thêm field `balance_after` trong response; UX cập nhật row layout SCR-HIST-01 để có thêm dòng số dư; xem xét tăng payload size.  
-    **Phụ thuộc:** GD cũ trước khi field tồn tại (nếu có) hiển thị "—"; đánh giá impact bandwidth trên danh sách dài.
-  </Accordion>
+### [Sprint 8] Hiển thị Số dư sau GD trên danh sách (SCR-HIST-01)
 
-  <Accordion title="[Sprint 9] Yêu cầu Sao kê — Export GD quá 6 tháng qua Email" icon="file-export">
-    **Team:** Product + CS Ops · **Ưu tiên:** Medium
+**Team:** UX + Product · **Ưu tiên:** Low
 
-    Khi user cần xem lịch sử GD **quá 6 tháng** (app không hiển thị), cho phép gửi **yêu cầu sao kê** ngay trong app. Hệ thống tạo file PDF/CSV (async job) và gửi về email đăng ký. Tuân thủ nghĩa vụ cung cấp lịch sử 5 năm theo Nghị định 52/2024.
+Thêm trường **"Số dư sau GD"** hiển thị trực tiếp trên mỗi row trong danh sách lịch sử. Cho phép user theo dõi lịch sử thay đổi số dư ngay trên list view mà không cần mở từng GD.
 
-    **Yêu cầu chính:** Entry point trên SCR-HIST-05 (empty state khi search > 6 tháng); async export job; email PDF với đầy đủ thông tin GD; giới hạn 1 yêu cầu / tháng / user để tránh abuse.  
-    **Phụ thuộc:** CS Ops thiết lập SLA xử lý (đề xuất trong 24 giờ); email service hỗ trợ gửi attachment PDF lớn.
-  </Accordion>
+**Lưu ý kỹ thuật:** Field `balance_after` đã được lưu vào DB tại thời điểm commit per BR-HIST-08, và đã hiển thị trên SCR-HIST-04 (chi tiết GD) trong MVP. Sprint 8 chỉ bổ sung hiển thị trường này lên **SCR-HIST-01 (danh sách)** — không cần thay đổi schema DB.  
+**Yêu cầu chính:** API `/transactions` trả thêm field `balance_after` trong response; UX cập nhật row layout SCR-HIST-01 để có thêm dòng số dư; xem xét tăng payload size.  
+**Phụ thuộc:** GD cũ trước khi field tồn tại (nếu có) hiển thị "—"; đánh giá impact bandwidth trên danh sách dài.
 
-  <Accordion title="[Sprint 9] Tìm kiếm kết hợp — Search Text + Filter loại GD đồng thời" icon="magnifying-glass">
-    **Team:** Product · **Ưu tiên:** Low
+### [Sprint 9] Yêu cầu Sao kê — Export GD quá 6 tháng qua Email
 
-    Mở rộng tính năng tìm kiếm để hỗ trợ **kết hợp search text + filter loại GD** cùng lúc (ví dụ: tìm "Nguyen" trong loại "Chuyển tiền"). Hiện tại khi filter active, thanh search bị ẩn và ngược lại.
+**Team:** Product + CS Ops · **Ưu tiên:** Medium
 
-    **Yêu cầu chính:** Cập nhật SCR-HIST-02 và SCR-HIST-03 để hai điều kiện coexist; API `/transactions/search` nhận thêm tham số `type` filter; UX thiết kế lại filter panel để không conflict với search bar.  
-    **Phụ thuộc:** Tech đánh giá performance combined FTS query + type filter trên dataset 6 tháng; cần load test trước khi release.
-  </Accordion>
-</AccordionGroup>
+Khi user cần xem lịch sử GD **quá 6 tháng** (app không hiển thị), cho phép gửi **yêu cầu sao kê** ngay trong app. Hệ thống tạo file PDF/CSV (async job) và gửi về email đăng ký. Tuân thủ nghĩa vụ cung cấp lịch sử 5 năm theo Nghị định 52/2024.
+
+**Yêu cầu chính:** Entry point trên SCR-HIST-05 (empty state khi search > 6 tháng); async export job; email PDF với đầy đủ thông tin GD; giới hạn 1 yêu cầu / tháng / user để tránh abuse.  
+**Phụ thuộc:** CS Ops thiết lập SLA xử lý (đề xuất trong 24 giờ); email service hỗ trợ gửi attachment PDF lớn.
+
+### [Sprint 9] Tìm kiếm kết hợp — Search Text + Filter loại GD đồng thời
+
+**Team:** Product · **Ưu tiên:** Low
+
+Mở rộng tính năng tìm kiếm để hỗ trợ **kết hợp search text + filter loại GD** cùng lúc (ví dụ: tìm "Nguyen" trong loại "Chuyển tiền"). Hiện tại khi filter active, thanh search bị ẩn và ngược lại.
+
+**Yêu cầu chính:** Cập nhật SCR-HIST-02 và SCR-HIST-03 để hai điều kiện coexist; API `/transactions/search` nhận thêm tham số `type` filter; UX thiết kế lại filter panel để không conflict với search bar.  
+**Phụ thuộc:** Tech đánh giá performance combined FTS query + type filter trên dataset 6 tháng; cần load test trước khi release.
+

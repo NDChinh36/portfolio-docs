@@ -25,20 +25,10 @@ icon: "lock"
 
 Module Authentication xử lý toàn bộ vòng đời xác thực người dùng:
 
-<CardGroup cols={2}>
-  <Card title="Đăng ký tài khoản" icon="user-plus">
-    SĐT + OTP → Tạo PIN → Nhập thông tin cơ bản → Tạo ví
-  </Card>
-  <Card title="Đăng nhập" icon="right-to-bracket">
-    PIN hoặc Biometric (Face ID / Fingerprint) → JWT token
-  </Card>
-  <Card title="Quên / Đổi PIN" icon="key">
-    SĐT → OTP → PIN mới · Invalidate toàn bộ session cũ
-  </Card>
-  <Card title="Session Management" icon="clock">
-    Access token 15 phút · Refresh token 30 ngày · Auto-logout khi expire
-  </Card>
-</CardGroup>
+- **Đăng ký tài khoản** — SĐT + OTP → Tạo PIN → Nhập thông tin cơ bản → Tạo ví
+- **Đăng nhập** — PIN hoặc Biometric (Face ID / Fingerprint) → JWT token
+- **Quên / Đổi PIN** — SĐT → OTP → PIN mới · Invalidate toàn bộ session cũ
+- **Session Management** — Access token 15 phút · Refresh token 30 ngày · Auto-logout khi expire
 
 ---
 
@@ -657,61 +647,59 @@ sequenceDiagram
   Các tính năng dưới đây đã được identify trong quá trình phân tích nhưng chưa nằm trong phạm vi MVP. BA phối hợp với Product để làm rõ yêu cầu và ưu tiên trước khi đưa vào backlog Sprint tương ứng.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 1] Đăng ký đa phương thức — Email + SĐT" icon="envelope">
-    **Team:** Product · **Ưu tiên:** Medium
+### [Sprint 1] Đăng ký đa phương thức — Email + SĐT
 
-    Bổ sung phương thức đăng ký và đăng nhập bằng **địa chỉ email** bên cạnh SĐT hiện tại. Phục vụ người dùng không có SĐT Việt Nam hoặc ưu tiên dùng email làm định danh chính.
+**Team:** Product · **Ưu tiên:** Medium
 
-    **Yêu cầu chính:** Email input + RFC 5322 validation trên SCR-AUTH-03; OTP gửi qua email; xử lý email trùng với tài khoản đã tồn tại; cập nhật login flow.  
-    **Phụ thuộc:** OTP Gateway hỗ trợ email channel; Product xác nhận ưu tiên so với chiến lược phone-first hiện tại.
-  </Accordion>
+Bổ sung phương thức đăng ký và đăng nhập bằng **địa chỉ email** bên cạnh SĐT hiện tại. Phục vụ người dùng không có SĐT Việt Nam hoặc ưu tiên dùng email làm định danh chính.
 
-  <Accordion title="[Sprint 1] Xác thực Biometric nâng cao — FIDO2 / WebAuthn" icon="fingerprint">
-    **Team:** Security + Tech Lead · **Ưu tiên:** High
+**Yêu cầu chính:** Email input + RFC 5322 validation trên SCR-AUTH-03; OTP gửi qua email; xử lý email trùng với tài khoản đã tồn tại; cập nhật login flow.  
+**Phụ thuộc:** OTP Gateway hỗ trợ email channel; Product xác nhận ưu tiên so với chiến lược phone-first hiện tại.
 
-    Nâng cấp Biometric từ **LocalAuthentication on-device** (v1.0) lên **FIDO2 WebAuthn** với server-side challenge–response. Giảm rủi ro biometric key bị clone hoặc bypass ở OS level.
+### [Sprint 1] Xác thực Biometric nâng cao — FIDO2 / WebAuthn
 
-    **Yêu cầu chính:** Tích hợp FIDO2 authenticator (iOS Passkeys / Android FIDO2 API); server lưu credential ID + public key; fallback về PIN khi thiết bị không hỗ trợ.  
-    **Phụ thuộc:** Security Team phê duyệt threat model; Tech Lead confirm compatibility với React Native.
-  </Accordion>
+**Team:** Security + Tech Lead · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 1] Chính sách Quên PIN khi tài khoản đang bị khóa" icon="key">
-    **Team:** Product + Security · **Ưu tiên:** High
+Nâng cấp Biometric từ **LocalAuthentication on-device** (v1.0) lên **FIDO2 WebAuthn** với server-side challenge–response. Giảm rủi ro biometric key bị clone hoặc bypass ở OS level.
 
-    Quyết định và implement policy rõ ràng: user bị lock PIN 5 lần có thể dùng **Quên PIN ngay** hay phải **chờ hết 30 phút** mới được reset. Ảnh hưởng trực tiếp đến UX và bảo mật.
+**Yêu cầu chính:** Tích hợp FIDO2 authenticator (iOS Passkeys / Android FIDO2 API); server lưu credential ID + public key; fallback về PIN khi thiết bị không hỗ trợ.  
+**Phụ thuộc:** Security Team phê duyệt threat model; Tech Lead confirm compatibility với React Native.
 
-    **Yêu cầu chính:** Cập nhật SCR-AUTH-09 và BR-AUTH-06 theo policy được chọn; nếu cho reset trong lock period cần thêm CAPTCHA hoặc OTP xác thực bổ sung.  
-    **Phụ thuộc:** Security Team xác nhận risk level của từng phương án trước khi implement.
-  </Accordion>
+### [Sprint 1] Chính sách Quên PIN khi tài khoản đang bị khóa
 
-  <Accordion title="[Sprint 2] Fallback OTP qua Voice Call" icon="phone">
-    **Team:** Tech · **Ưu tiên:** Medium
+**Team:** Product + Security · **Ưu tiên:** High
 
-    Thêm kênh **voice call OTP** làm fallback cấp 3 sau SMS và Zalo OA. Đảm bảo user có thể đăng ký hoặc đặt lại PIN ngay cả khi mạng SMS gặp sự cố.
+Quyết định và implement policy rõ ràng: user bị lock PIN 5 lần có thể dùng **Quên PIN ngay** hay phải **chờ hết 30 phút** mới được reset. Ảnh hưởng trực tiếp đến UX và bảo mật.
 
-    **Yêu cầu chính:** Tích hợp voice call provider (Twilio / Viettel IDC Voice); trigger tự động sau khi Zalo OA fail; thêm tùy chọn "Gọi điện thoại" trên SCR-AUTH-04.  
-    **Phụ thuộc:** Ops chọn vendor và ước tính chi phí per-call; Product xác nhận ngưỡng kích hoạt.
-  </Accordion>
+**Yêu cầu chính:** Cập nhật SCR-AUTH-09 và BR-AUTH-06 theo policy được chọn; nếu cho reset trong lock period cần thêm CAPTCHA hoặc OTP xác thực bổ sung.  
+**Phụ thuộc:** Security Team xác nhận risk level của từng phương án trước khi implement.
 
-  <Accordion title="[Sprint 2] Xác thực PIN trước khi Đăng xuất tất cả thiết bị" icon="shield-halved">
-    **Team:** Security · **Ưu tiên:** High
+### [Sprint 2] Fallback OTP qua Voice Call
 
-    Yêu cầu user **nhập lại PIN** trước khi thực hiện "Đăng xuất tất cả thiết bị". Ngăn kịch bản kẻ tấn công chiếm session rồi đăng xuất các thiết bị hợp lệ của nạn nhân.
+**Team:** Tech · **Ưu tiên:** Medium
 
-    **Yêu cầu chính:** Thêm PIN confirmation modal trước khi gọi `POST /auth/logout/all`; cập nhật SCR-SETTINGS-03; thêm error handling khi PIN sai.  
-    **Phụ thuộc:** UX cân nhắc friction; Security Team xác nhận đây là yêu cầu bắt buộc hay optional.
-  </Accordion>
+Thêm kênh **voice call OTP** làm fallback cấp 3 sau SMS và Zalo OA. Đảm bảo user có thể đăng ký hoặc đặt lại PIN ngay cả khi mạng SMS gặp sự cố.
 
-  <Accordion title="[Sprint 2] Cấu hình thời gian Auto-Logout per User" icon="clock">
-    **Team:** Product · **Ưu tiên:** Low
+**Yêu cầu chính:** Tích hợp voice call provider (Twilio / Viettel IDC Voice); trigger tự động sau khi Zalo OA fail; thêm tùy chọn "Gọi điện thoại" trên SCR-AUTH-04.  
+**Phụ thuộc:** Ops chọn vendor và ước tính chi phí per-call; Product xác nhận ngưỡng kích hoạt.
 
-    Cho phép user tự cấu hình thời gian **tự động đăng xuất** khi không hoạt động. Tùy chọn đề xuất: 5 / 15 / 30 / 60 phút (mặc định 30 phút). Tăng tính linh hoạt cho người dùng có yêu cầu bảo mật khác nhau.
+### [Sprint 2] Xác thực PIN trước khi Đăng xuất tất cả thiết bị
 
-    **Yêu cầu chính:** Thêm setting "Tự động đăng xuất sau" vào SCR-SETTINGS-03; lưu vào `user_settings`; client timer đọc giá trị từ preferences.  
-    **Phụ thuộc:** Security Team xác nhận ngưỡng tối thiểu cho phép (đề xuất ≥ 5 phút).
-  </Accordion>
-</AccordionGroup>
+**Team:** Security · **Ưu tiên:** High
+
+Yêu cầu user **nhập lại PIN** trước khi thực hiện "Đăng xuất tất cả thiết bị". Ngăn kịch bản kẻ tấn công chiếm session rồi đăng xuất các thiết bị hợp lệ của nạn nhân.
+
+**Yêu cầu chính:** Thêm PIN confirmation modal trước khi gọi `POST /auth/logout/all`; cập nhật SCR-SETTINGS-03; thêm error handling khi PIN sai.  
+**Phụ thuộc:** UX cân nhắc friction; Security Team xác nhận đây là yêu cầu bắt buộc hay optional.
+
+### [Sprint 2] Cấu hình thời gian Auto-Logout per User
+
+**Team:** Product · **Ưu tiên:** Low
+
+Cho phép user tự cấu hình thời gian **tự động đăng xuất** khi không hoạt động. Tùy chọn đề xuất: 5 / 15 / 30 / 60 phút (mặc định 30 phút). Tăng tính linh hoạt cho người dùng có yêu cầu bảo mật khác nhau.
+
+**Yêu cầu chính:** Thêm setting "Tự động đăng xuất sau" vào SCR-SETTINGS-03; lưu vào `user_settings`; client timer đọc giá trị từ preferences.  
+**Phụ thuộc:** Security Team xác nhận ngưỡng tối thiểu cho phép (đề xuất ≥ 5 phút).
 
 ---
 

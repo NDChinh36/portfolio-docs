@@ -155,9 +155,7 @@ sequenceDiagram
 
 ## Data Quality Rules
 
-<AccordionGroup>
-
-<Accordion title="1. Completeness Checks — Mandatory Fields">
+### 1. Completeness Checks — Mandatory Fields
 
 OMS chạy completeness check ngay sau khi nhận webhook từ Sales Channel, trước khi insert vào database. Đơn hàng fail bất kỳ check nào sẽ bị **reject**.
 
@@ -173,9 +171,7 @@ OMS chạy completeness check ngay sau khi nhận webhook từ Sales Channel, tr
 | `payment_method` | Normalize thành công về COD/PREPAID | `ERR_PAYMENT_METHOD_UNKNOWN` |
 | `cod_amount` (khi COD) | Số dương, trong giới hạn Carrier | `ERR_INVALID_COD_AMOUNT` |
 
-</Accordion>
-
-<Accordion title="2. Format Validation Rules">
+### 2. Format Validation Rules
 
 **Phone Number:**
 - Sau normalize: phải khớp `^(03|05|07|08|09)\d{8}$`
@@ -194,9 +190,7 @@ OMS chạy completeness check ngay sau khi nhận webhook từ Sales Channel, tr
 - `customer_name`: strip whitespace, collapse multiple spaces thành 1 space
 - `sku_name`: strip whitespace, max 255 ký tự, truncate nếu vượt (không reject)
 
-</Accordion>
-
-<Accordion title="3. Referential Integrity Rules">
+### 3. Referential Integrity Rules
 
 **SKU Integrity:**
 - Sau khi resolve `sku_id`: phải tồn tại trong `vf_sku_master` với `status = ACTIVE`
@@ -214,9 +208,7 @@ OMS chạy completeness check ngay sau khi nhận webhook từ Sales Channel, tr
 - Nếu `payment_method = PREPAID` nhưng `cod_amount > 0` → override `cod_amount = 0`, log warning
 - Nếu `payment_method = COD` nhưng `cod_amount = 0` → reject, error `COD_AMOUNT_REQUIRED`
 
-</Accordion>
-
-<Accordion title="4. Deduplication Rules">
+### 4. Deduplication Rules
 
 **Primary Deduplication Key:** Combination `(external_order_id, source_channel)` phải unique trong bảng `oms_orders`.
 
@@ -234,6 +226,3 @@ OMS chạy completeness check ngay sau khi nhận webhook từ Sales Channel, tr
 - Duplicate check cho `external_order_id`: không có time window — check toàn bộ history (trừ CANCELLED/RETURNED)
 - Carrier webhook dedup window: 72 giờ
 
-</Accordion>
-
-</AccordionGroup>

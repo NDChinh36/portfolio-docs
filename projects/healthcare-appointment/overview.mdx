@@ -14,20 +14,12 @@ Hệ thống đặt lịch khám ngoại trú, check-in QR/kiosk và đồng b�
 
 ## Project Overview
 
-<CardGroup cols={4}>
-  <Card title="18 Chuyên Khoa" icon="stethoscope">
-    Phủ toàn bộ 18 chuyên khoa ngoại trú, từ Nội tổng quát đến Nhi, Mắt, Tai Mũi Họng, và Ung bướu
-  </Card>
-  <Card title="1.200 Lượt/Ngày" icon="calendar-check">
-    Công suất tối đa 1.200 lượt đặt lịch/ngày, phân bổ theo ca sáng (07:00–11:30) và ca chiều (13:00–16:30)
-  </Card>
-  <Card title="3 Kênh Check-in" icon="qrcode">
-    Mobile app QR, kiosk tự phục vụ tại sảnh, và quầy lễ tân — cả 3 kênh đều kết nối real-time với MedBook Backend
-  </Card>
-  <Card title="4 HIS Integration Points" icon="network-wired">
-    Patient registration, visit creation, queue assignment, và visit status update — 4 điểm tích hợp hai chiều với HIS legacy
-  </Card>
-</CardGroup>
+- **18 Chuyên Khoa** — Phủ toàn bộ 18 chuyên khoa ngoại trú, từ Nội tổng quát đến Nhi, Mắt, Tai Mũi Họng, và Ung bướu
+- **1.200 Lượt/Ngày** — Công suất tối đa 1.200 lượt đặt lịch/ngày, phân bổ theo ca sáng (07:00–11:30) và ca chiều (13:00–16:30)
+- **3 Kênh Check-in** — Mobile app QR, kiosk tự phục vụ tại sảnh, và quầy lễ tân — cả 3 kênh đều kết nối real-time với MedBook Backend
+### 4 HIS Integration Points
+
+Patient registration, visit creation, queue assignment, và visit status update — 4 điểm tích hợp hai chiều với HIS legacy
 
 ---
 
@@ -108,9 +100,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ## 5 Key BA Decisions
 
-<AccordionGroup>
-
-<Accordion title="Decision 1 — Tách thành 3 status fields riêng biệt">
+### Decision 1 — Tách thành 3 status fields riêng biệt
 
 | | |
 |---|---|
@@ -120,9 +110,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 | **Trade-off** | Phức tạp hơn cho Dev khi query và update. Cần có business rule rõ ràng về combination nào là valid và invalid. |
 | **Expected Impact** | Hệ thống có thể xử lý chính xác trường hợp HIS sync fail sau check-in. Reception thấy ngay "bệnh nhân đã ở đây nhưng HIS chưa sync" thay vì nhìn thấy một status mơ hồ. |
 
-</Accordion>
-
-<Accordion title="Decision 2 — Check-in không hoàn tất nếu HIS sync chưa thành công">
+### Decision 2 — Check-in không hoàn tất nếu HIS sync chưa thành công
 
 | | |
 |---|---|
@@ -132,9 +120,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 | **Trade-off** | Bệnh nhân bị giữ tại kiosk/quầy trong khi chờ HIS sync (thường < 3 giây, worst case 10–15 giây). Cần hiển thị loading state rõ ràng và có fallback UX. |
 | **Expected Impact** | Đảm bảo bác sĩ luôn có đủ danh sách bệnh nhân trong HIS trước khi bắt đầu khám. Loại bỏ tình huống bệnh nhân "vô hình" trong hệ thống bác sĩ. |
 
-</Accordion>
-
-<Accordion title="Decision 3 — QR code chỉ valid trong time window cụ thể">
+### Decision 3 — QR code chỉ valid trong time window cụ thể
 
 | | |
 |---|---|
@@ -144,9 +130,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 | **Trade-off** | Bệnh nhân đến sớm hơn 60 phút không check-in được qua app — phải qua lễ tân. Cần communicate rõ rule này cho bệnh nhân. |
 | **Expected Impact** | Queue management trở nên predictable. Bác sĩ biết chắc danh sách queue phản chiếu đúng bệnh nhân đang thực sự có mặt tại khoa. |
 
-</Accordion>
-
-<Accordion title="Decision 4 — Idempotency key bắt buộc khi call HIS registration API">
+### Decision 4 — Idempotency key bắt buộc khi call HIS registration API
 
 | | |
 |---|---|
@@ -156,9 +140,7 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 | **Trade-off** | Yêu cầu HIS vendor implement thêm một layer validation. Nếu HIS không hỗ trợ, phải thiết kế workaround ở phía MedBook (check existence trước khi create). |
 | **Expected Impact** | Loại bỏ hoàn toàn nguy cơ duplicate visit record do retry. Đây là safeguard quan trọng nhất trong toàn bộ integration. |
 
-</Accordion>
-
-<Accordion title="Decision 5 — No-show tự động nhưng receptionist có thể override">
+### Decision 5 — No-show tự động nhưng receptionist có thể override
 
 | | |
 |---|---|
@@ -167,10 +149,6 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 | **BA Recommendation** | Hệ thống tự động set `appointment_status = no_show` sau grace period (30 phút sau giờ hẹn). Slot được đánh dấu là có thể giải phóng nhưng **chưa giải phóng ngay** — giữ thêm 15 phút để receptionist có thể override nếu bệnh nhân xuất hiện muộn với lý do. Sau 15 phút buffer, slot mới thực sự được giải phóng. |
 | **Trade-off** | Slot bị giữ thêm 15 phút sau grace period, giảm nhẹ cơ hội tái sử dụng. Đây là trade-off chấp nhận được để tránh oan cho bệnh nhân đến muộn chính đáng. |
 | **Expected Impact** | Giảm ~8–10% công suất bị lãng phí do no-show không được xử lý kịp. Receptionist không phải manual review 1.200 records mỗi ngày mà chỉ cần xử lý các case exception. |
-
-</Accordion>
-
-</AccordionGroup>
 
 ---
 
@@ -205,29 +183,29 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 ## Lessons Learned
 
-<CardGroup cols={3}>
-  <Card title="HIS constraint phát sinh muộn" icon="triangle-exclamation">
-    **Underestimated:** Tôi giả định HIS vendor hỗ trợ idempotency key từ đầu. Thực ra phải mất 2 tuần làm việc với vendor mới confirm.
+### HIS constraint phát sinh muộn
 
-    **Changed:** Từ sau, tôi đưa việc confirm technical capability của external system vào checklist discovery sprint 1.
+**Underestimated:** Tôi giả định HIS vendor hỗ trợ idempotency key từ đầu. Thực ra phải mất 2 tuần làm việc với vendor mới confirm.
 
-    **Would do earlier:** Gặp trực tiếp HIS vendor ngay trong sprint 1.
-  </Card>
-  <Card title="Grace period là bài toán chính trị" icon="people-group">
-    **Underestimated:** Tôi nghĩ chọn 30 hay 45 phút grace period là quyết định kỹ thuật đơn giản.
+**Changed:** Từ sau, tôi đưa việc confirm technical capability của external system vào checklist discovery sprint 1.
 
-    **Changed:** Tổ chức workshop riêng với 3 bên (bác sĩ, lễ tân, đại diện bệnh nhân) để align trước khi quyết định.
+**Would do earlier:** Gặp trực tiếp HIS vendor ngay trong sprint 1.
 
-    **Would do earlier:** Đưa grace period vào agenda buổi stakeholder interview đầu tiên.
-  </Card>
-  <Card title="3 status fields cần giải thích liên tục" icon="lightbulb">
-    **Underestimated:** Quyết định tách 3 status fields gây nhầm lẫn dai dẳng cho cả Dev lẫn QA về field nào là "trạng thái chính".
+### Grace period là bài toán chính trị
 
-    **Changed:** Viết thêm "status combination reference table" liệt kê mọi combination valid/invalid.
+**Underestimated:** Tôi nghĩ chọn 30 hay 45 phút grace period là quyết định kỹ thuật đơn giản.
 
-    **Would do earlier:** Giao reference table ngay khi handoff requirements.
-  </Card>
-</CardGroup>
+**Changed:** Tổ chức workshop riêng với 3 bên (bác sĩ, lễ tân, đại diện bệnh nhân) để align trước khi quyết định.
+
+**Would do earlier:** Đưa grace period vào agenda buổi stakeholder interview đầu tiên.
+
+### 3 status fields cần giải thích liên tục
+
+**Underestimated:** Quyết định tách 3 status fields gây nhầm lẫn dai dẳng cho cả Dev lẫn QA về field nào là "trạng thái chính".
+
+**Changed:** Viết thêm "status combination reference table" liệt kê mọi combination valid/invalid.
+
+**Would do earlier:** Giao reference table ngay khi handoff requirements.
 
 ---
 
@@ -235,43 +213,25 @@ Toàn bộ quy trình được thiết kế theo 3 giai đoạn:
 
 *Hai màn hình quan trọng nhất trong workflow: Reception Dashboard (quản lý danh sách bệnh nhân, check-in status real-time, HIS sync status) và Appointment Detail with QR (chi tiết lịch hẹn kèm QR code check-in cho patient app).*
 
-<iframe
-  src="/artifacts/healthcare-appointment/reception-dashboard.html"
-  width="100%"
-  height="600"
-  style="border:none;border-radius:8px;"
-></iframe>
-
-<iframe
-  src="/artifacts/healthcare-appointment/appointment-detail-qr.html"
-  width="100%"
-  height="600"
-  style="border:none;border-radius:8px;"
-></iframe>
-
 ---
 
 ## Supporting Documents
 
-<CardGroup cols={2}>
+### [Appointment Booking & Check-in Flow](/projects/healthcare-appointment/booking-flow)
 
-<Card title="Appointment Booking & Check-in Flow" icon="arrows-split-up-and-left" href="/projects/healthcare-appointment/booking-flow">
-  Business flow 18 bước, swimlane diagram, sequence diagram, và 5 exception paths
-</Card>
+Business flow 18 bước, swimlane diagram, sequence diagram, và 5 exception paths
 
-<Card title="Appointment State Machine" icon="diagram-project" href="/projects/healthcare-appointment/state-machine">
-  15 states đầy đủ với transitions, cancellation rules, và HIS sync detail
-</Card>
+### [Appointment State Machine](/projects/healthcare-appointment/state-machine)
 
-<Card title="Business Rules" icon="book" href="/projects/healthcare-appointment/business-rules">
-  37 business rules đánh số theo 6 nhóm: Booking, Confirmation, Check-in, HIS Sync, Cancel, Queue
-</Card>
+15 states đầy đủ với transitions, cancellation rules, và HIS sync detail
 
-<Card title="Data Mapping & Source of Truth" icon="database" href="/projects/healthcare-appointment/data-mapping">
-  25 fields × 5 hệ thống, patient identity matching, source of truth matrix
-</Card>
+### [Business Rules](/projects/healthcare-appointment/business-rules)
 
-</CardGroup>
+37 business rules đánh số theo 6 nhóm: Booking, Confirmation, Check-in, HIS Sync, Cancel, Queue
+
+### [Data Mapping & Source of Truth](/projects/healthcare-appointment/data-mapping)
+
+25 fields × 5 hệ thống, patient identity matching, source of truth matrix
 
 ---
 

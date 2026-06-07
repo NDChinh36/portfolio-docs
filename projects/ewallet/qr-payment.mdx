@@ -785,52 +785,50 @@ Transaction History hiển thị GD `qr_pay` với:
   Các tính năng và quyết định kỹ thuật dưới đây được identify trong Sprint 7 planning. Một số mục liên quan đến revenue model và kiến trúc NAPAS cần Product và Tech Lead quyết định trước khi bắt đầu implement.
 </Info>
 
-<AccordionGroup>
-  <Accordion title="[Sprint 7] NAPAS Account Name Lookup trước khi Confirm QR Payment" icon="user-check">
-    **Team:** Tech Lead + Product · **Ưu tiên:** High
+### [Sprint 7] NAPAS Account Name Lookup trước khi Confirm QR Payment
 
-    Tích hợp **NAPAS name lookup** để hiển thị tên chủ tài khoản nhận tiền trước khi user confirm QR payment. Tương tự tính năng đã có ở Bank Linking — giảm đáng kể tỷ lệ chuyển nhầm người.
+**Team:** Tech Lead + Product · **Ưu tiên:** High
 
-    **Yêu cầu chính:** Gọi NAPAS lookup API sau khi parse QR thành công; hiển thị tên chủ TK trên SCR-QR-03 (Confirm screen); thêm UX warning nếu tên không khớp với kỳ vọng của user.  
-    **Phụ thuộc:** NAPAS cấp quyền truy cập lookup API và công bố phí per-call; Product quyết định lookup bắt buộc hay optional.
-  </Accordion>
+Tích hợp **NAPAS name lookup** để hiển thị tên chủ tài khoản nhận tiền trước khi user confirm QR payment. Tương tự tính năng đã có ở Bank Linking — giảm đáng kể tỷ lệ chuyển nhầm người.
 
-  <Accordion title="[Sprint 7] Fee Model cho QR Payment" icon="coins">
-    **Team:** Product (Revenue) · **Ưu tiên:** High
+**Yêu cầu chính:** Gọi NAPAS lookup API sau khi parse QR thành công; hiển thị tên chủ TK trên SCR-QR-03 (Confirm screen); thêm UX warning nếu tên không khớp với kỳ vọng của user.  
+**Phụ thuộc:** NAPAS cấp quyền truy cập lookup API và công bố phí per-call; Product quyết định lookup bắt buộc hay optional.
 
-    Xác định và implement **cấu trúc phí QR payment**: đề xuất miễn phí với GD ≤ 500,000đ, thu **0.5%** với GD > 500,000đ (tối đa 10,000đ/GD). Hiển thị phí minh bạch trước khi user confirm để tránh khiếu nại.
+### [Sprint 7] Fee Model cho QR Payment
 
-    **Yêu cầu chính:** Fee Calculator service; hiển thị breakdown "Số tiền + Phí dịch vụ = Tổng thanh toán" trên SCR-QR-03; cập nhật SCR-QR-04 (Success screen) và Transaction History record.  
-    **Phụ thuộc:** Product / CFO phê duyệt fee structure; Compliance xác nhận nghĩa vụ công bố biểu phí trên app.
-  </Accordion>
+**Team:** Product (Revenue) · **Ưu tiên:** High
 
-  <Accordion title="[Sprint 7] Giới hạn số Dynamic QR tạo trong ngày" icon="qrcode">
-    **Team:** Risk · **Ưu tiên:** Medium
+Xác định và implement **cấu trúc phí QR payment**: đề xuất miễn phí với GD ≤ 500,000đ, thu **0.5%** với GD > 500,000đ (tối đa 10,000đ/GD). Hiển thị phí minh bạch trước khi user confirm để tránh khiếu nại.
 
-    Thiết lập **rate limit tạo Dynamic QR**: tối đa **20 QR động / user / ngày**. Ngăn chặn lạm dụng API tạo QR hàng loạt để thu thập thông tin merchant hoặc tấn công hệ thống.
+**Yêu cầu chính:** Fee Calculator service; hiển thị breakdown "Số tiền + Phí dịch vụ = Tổng thanh toán" trên SCR-QR-03; cập nhật SCR-QR-04 (Success screen) và Transaction History record.  
+**Phụ thuộc:** Product / CFO phê duyệt fee structure; Compliance xác nhận nghĩa vụ công bố biểu phí trên app.
 
-    **Yêu cầu chính:** Counter per user per day trong Redis; trả lỗi `QR_004: Daily Dynamic QR limit reached` khi đạt ngưỡng; reset counter lúc 00:00 Vietnam time; hiển thị thông báo thân thiện trên SCR-QR-05.  
-    **Phụ thuộc:** Risk Team xác nhận ngưỡng 20 QR/ngày có phù hợp với use case hợp lệ (merchant nhỏ tạo nhiều QR/ngày) không.
-  </Accordion>
+### [Sprint 7] Giới hạn số Dynamic QR tạo trong ngày
 
-  <Accordion title="[Sprint 7] Kiến trúc NAPAS Callback — Webhook vs Polling" icon="server">
-    **Team:** Tech Lead · **Ưu tiên:** Critical
+**Team:** Risk · **Ưu tiên:** Medium
 
-    Quyết định kiến trúc nhận kết quả từ NAPAS sau QR payment: (A) **Webhook** — NAPAS push callback đến public endpoint (nhanh hơn ~1-2s, nhưng cần IP whitelist + HMAC verify + public URL); (B) **Polling** — App tự query NAPAS theo interval (đơn giản hơn, chậm hơn ~2-5s). Ảnh hưởng đến latency UX và infrastructure complexity.
+Thiết lập **rate limit tạo Dynamic QR**: tối đa **20 QR động / user / ngày**. Ngăn chặn lạm dụng API tạo QR hàng loạt để thu thập thông tin merchant hoặc tấn công hệ thống.
 
-    **Yêu cầu chính:** Tech Lead ra ADR; nếu chọn webhook cần thiết kế endpoint security (IP whitelist NAPAS + HMAC-SHA256); document kiến trúc vào module.  
-    **Phụ thuộc:** NAPAS xác nhận hỗ trợ webhook và cung cấp IP range + signing secret; infrastructure team đánh giá khả năng expose public endpoint bảo mật.
-  </Accordion>
+**Yêu cầu chính:** Counter per user per day trong Redis; trả lỗi `QR_004: Daily Dynamic QR limit reached` khi đạt ngưỡng; reset counter lúc 00:00 Vietnam time; hiển thị thông báo thân thiện trên SCR-QR-05.  
+**Phụ thuộc:** Risk Team xác nhận ngưỡng 20 QR/ngày có phù hợp với use case hợp lệ (merchant nhỏ tạo nhiều QR/ngày) không.
 
-  <Accordion title="[Sprint 8] Lịch sử QR Merchant đã quét — One-tap Rescan" icon="clock-rotate-left">
-    **Team:** Product · **Ưu tiên:** Low
+### [Sprint 7] Kiến trúc NAPAS Callback — Webhook vs Polling
 
-    Lưu **danh sách merchant QR đã quét gần đây** (đề xuất 10 merchant, TTL 30 ngày) cho phép user thanh toán lại quán quen mà không cần quét QR lại. Hiển thị dưới vùng camera trên SCR-QR-01.
+**Team:** Tech Lead · **Ưu tiên:** Critical
 
-    **Yêu cầu chính:** Lưu merchant info (tên, logo, merchant_id) sau mỗi QR payment thành công; UI "Quét gần đây" với merchant card; one-tap để mở prefilled confirm screen.  
-    **Phụ thuộc:** Privacy consent — lưu lịch sử địa điểm thanh toán; Product xác nhận đây là opt-in hay opt-out mặc định.
-  </Accordion>
-</AccordionGroup>
+Quyết định kiến trúc nhận kết quả từ NAPAS sau QR payment: (A) **Webhook** — NAPAS push callback đến public endpoint (nhanh hơn ~1-2s, nhưng cần IP whitelist + HMAC verify + public URL); (B) **Polling** — App tự query NAPAS theo interval (đơn giản hơn, chậm hơn ~2-5s). Ảnh hưởng đến latency UX và infrastructure complexity.
+
+**Yêu cầu chính:** Tech Lead ra ADR; nếu chọn webhook cần thiết kế endpoint security (IP whitelist NAPAS + HMAC-SHA256); document kiến trúc vào module.  
+**Phụ thuộc:** NAPAS xác nhận hỗ trợ webhook và cung cấp IP range + signing secret; infrastructure team đánh giá khả năng expose public endpoint bảo mật.
+
+### [Sprint 8] Lịch sử QR Merchant đã quét — One-tap Rescan
+
+**Team:** Product · **Ưu tiên:** Low
+
+Lưu **danh sách merchant QR đã quét gần đây** (đề xuất 10 merchant, TTL 30 ngày) cho phép user thanh toán lại quán quen mà không cần quét QR lại. Hiển thị dưới vùng camera trên SCR-QR-01.
+
+**Yêu cầu chính:** Lưu merchant info (tên, logo, merchant_id) sau mỗi QR payment thành công; UI "Quét gần đây" với merchant card; one-tap để mở prefilled confirm screen.  
+**Phụ thuộc:** Privacy consent — lưu lịch sử địa điểm thanh toán; Product xác nhận đây là opt-in hay opt-out mặc định.
 
 ---
 

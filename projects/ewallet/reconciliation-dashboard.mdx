@@ -14,20 +14,18 @@ icon: "chart-bar"
 
 Quy trình đối soát truyền thống dựa trên xuất/nhập CSV cuối ngày tiềm ẩn nhiều rủi ro vận hành: mismatch chỉ được phát hiện sau nhiều giờ, không có audit trail đầy đủ, và đội Operation mất nhiều thời gian tra cứu thủ công từ nhiều hệ thống khác nhau.
 
-<CardGroup cols={2}>
-  <Card title="Realtime Mismatch Detection" icon="bell">
-    Phát hiện mismatch ngay khi batch reconciliation chạy, thay vì chờ báo cáo cuối ngày. Cho phép đội Operation can thiệp trong vòng 30 phút thay vì nhiều giờ.
-  </Card>
-  <Card title="Giảm MTTR xuống dưới 30 phút" icon="clock">
-    Tập trung toàn bộ context (internal event, external event, callback log) trên một màn hình — loại bỏ việc tra cứu thủ công trên nhiều hệ thống.
-  </Card>
-  <Card title="Audit Trail Bắt buộc" icon="shield-check">
-    Mọi hành động manual resolve đều được ghi log với timestamp, user, lý do và trạng thái trước/sau.
-  </Card>
-  <Card title="Phân loại theo Severity" icon="triangle-exclamation">
-    Exception được phân loại theo severity (Critical / High / Medium / Low) để đội Operation ưu tiên xử lý những case có rủi ro tài chính cao nhất trước.
-  </Card>
-</CardGroup>
+### Realtime Mismatch Detection
+
+Phát hiện mismatch ngay khi batch reconciliation chạy, thay vì chờ báo cáo cuối ngày. Cho phép đội Operation can thiệp trong vòng 30 phút thay vì nhiều giờ.
+
+### Giảm MTTR xuống dưới 30 phút
+
+Tập trung toàn bộ context (internal event, external event, callback log) trên một màn hình — loại bỏ việc tra cứu thủ công trên nhiều hệ thống.
+
+- **Audit Trail Bắt buộc** — Mọi hành động manual resolve đều được ghi log với timestamp, user, lý do và trạng thái trước/sau.
+### Phân loại theo Severity
+
+Exception được phân loại theo severity (Critical / High / Medium / Low) để đội Operation ưu tiên xử lý những case có rủi ro tài chính cao nhất trước.
 
 ---
 
@@ -105,8 +103,6 @@ flowchart TD
 
 **Người dùng chính:** Operation Manager, Finance Admin
 
-<iframe src="/artifacts/digital-payment/reconciliation-dashboard.html" width="100%" height="780" style="border:1px solid #e5e7eb;border-radius:12px;"></iframe>
-
 #### 5 KPI Metric Cards
 
 | Card | Metric | Màu cảnh báo |
@@ -139,8 +135,6 @@ flowchart TD
 **Mục tiêu:** Reconciliation Staff xử lý từng exception theo thứ tự ưu tiên.
 
 **Người dùng chính:** Reconciliation Staff, CS Agent
-
-<iframe src="/artifacts/digital-payment/reconciliation-dashboard.html" width="100%" height="780" style="border:1px solid #e5e7eb;border-radius:12px;"></iframe>
 
 #### Table Columns
 

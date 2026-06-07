@@ -26,14 +26,8 @@ Tính năng Chuyển Tiền Nội Bộ cho phép các ví MoMo giao dịch trự
 
 ## Phạm vi phân tích
 
-<CardGroup cols={2}>
-  <Card title="P2P Transfer" icon="arrow-right-arrow-left">
-    Cá nhân → Cá nhân qua SĐT, QR code, tìm tên. Authentication 1FA/2FA/3FA theo ngưỡng giao dịch.
-  </Card>
-  <Card title="Business Disbursement" icon="building">
-    Doanh nghiệp → Cá nhân, đơn lẻ và hàng loạt (batch 1,000 dòng). Maker-Checker workflow.
-  </Card>
-</CardGroup>
+- **P2P Transfer** — Cá nhân → Cá nhân qua SĐT, QR code, tìm tên. Authentication 1FA/2FA/3FA theo ngưỡng giao dịch.
+- **Business Disbursement** — Doanh nghiệp → Cá nhân, đơn lẻ và hàng loạt (batch 1,000 dòng). Maker-Checker workflow.
 
 ---
 
@@ -51,33 +45,34 @@ Tính năng Chuyển Tiền Nội Bộ cho phép các ví MoMo giao dịch trự
 
 ## Điểm nổi bật về mặt nghiệp vụ
 
-<AccordionGroup>
-  <Accordion title="Authentication Logic — 3 cấp độ theo ngưỡng">
-    | Điều kiện | Auth level |
-    |---|---|
-    | amount < 10M VND **VÀ** cumulative_1h < 20M VND | **1FA** — PIN hoặc Face ID |
-    | amount ≥ 10M VND | **2FA** — PIN + Face ID |
-    | cumulative_1h + amount ≥ 20M VND | **3FA** — PIN + Face ID + OTP |
+### Authentication Logic — 3 cấp độ theo ngưỡng
 
-    `cumulative_1h` = sliding window 60 phút, không phải fixed hour.
-  </Accordion>
-  <Accordion title="Tuân thủ TT23/2019/TT-NHNN">
-    - Tối đa 20,000,000 VND / giao dịch
-    - Tối đa 100,000,000 VND / ngày / ví
-    - Ví đã eKYC: 200,000,000 VND / tháng
-    - Ví chưa eKYC: 20,000,000 VND / tháng
-    - Tối thiểu 1,000 VND / giao dịch
-  </Accordion>
-  <Accordion title="Maker-Checker — Business Disbursement">
-    Business account bắt buộc có workflow phê duyệt 2 người:
-    - **Maker** tạo lệnh giải ngân
-    - **Checker** review và phê duyệt (Maker ≠ Checker — enforce tại DB level)
-    - Checker timeout 24h → tự động EXPIRED
-  </Accordion>
-  <Accordion title="Idempotency — Chống duplicate debit">
-    Mọi request ghi nợ đều bắt buộc kèm `idempotency_key` (UUID v4). Hệ thống kiểm tra key trước khi tạo bất kỳ TRANSACTION nào — đảm bảo không tạo giao dịch trùng dù client retry.
-  </Accordion>
-</AccordionGroup>
+| Điều kiện | Auth level |
+|---|---|
+| amount < 10M VND **VÀ** cumulative_1h < 20M VND | **1FA** — PIN hoặc Face ID |
+| amount ≥ 10M VND | **2FA** — PIN + Face ID |
+| cumulative_1h + amount ≥ 20M VND | **3FA** — PIN + Face ID + OTP |
+
+`cumulative_1h` = sliding window 60 phút, không phải fixed hour.
+
+### Tuân thủ TT23/2019/TT-NHNN
+
+- Tối đa 20,000,000 VND / giao dịch
+- Tối đa 100,000,000 VND / ngày / ví
+- Ví đã eKYC: 200,000,000 VND / tháng
+- Ví chưa eKYC: 20,000,000 VND / tháng
+- Tối thiểu 1,000 VND / giao dịch
+
+### Maker-Checker — Business Disbursement
+
+Business account bắt buộc có workflow phê duyệt 2 người:
+- **Maker** tạo lệnh giải ngân
+- **Checker** review và phê duyệt (Maker ≠ Checker — enforce tại DB level)
+- Checker timeout 24h → tự động EXPIRED
+
+### Idempotency — Chống duplicate debit
+
+Mọi request ghi nợ đều bắt buộc kèm `idempotency_key` (UUID v4). Hệ thống kiểm tra key trước khi tạo bất kỳ TRANSACTION nào — đảm bảo không tạo giao dịch trùng dù client retry.
 
 ---
 
