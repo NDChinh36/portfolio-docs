@@ -51,6 +51,7 @@
       "pages": [
         "projects/nami-futures-trading",
         "projects/nami-reward-program",
+        "projects/nami-reward-program-v2",
         "projects/nami-money-transfer",
         "projects/nami-calculator"
       ]
