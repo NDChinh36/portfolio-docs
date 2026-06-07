@@ -86,27 +86,25 @@ Nami Innovation muốn thêm tính năng **chuyển tiền nội bộ** giữa c
   <Accordion title="3. User Flow Design — Transfer Scenarios & Edge Cases" icon="diagram-project">
 
     **Luồng chính — Internal Transfer (cùng user):**
-    ```
-    Home → "Chuyển tiền nội bộ"
-      → Chọn Từ (Spot / Futures)
-      → Chọn Đến (Spot / Futures) [auto-switch]
-      → Chọn coin
-      → Nhập amount (hoặc bấm MAX)
-      → Preview: từ đâu, đến đâu, coin, amount, phí (nếu có)
-      → Confirm → Xử lý tức thì
-      → Success screen + balance update
-    ```
+
+    1. Home → "Chuyển tiền nội bộ"
+    2. Chọn Từ (Spot / Futures)
+    3. Chọn Đến (Spot / Futures) — auto-switch
+    4. Chọn coin
+    5. Nhập amount (hoặc bấm MAX)
+    6. Preview: từ đâu, đến đâu, coin, amount, phí (nếu có)
+    7. Confirm → Xử lý tức thì
+    8. Success screen + balance update
 
     **Luồng phụ — Chuyển cho user khác (P2P internal):**
-    ```
-    Home → "Chuyển tiền"
-      → Nhập UID hoặc email của người nhận
-      → Hệ thống hiển thị avatar + tên để confirm
-      → Chọn coin + nhập amount
-      → Nhập nội dung (optional)
-      → Confirm → OTP verify (nếu amount lớn)
-      → Success
-    ```
+
+    1. Home → "Chuyển tiền"
+    2. Nhập UID hoặc email của người nhận
+    3. Hệ thống hiển thị avatar + tên để confirm
+    4. Chọn coin + nhập amount
+    5. Nhập nội dung (optional)
+    6. Confirm → OTP verify (nếu amount lớn)
+    7. Success
 
     **Edge Cases được định nghĩa:**
     | Trường hợp | Hành vi |
