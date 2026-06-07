@@ -38,7 +38,7 @@
     "tabs": [
       {
         "tab": "Giới thiệu",
-        "icon": "bank",
+        "icon": "user",
         "groups": [
           {
             "group": "Tổng quan",
@@ -49,119 +49,106 @@
         ]
       },
       {
-        "tab": "Dự án BA",
+        "tab": "Dự án thực tế",
+        "icon": "briefcase",
         "groups": [
           {
-            "group": "Dự án thực tế tại Nami Innovation",
+            "group": "Tại Nami Innovation",
             "pages": [
               "projects/nami-futures-trading",
               "projects/nami-reward-program-v2",
               "projects/nami-money-transfer",
               "projects/nami-calculator"
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "Tài liệu mẫu",
+        "icon": "book-open",
+        "groups": [
           {
-            "group": "Tài liệu mẫu — Futures Position Calculator",
+            "group": "Futures Position Calculator",
+            "icon": "calculator",
             "pages": [
-              {
-                "group": "Futures Position Calculator",
-                "icon": "calculator",
-                "pages": [
-                  "projects/futures-calculator/overview",
-                  "projects/futures-calculator/brd",
-                  "projects/futures-calculator/user-stories",
-                  "projects/futures-calculator/use-cases",
-                  "projects/futures-calculator/calculator",
-                  "projects/futures-calculator/copy-fill",
-                  "projects/futures-calculator/erd",
-                  "projects/futures-calculator/uat"
-                ]
-              }
+              "projects/futures-calculator/overview",
+              "projects/futures-calculator/brd",
+              "projects/futures-calculator/user-stories",
+              "projects/futures-calculator/use-cases",
+              "projects/futures-calculator/calculator",
+              "projects/futures-calculator/copy-fill",
+              "projects/futures-calculator/erd",
+              "projects/futures-calculator/uat"
             ]
           },
           {
-            "group": "Tài liệu mẫu — Healthcare Appointment",
+            "group": "Hospital Appointment & HIS Check-in",
+            "icon": "hospital",
             "pages": [
-              {
-                "group": "Hospital Appointment & HIS Check-in",
-                "icon": "hospital",
-                "pages": [
-                  "projects/healthcare-appointment/overview",
-                  "projects/healthcare-appointment/booking-flow",
-                  "projects/healthcare-appointment/state-machine",
-                  "projects/healthcare-appointment/business-rules",
-                  "projects/healthcare-appointment/data-mapping",
-                  "projects/healthcare-appointment/source-of-truth",
-                  "projects/healthcare-appointment/rbac",
-                  "projects/healthcare-appointment/api-integration",
-                  "projects/healthcare-appointment/exception-handling",
-                  "projects/healthcare-appointment/uat-scenarios",
-                  "projects/healthcare-appointment/wireframe-plan"
-                ]
-              }
+              "projects/healthcare-appointment/overview",
+              "projects/healthcare-appointment/booking-flow",
+              "projects/healthcare-appointment/state-machine",
+              "projects/healthcare-appointment/business-rules",
+              "projects/healthcare-appointment/data-mapping",
+              "projects/healthcare-appointment/source-of-truth",
+              "projects/healthcare-appointment/rbac",
+              "projects/healthcare-appointment/api-integration",
+              "projects/healthcare-appointment/exception-handling",
+              "projects/healthcare-appointment/uat-scenarios",
+              "projects/healthcare-appointment/wireframe-plan"
             ]
           },
           {
-            "group": "Tài liệu mẫu — Logistics / OMS-WMS",
+            "group": "OMS/WMS Fulfillment Platform",
+            "icon": "truck",
             "pages": [
-              {
-                "group": "OMS/WMS Fulfillment Platform",
-                "icon": "truck",
-                "pages": [
-                  "projects/logistics-oms-wms/overview",
-                  "projects/logistics-oms-wms/fulfillment-flow",
-                  "projects/logistics-oms-wms/state-machine",
-                  "projects/logistics-oms-wms/business-rules",
-                  "projects/logistics-oms-wms/data-mapping",
-                  "projects/logistics-oms-wms/rbac",
-                  "projects/logistics-oms-wms/api-integration",
-                  "projects/logistics-oms-wms/exception-queue",
-                  "projects/logistics-oms-wms/uat"
-                ]
-              }
+              "projects/logistics-oms-wms/overview",
+              "projects/logistics-oms-wms/fulfillment-flow",
+              "projects/logistics-oms-wms/state-machine",
+              "projects/logistics-oms-wms/business-rules",
+              "projects/logistics-oms-wms/data-mapping",
+              "projects/logistics-oms-wms/rbac",
+              "projects/logistics-oms-wms/api-integration",
+              "projects/logistics-oms-wms/exception-queue",
+              "projects/logistics-oms-wms/uat"
             ]
           },
           {
-            "group": "Tài liệu mẫu — E-wallet / Payment System",
+            "group": "FinPay E-Wallet — Modules",
+            "icon": "wallet",
             "pages": [
-              {
-                "group": "FinPay E-Wallet — Tổng quan & Modules",
-                "icon": "wallet",
-                "pages": [
-                  "projects/ewallet/overview",
-                  "projects/ewallet/project-context",
-                  "projects/ewallet/auth",
-                  "projects/ewallet/kyc",
-                  "projects/ewallet/wallet-core",
-                  "projects/ewallet/bank-linking",
-                  "projects/ewallet/transfer",
-                  "projects/ewallet/qr-payment",
-                  "projects/ewallet/transaction-history",
-                  "projects/ewallet/notifications-settings"
-                ]
-              },
-              {
-                "group": "QR Payment & Reconciliation",
-                "icon": "credit-card",
-                "pages": [
-                  "projects/ewallet/payment-case-study",
-                  "projects/ewallet/transaction-state-machine",
-                  "projects/ewallet/reconciliation-dashboard",
-                  "projects/ewallet/exception-handling"
-                ]
-              },
-              {
-                "group": "MoMo P2P Transfer — Appendix",
-                "icon": "mobile",
-                "pages": [
-                  "projects/momo-transfer/overview",
-                  "projects/momo-transfer/brd",
-                  "projects/momo-transfer/user-stories",
-                  "projects/momo-transfer/use-case-spec",
-                  "projects/momo-transfer/frd",
-                  "projects/momo-transfer/erd"
-                ]
-              }
+              "projects/ewallet/overview",
+              "projects/ewallet/project-context",
+              "projects/ewallet/auth",
+              "projects/ewallet/kyc",
+              "projects/ewallet/wallet-core",
+              "projects/ewallet/bank-linking",
+              "projects/ewallet/transfer",
+              "projects/ewallet/qr-payment",
+              "projects/ewallet/transaction-history",
+              "projects/ewallet/notifications-settings"
+            ]
+          },
+          {
+            "group": "QR Payment & Reconciliation",
+            "icon": "credit-card",
+            "pages": [
+              "projects/ewallet/payment-case-study",
+              "projects/ewallet/transaction-state-machine",
+              "projects/ewallet/reconciliation-dashboard",
+              "projects/ewallet/exception-handling"
+            ]
+          },
+          {
+            "group": "MoMo P2P Transfer — Appendix",
+            "icon": "mobile",
+            "pages": [
+              "projects/momo-transfer/overview",
+              "projects/momo-transfer/brd",
+              "projects/momo-transfer/user-stories",
+              "projects/momo-transfer/use-case-spec",
+              "projects/momo-transfer/frd",
+              "projects/momo-transfer/erd"
             ]
           }
         ]

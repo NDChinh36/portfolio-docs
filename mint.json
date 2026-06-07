@@ -22,8 +22,12 @@
   },
   "tabs": [
     {
-      "name": "Dự án BA",
+      "name": "Dự án thực tế",
       "url": "projects"
+    },
+    {
+      "name": "Tài liệu mẫu",
+      "url": "projects/futures-calculator"
     }
   ],
   "navigation": [
