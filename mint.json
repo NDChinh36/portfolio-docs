@@ -157,5 +157,8 @@
   "feedback": {
     "thumbsRating": false,
     "suggestEdit": false
+  },
+  "integrations": {
+    "chat": false
   }
 }
