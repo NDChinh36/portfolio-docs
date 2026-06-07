@@ -4,10 +4,8 @@ description: "Real Project — Business Analyst · Nami Innovation · 2025 – P
 icon: "chart-line"
 ---
 
-# Crypto Futures Trading Platform
-
 <Info>
-  **Real Project — Nami Innovation** · Business Analyst  
+  **Real Project — Nami Innovation** · Business Analyst\
   **Timeline:** 2025 – Present · **Platform:** Web / Mobile · **Team:** ~20 people
 </Info>
 
@@ -30,8 +28,8 @@ icon: "chart-line"
 
 ## Outcome
 
-- 6,000+ active users in early rollout
-- ~$10M trading volume in early months of operation
+- 6,000\+ active users in early rollout
+- ~\$10M trading volume in early months of operation
 
 > Outcome reflects team performance. BA contribution focused on requirement clarity, business rule definition, cross-functional alignment and release validation — not individual ownership of technical or business metrics.
 
@@ -86,7 +84,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 ## Business Rules & Logic Cốt lõi
 
 | Rule | Expected Behavior |
-|---|---|
+| --- | --- |
 | **Leverage selection** | User selects leverage within allowed range. High leverage triggers an additional confirmation step. |
 | **Required margin** | System calculates and displays required margin before order submission. |
 | **Estimated liquidation price** | Displayed in real-time on Order Form, updating as user adjusts leverage or quantity. |
@@ -161,7 +159,7 @@ I reviewed Figma prototypes with Design before writing the detailed PRD. Most in
 
 - Insufficient available balance → Submit button disabled; clear error message displayed
 - High leverage order → Mandatory confirmation required before submission
-- Order partially filled → PARTIALLY_FILLED state; user can cancel remaining quantity
+- Order partially filled → PARTIALLY\_FILLED state; user can cancel remaining quantity
 - Position updated after a filled order → Position status reflects correctly in real-time
 - User cancels an open order → Order moves to Cancelled; margin is released
 - System rejects invalid order parameters → Rejected state with reason displayed
@@ -234,6 +232,193 @@ The platform launched without critical bugs related to trading logic — a share
 - Trading domain research and knowledge transfer
 
 ---
+
+## Outcome
+
+- 6,000\+ active users in early rollout
+- ~\$10M trading volume in early months of operation
+
+> Outcome reflects team performance. BA contribution focused on requirement clarity, business rule definition, cross-functional alignment and release validation — not individual ownership of technical or business metrics.
+
+## Business Context
+
+Nami Innovation expanded from spot trading to **futures trading** — a significant increase in product and business rule complexity.
+
+Futures trading requires handling leverage (5x–125x), margin management, automated liquidation rules and multi-tier risk controls.
+
+**Why this matters for the BA role:** In a futures product, an incorrect business rule is not just a UI bug — it can create direct financial risk for users. Requirements needed to be complete, consistent and team-agreed before development began.
+
+## My Role as BA
+
+- Clarified product requirements with Product Owner and Product team
+- Defined business rules for order behavior, margin, leverage and position lifecycle
+- Wrote PRD, Business Rule Register, Functional Specifications and User Guide
+- Designed user flows for order placement and position management
+- Worked with Dev, QA and UI/UX to clarify edge cases and expected system behavior
+- Supported UAT and release validation
+
+---
+
+## BA Problems to Solve
+
+- **Domain ambiguity** — Futures concepts such as margin mode, liquidation price and position status needed a shared, consistent understanding across Product, Engineering, QA and UI/UX. Misalignment in domain vocabulary leads to hard-to-detect bugs in a financial product.
+- **Edge case density** — Each combination of order type, margin mode, leverage level and position status creates a distinct scenario. Teams could not reasonably derive every case independently — a structured approach was needed.
+- **Risk visibility** — Users needed to see key risk information (required margin, estimated liquidation price) at order placement time, not only after submission.
+- **Stakeholder alignment** — Product wanted a clean UX for new traders; Engineering was concerned about complexity and performance; Risk required strict guardrails. BA needed to find a position all three teams could work from.
+
+---
+
+## BA Approach
+
+### Business Rule Register from the start
+
+Futures has many interdependent rules. I proposed building a centralized Business Rule Register instead of scattering rules across multiple documents. Each rule included an ID, description, dependency list and a numeric example. Engineering used it to track: "if this rule changes, what else needs to update?"
+
+### User story first, technical spec second
+
+I wrote user stories for each trader type before defining the corresponding business rules. This kept the team aligned on user value and prevented early focus on technical details before agreeing on what was actually being built.
+
+### Prototype review before PRD
+
+I reviewed Figma prototypes with Design before writing the detailed PRD. Most inconsistencies between UX and business rules were identified at this stage — not after development had started.
+
+| Rule | Expected Behavior |
+| --- | --- |
+| **Leverage selection** | User selects leverage within allowed range. High leverage triggers an additional confirmation step. |
+| **Required margin** | System calculates and displays required margin before order submission. |
+| **Estimated liquidation price** | Displayed in real-time on Order Form, updating as user adjusts leverage or quantity. |
+| **Order submission validation** | Submit is disabled if required margin exceeds available balance. |
+| **Margin mode** | Isolated Margin supported in MVP. Cross Margin documented as out of scope for v1 with rationale. |
+| **Position status** | Order status transitions defined: Open → Partially Filled / Filled / Cancelled / Rejected. If filled, position is created or updated. |
+| **Risk warning** | High leverage orders require explicit user acknowledgement before submission. |
+
+## Key BA Decisions
+
+### Decision 1 — Prioritize Isolated Margin for MVP
+
+**Context:** Product initially wanted both Isolated and Cross Margin in the first release.
+
+**Problem / Risk:** Cross Margin has significantly more complex liquidation rules and edge cases. Supporting both modes in MVP would increase specification scope and QA coverage considerably — with high risk of shipping incorrect logic.
+
+**BA Recommendation:** MVP supports Isolated Margin only. Cross Margin documented in Out of Scope with rationale and a planned timeline for v2.
+
+**Trade-off:** Users wanting Cross Margin needed to wait. However, Isolated Margin covers the majority of trader needs and substantially reduces launch risk.
+
+**Expected Impact:** Engineering confirmed a significant reduction in estimate. Timeline was maintained. No scope conflicts after Out of Scope was clearly documented.
+
+### Decision 2 — Show Estimated Liquidation Price on Order Form
+
+**Context:** Initial design only showed liquidation price in Position Management — after an order was already placed and filled.
+
+**Problem / Risk:** New traders typically don't check Position Management immediately after placing an order. Many users first saw their liquidation price when margin ratio was already near the threshold. "Why was I liquidated unexpectedly?" was a recurring CS ticket pattern.
+
+**BA Recommendation:** Display estimated liquidation price in real-time on the Order Form, updating as the user adjusts leverage or quantity.
+
+**Trade-off:** Additional computation and UI complexity. Engineering confirmed client-side calculation was feasible within project scope.
+
+**Expected Impact:** Traders see risk information before confirming an order — directly addressing one of the most common causes of CS complaints.
+
+---
+
+### Decision 3 — Mandatory Confirmation for High Leverage Orders
+
+**Context:** Nami had no confirmation step for high leverage selection. Major exchanges already had this pattern.
+
+**Problem / Risk:** Users selecting high leverage without understanding the risk leads to early liquidations and CS complaints. Warning text alone was not effective.
+
+**BA Recommendation:** Mandatory confirmation popup for leverage at or above a configured threshold. Users must acknowledge risk before proceeding.
+
+**Trade-off:** Adds friction for experienced traders who understand the risks. Mitigated by: popup appears once per session, not on every leverage adjustment.
+
+**Expected Impact:** Balances protecting new traders without creating excessive friction for experienced users.
+
+---
+
+## Main Flow
+
+1. User selects trading pair
+2. User selects order type (Limit / Market / Stop-Limit)
+3. User selects margin mode and leverage
+4. System displays required margin and estimated liquidation price in real-time
+5. User enters quantity and price
+6. System validates balance and order parameters
+7. If leverage is above threshold — mandatory confirmation popup appears
+8. User confirms order
+9. System submits order
+10. Order transitions through states: Open → Filled / Partially Filled / Cancelled / Rejected
+11. If filled, position is created or updated
+
+---
+
+## Important Edge Cases
+
+- Insufficient available balance → Submit button disabled; clear error message displayed
+- High leverage order → Mandatory confirmation required before submission
+- Order partially filled → PARTIALLY\_FILLED state; user can cancel remaining quantity
+- Position updated after a filled order → Position status reflects correctly in real-time
+- User cancels an open order → Order moves to Cancelled; margin is released
+- System rejects invalid order parameters → Rejected state with reason displayed
+- Leverage = 1 → No liquidation price displayed (no liquidation risk at 1x leverage)
+- Margin ratio approaching liquidation threshold → Warning state shown; position not yet liquidated
+
+---
+
+## Selected BA Deliverables
+
+- **BRS** — overall scope and core business rules for the futures trading feature
+- **PRD** — user flows, screen specifications, acceptance criteria and edge cases
+- **Business Rule Register** — all rules, dependencies and numeric examples, maintained throughout the project
+- **Functional Specifications** — detailed system behavior per screen and key API interactions
+- **User Guide** — end-user documentation for CS and Marketing
+
+---
+
+## Collaboration with Dev / QA / UIUX
+
+### Align with Engineering
+
+Funding rate was the concept where each team had a different understanding. Engineering asked about trigger timing and logic; UX asked about countdown display; CS needed clear language to explain it to users. I wrote a separate internal explainer document and facilitated a walkthrough session before any team began their work.
+
+### UX vs. Risk Control
+
+UX wanted a clean, minimal Order Form. Risk required key information to be visible: required margin, estimated liquidation price, leverage warning. The agreed approach: critical risk fields always visible; secondary information (fee details, funding rate countdown) accessible via expand or tooltip — neither fully hidden nor cluttering the primary screen.
+
+### Reducing Ambiguity Before Release
+
+I provided QA with an edge case list from the functional spec along with specific test data for each case — for example, leverage = 1 means no liquidation price should appear; margin ratio = 99.9% is warning state, not yet liquidated. QA used this directly to build test scenarios without having to derive the logic independently.
+
+## Validation trước Release
+
+- Reviewed order placement flow end-to-end with QA
+- Verified margin calculation and risk display logic against business rules
+- Validated key edge cases using specific numeric test data
+- Supported UAT sign-off for each screen flow
+- Assisted with user guide and release communication preparation
+
+The platform launched without critical bugs related to trading logic — a shared result of BA, Engineering and QA through structured specification, cross-functional review and testing.
+
+---
+
+## Lessons Learned
+
+- **Domain takes real time** — Spending the first two weeks on domain research (whitepapers, competitor platforms, technical documentation) before writing any requirements made a significant difference in spec quality.
+- **Map rule dependencies from day one** — Changing one assumption can cascade into many other rules. A Business Rule Register with explicit dependency mapping from kickoff prevents late-stage conflicts.
+- **Prototype review before PRD** — Most UX vs. business rule inconsistencies surfaced during prototype review, not during development. Scheduling this early is more effective than waiting for a "complete" design.
+- **Edge cases belong in Acceptance Criteria** — Edge cases placed in document appendices often don't get fully tested. Moving critical edge cases directly into Acceptance Criteria ensures they reach QA and Definition of Done.
+
+---
+
+> Planned: Annotated Order Form and High Leverage Confirmation Modal will be added after MDX rendering is fully stable.
+
+## Skills thể hiện trong dự án này
+
+- Requirement clarification and gap analysis
+- Business rule definition and dependency mapping
+- User flow design
+- Edge case analysis and structured documentation
+- Cross-functional collaboration (Product / Engineering / QA / UI/UX)
+- UAT support and release validation
+- Trading domain research and knowledge transfer
 
 <Note>
   **Real project at Nami Innovation.** Specific business rules, internal metrics and technical specifications have not been disclosed to protect company information. The above is a case study-level summary.
