@@ -6,12 +6,19 @@
     "body": { "family": "Montserrat" }
   },
   "background": {
-    "style": "gradient"
+    "style": "gradient",
+    "color": {
+      "light": "#EFF6FF",
+      "dark": "#0F172A"
+    }
   },
   "colors": {
-    "primary": "#1D4ED8",
-    "light": "#3B82F6",
-    "dark": "#1E40AF"
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
+  },
+  "modeToggle": {
+    "default": "light"
   },
   "ai": {
     "enabled": false
