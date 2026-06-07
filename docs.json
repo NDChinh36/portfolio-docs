@@ -8,8 +8,8 @@
   },
   "favicon": "/images/favicon.svg",
   "logo": {
-    "light": "/images/logo-light.svg",
-    "dark": "/images/logo-dark.svg",
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
     "href": "https://github.com/NDChinh36"
   },
   "navbar": {
