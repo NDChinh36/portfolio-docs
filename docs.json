@@ -6,7 +6,11 @@
     "body": { "family": "Montserrat" }
   },
   "background": {
-    "style": "windows"
+    "style": "gradient",
+    "color": {
+      "light": "#DBEAFE",
+      "dark": "#1E3A5F"
+    }
   },
   "colors": {
     "primary": "#1D4ED8",
