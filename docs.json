@@ -8,14 +8,14 @@
   "background": {
     "style": "gradient",
     "color": {
-      "light": "#EFF6FF",
-      "dark": "#0F172A"
+      "light": "#FFFBEB",
+      "dark": "#0C0C0C"
     }
   },
   "colors": {
-    "primary": "#2563EB",
-    "light": "#60A5FA",
-    "dark": "#1D4ED8"
+    "primary": "#F59E0B",
+    "light": "#FCD34D",
+    "dark": "#B45309"
   },
   "modeToggle": {
     "default": "light"
