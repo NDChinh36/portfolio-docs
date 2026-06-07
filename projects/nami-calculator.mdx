@@ -1,201 +1,163 @@
 ---
 title: "Calculator Trading Feature"
-description: "Case Study — BA tại Nami Innovation | 6/2024 – 10/2024"
+description: "Real Project — Business Analyst · Nami Innovation · 2024"
 icon: "calculator"
 ---
 
 # Calculator Trading Feature
 
 <Info>
-  **Dự án thực tế — Nami Innovation** · Business Analyst  
-  **Thời gian:** 6/2024 – 10/2024 · **Platform:** Web / Mobile  
-  **Team:** ~10 người (BA, Dev, QA, UI/UX)
+  **Real Project — Nami Innovation** · Business Analyst  
+  **Timeline:** 6/2024 – 10/2024 · **Platform:** Web / Mobile · **Team:** ~10 people
 </Info>
 
----
-
-## Kết quả dự án
-
-<CardGroup cols={2}>
-  <Card title="Giảm CS ticket về PnL" icon="headset">
-    Sau khi ra mắt, câu hỏi "cách tính PnL / liquidation price" giảm rõ rệt trong CS ticket queue — mục tiêu chính của tính năng.
-  </Card>
-  <Card title="Phủ 3 nhóm trader" icon="users">
-    Calculator thiết kế đủ cho trader mới (liq price), thường (PnL + ROE) và pro (break-even, full parameters).
-  </Card>
-</CardGroup>
+<Note>
+  This case is based on my real work as a Business Analyst at Nami Innovation. Sensitive information has been generalized or anonymized.
+</Note>
 
 ---
 
-## Bối cảnh & Vấn đề
+## Project Overview
 
-Đây là **tính năng BA đầu tiên** tôi phụ trách tại Nami Innovation — bắt đầu vào tháng 6/2024, ngay khi chuyển sang vai trò BA từ Marketing.
-
-Trading calculator là công cụ giúp trader **ước tính kết quả giao dịch trước khi đặt lệnh**. Thay vì tính toán thủ công, user nhập các thông số và calculator tự động tính:
-
-- **PnL dự kiến** (Profit & Loss)
-- **Liquidation price** (giá thanh lý)
-- **Required margin**
-- **ROE (Return on Equity)**
-
-**Vấn đề ban đầu:** User (đặc biệt trader mới) liên tục hỏi CS về cách tính PnL và margin — nhưng thực ra họ chỉ cần một công cụ tính nhanh ngay trên app mà không cần rời nền tảng sang tool ngoài.
+- **Role:** Business Analyst
+- **Company:** Nami Innovation
+- **Timeline:** 6/2024 – 10/2024
+- **Platform:** Web / Mobile
+- **Domain:** Trading Tools / Fintech
+- **Team size:** ~10 (BA, Dev, QA, UI/UX)
 
 ---
 
-## Vai trò & Trách nhiệm BA
+## Outcome
 
-<AccordionGroup>
-  <Accordion title="1. Thu thập User Feedback qua CS Team" icon="headset">
-
-    Phương pháp đầu tiên: **interview CS Team** để khai thác câu hỏi thường gặp từ user.
-
-    **Insights từ CS:**
-    - Top câu hỏi: "Tôi đặt lệnh X với leverage Y thì bị thanh lý tại giá nào?"
-    - User hay dùng sai: tính PnL theo giá kỳ vọng nhưng quên tính phí giao dịch
-    - Nhiều user không biết margin required khác nhau giữa Isolated và Cross
-    - Trader pro muốn tính nhanh break-even price khi hold lệnh thua
-
-    **User personas được xác định:**
-    | Persona | Nhu cầu chính | Ưu tiên tính năng |
-    |---|---|---|
-    | **Trader mới** | Hiểu tôi có thể mất bao nhiêu | Liquidation price, required margin |
-    | **Trader thường** | Tính PnL target trước khi vào lệnh | PnL calculator, ROE |
-    | **Trader pro** | Tính break-even, tối ưu leverage | Full calculator với tất cả input |
-  </Accordion>
-
-  <Accordion title="2. Competitor Analysis — Xác định Feature Scope" icon="magnifying-glass">
-
-    Tôi phân tích calculator trên các sàn lớn để benchmark:
-
-    | Platform | Tính năng | Ưu điểm | Hạn chế |
-    |---|---|---|---|
-    | **Binance** | Đầy đủ nhất: PnL, Liq Price, ROE, Target Price | Nhiều mode, phân tab rõ | Phức tạp với trader mới |
-    | **OKX** | Calculator tích hợp ngay trên order form | UX mượt, contextual | Không standalone |
-    | **Bybit** | 4 loại calculator tách biệt | Rõ ràng từng use case | Phải navigate nhiều |
-
-    **Quyết định scope Nami (từ analysis):**
-    - MVP: PnL Calculator + Liquidation Price Calculator (cover 80% nhu cầu)
-    - Thiết kế dạng tab đơn giản (học từ Bybit)
-    - Thêm toggle Long/Short (học từ Binance UX)
-    - Tích hợp nút "Fill from position" — kéo thông số từ lệnh đang mở vào calculator
-  </Accordion>
-
-  <Accordion title="3. Định nghĩa Formulas" icon="square-root-variable">
-
-    Phần kỹ thuật nhất của dự án — phải định nghĩa chính xác công thức để Dev implement đúng.
-
-    **PnL Calculator:**
-
-    | Loại | Công thức Long | Công thức Short |
-    |---|---|---|
-    | PnL | `(Exit Price - Entry Price) × Quantity` | `(Entry Price - Exit Price) × Quantity` |
-    | PnL (%) | `PnL / Initial Margin × 100` | `PnL / Initial Margin × 100` |
-    | ROE | `PnL / Initial Margin × 100` | `PnL / Initial Margin × 100` |
-
-    **Liquidation Price Calculator:**
-
-    | Margin Mode | Long Liquidation | Short Liquidation |
-    |---|---|---|
-    | Isolated | `Entry × (1 - 1/Leverage + MM Rate)` | `Entry × (1 + 1/Leverage - MM Rate)` |
-    | Cross | Phức tạp hơn — phụ thuộc toàn bộ account equity | Tương tự |
-
-    **Required Margin:**
-
-    `Initial Margin = (Entry Price × Quantity) / Leverage`
-
-    `Maintenance Margin = Entry Price × Quantity × MM Rate`
-
-    *Note: MM Rate (Maintenance Margin Rate) thay đổi theo tier position size — phải có lookup table.*
-  </Accordion>
-
-  <Accordion title="4. Finalize UI/UX Flow với Design & Development" icon="figma">
-
-    **Phối hợp với Design Team:**
-    - Wireframe: layout 2 cột (input bên trái, kết quả bên phải) cho desktop
-    - Mobile: stacked layout; kết quả hiện bên dưới sau khi user nhập đủ input
-    - Color coding: PnL dương → xanh; PnL âm → đỏ; rõ ràng cho mọi ngưỡng màu sắc
-    - Input UX: slider cho leverage (kèm input box); dropdown cho coin pair
-
-    **Phối hợp với Development Team:**
-    - Clarify rounding rule: PnL hiển thị 2 chữ số thập phân; price hiển thị theo tick size của từng pair
-    - Xử lý edge case: leverage = 1 (không có liquidation); margin mode = Cross (hiển thị disclaimer)
-    - Performance: tính toán real-time khi user thay đổi bất kỳ input nào (không cần bấm "Tính")
-    - Mobile keyboard: auto-show numeric keyboard khi focus vào input field
-
-    **Review rounds:** 3 vòng với Design; 2 vòng clarification với Dev trước khi start coding.
-  </Accordion>
-</AccordionGroup>
+- CS tickets about PnL and liquidation price calculation decreased after launch
+- Calculator designed to serve three trader groups: new traders (liquidation price), regular traders (PnL and ROE) and advanced traders (full parameter set)
 
 ---
 
-## BA Deliverables
+## Business Context
 
-| Deliverable | Loại tài liệu | Người đọc chính |
-|---|---|---|
-| **PRD — Trading Calculator Feature** | PRD | Dev, QA |
-| **Formula Specification** (PnL, Liq Price, Required Margin — Long & Short, Isolated & Cross) | Technical Spec | Dev |
-| **Competitor Analysis Report** (Binance, OKX, Bybit — feature scope & UX benchmark) | Research Doc | PO, Dev |
-| **User Persona Analysis** (3 trader types, needs, feature priority) | Research Doc | Design, PO |
-| **UI/UX Flow Diagrams** (desktop 2-col, mobile stacked, real-time input behavior) | Flow Diagram | Dev, Design |
-| **Edge Case Register** (leverage = 1, Cross mode disclaimer, MM Rate tier lookup) | Reference Spec | Dev, QA |
+Users needed a calculation tool to estimate trading outcomes before placing orders. Many users — especially new traders — were leaving the platform to use external tools to calculate PnL or liquidation price, then returning to trade.
+
+This was the first feature I owned as a BA at Nami Innovation, immediately after transitioning from a marketing role.
 
 ---
 
-## Điểm nổi bật
+## My Role as BA
 
-<CardGroup cols={2}>
-  <Card title="Dự án khởi đầu BA" icon="rocket">
-    Calculator là bước đầu chuyển đổi từ Marketing → BA. Dự án nhỏ nhưng đòi hỏi hiểu sâu domain (công thức tài chính) và rèn kỹ năng viết PRD lần đầu trong môi trường thực tế.
-  </Card>
-  <Card title="Research-driven approach" icon="magnifying-glass">
-    Thay vì spec từ trên xuống, dự án bắt đầu bằng user research (CS interviews) và competitor analysis — đảm bảo build đúng thứ user cần, không build theo assumption.
-  </Card>
-</CardGroup>
+- Collected user feedback through CS team interviews
+- Analyzed competitor calculator tools (Binance, OKX, Bybit)
+- Defined feature scope and formula requirements
+- Wrote PRD and supported functional specification
+- Aligned UI/UX flow with Design and formula logic with Development
+- Supported QA testing for formula accuracy
 
 ---
 
-## Thách thức & Bài học
+## BA Problems to Solve
 
-<CardGroup cols={2}>
-  <Card title="Thách thức" icon="triangle-exclamation">
-    Là BA mới, phải nhanh chóng nắm các công thức futures trading (liquidation price, MM rate, leverage tiers) trong thời gian ngắn. Domain knowledge là prerequisite để viết được spec đúng.
-  </Card>
-  <Card title="Bài học" icon="lightbulb">
-    **"Talk to CS first"** — CS team là goldmine insight về user pain point thực tế. Với tính năng tool/utility như calculator, feedback từ CS nhanh hơn và chính xác hơn nhiều so với user survey.
-  </Card>
-</CardGroup>
+- **User need validation** — Before defining scope, I needed to confirm what calculation problems users actually had, not what Product assumed.
+- **Formula specification** — PnL, liquidation price and required margin formulas needed to be defined precisely enough for Dev to implement correctly and QA to verify.
+- **Scope prioritization** — Multiple trader groups had different needs. Scope had to be prioritized to avoid building too much for MVP.
+- **Formula accuracy** — Calculator outputs must match trading product rules. Wrong formulas would undermine user trust in the platform.
 
 ---
 
-## Skills thể hiện trong dự án này
+## BA Approach
 
-<CardGroup cols={3}>
-  <Card title="User Research" icon="users">
-    CS interview · Competitor analysis · Persona
-  </Card>
-  <Card title="Domain Knowledge" icon="chart-candlestick">
-    Futures formulas · PnL · Liquidation · Margin
-  </Card>
-  <Card title="BA Artifacts" icon="file-lines">
-    PRD · Formula Spec · UI/UX Flow · Edge Cases
-  </Card>
-</CardGroup>
+### Talk to CS team first
+
+Instead of starting from assumptions, I interviewed the CS team to identify the most common user calculation questions. This revealed three distinct trader groups with different needs — driving the scope and tab-based layout.
+
+### Competitor analysis before scope definition
+
+I analyzed calculators on Binance, OKX and Bybit to benchmark features, identify UX patterns and understand what Nami needed to include or could simplify.
+
+### Formula definition as a BA deliverable
+
+I documented each formula explicitly as a BA deliverable — not just as implementation notes. This gave Dev a clear reference and gave QA expected values to validate against.
 
 ---
 
-## Visual Artifact — Trading Calculator Screen
+## Core Business Rules
 
-*Mockup màn hình PnL Calculator — minh họa các quyết định BA: (A) 3 user personas với nhu cầu khác nhau dẫn đến scope 3 loại kết quả, (B) công thức được BA define chính xác trong Formula Spec, (C) edge case leverage = 1 và Cross mode disclaimer.*
+| Rule | Behavior |
+|---|---|
+| **Required fields** | All required inputs must be completed before calculation runs |
+| **Input validation** | Invalid numeric inputs are blocked; appropriate error message shown |
+| **Real-time calculation** | Results update automatically when any input changes — no submit button needed |
+| **Formula alignment** | Calculator formulas must match the trading product's underlying calculation logic |
+| **Result labeling** | Results are clearly labeled as estimates, not guaranteed outcomes |
+| **Edge case: leverage = 1** | No liquidation price displayed at 1x leverage (no liquidation risk) |
 
-<iframe
-  src="/artifacts/calculator/calculator-screen.html"
-  width="100%"
-  height="580"
-  style="border:none;border-radius:8px;"
-></iframe>
+---
+
+## Main Flow
+
+1. User selects calculator type (PnL / Liquidation Price / Required Margin)
+2. User enters trading parameters (entry price, exit price, quantity, leverage, margin mode)
+3. System validates inputs
+4. System calculates and displays estimated result in real-time
+5. User adjusts parameters as needed
+6. User uses result as reference before placing an order
+
+---
+
+## Selected BA Deliverables
+
+- **PRD** — feature scope, user flows and screen specifications
+- **Formula Definition Document** — PnL, liquidation price and required margin formulas for Long/Short and Isolated/Cross variants
+- **Competitor Research Notes** — Binance, OKX and Bybit feature comparison
+- **Input/Output Field Spec** — field definitions, validation rules and error messages
+- **QA Formula Checklist** — expected outputs for key input combinations
+- **User Flow**
+
+---
+
+## Collaboration with Dev / QA / UIUX
+
+### Formula clarification with Dev
+
+I walked Dev through each formula in a dedicated session — including edge cases like Cross Margin liquidation (which depends on full account equity, not just position margin) and the difference between ROE and PnL percentage. This prevented misunderstanding during implementation.
+
+### QA formula validation support
+
+I prepared a formula checklist with specific numeric examples — input values and expected outputs — so QA could verify formula accuracy without deriving the expected results themselves.
+
+### UX decisions with Design
+
+I worked with Design on two key UX decisions: real-time calculation (no submit button needed) and the "Fill from position" button (lets users pull parameters from an open order directly into the calculator). Both came from competitor analysis and CS feedback.
+
+---
+
+## Validation trước Release
+
+- Reviewed formula outputs against expected values from the formula spec
+- Confirmed edge case behavior (leverage = 1, Cross mode disclaimer)
+- Validated real-time calculation trigger behavior across input types
+- Supported QA sign-off
+
+---
+
+## Lessons Learned
+
+- **CS team is the fastest path to user insight** — for a utility tool like a calculator, CS feedback was more accurate and faster than user surveys or assumptions.
+- **Formula specification is a core BA deliverable** — even for a "simple" calculation feature, formula definitions need to be explicit, testable and owned by BA from the start.
+- **Domain knowledge before spec writing** — transitioning from marketing, I had to quickly learn futures calculation concepts before I could write correct requirements. Time spent on domain research first paid off in spec quality.
+
+---
+
+## Skills Demonstrated
+
+- User feedback analysis via CS team
+- Competitor research and feature benchmarking
+- Formula requirement definition
+- User flow design
+- QA support and formula validation
+- Trading domain research
 
 ---
 
 <Note>
-  Đây là **dự án thực tế tại Nami Innovation** — tính năng BA đầu tiên sau khi chuyển từ Marketing. Nội dung trên là tóm tắt cấp độ case study để bảo mật thông tin nội bộ.
+  **Real project at Nami Innovation.** Specific formula implementations and internal business rules have not been disclosed to protect company information. The above is a case study-level summary.
 </Note>
