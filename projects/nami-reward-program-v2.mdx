@@ -1,10 +1,190 @@
 ---
 title: "Reward Program Feature"
-description: "Case Study — Business Analyst at Nami Innovation"
+description: "Real Project — Business Analyst · Nami Innovation · 2024–2025"
+icon: "gift"
 ---
 
 # Reward Program Feature
 
-This is a fresh route test to verify Mintlify rendering is not affected by cached state from the original route.
+<Info>
+  **Real Project — Nami Innovation** · Business Analyst  
+  **Timeline:** 10/2024 – 6/2025 · **Platform:** Web / Mobile · **Team:** ~20 people
+</Info>
 
-If this page renders correctly but `nami-reward-program` still fails, the issue is confirmed to be route-specific cache, not page content.
+<Note>
+  This case is based on my real work as a Business Analyst at Nami Innovation. Sensitive business rules, campaign details and internal metrics have been generalized or anonymized.
+</Note>
+
+## Project Overview
+
+- **Role:** Business Analyst
+- **Company:** Nami Innovation
+- **Timeline:** 10/2024 – 6/2025
+- **Platform:** Web / Mobile
+- **Domain:** Growth / Reward System
+- **Team:** Product, Growth/MKT, Content, CS, BI, Dev, QA, UI/UX
+
+## Outcome
+
+- 20,000+ user engagement across reward campaigns
+- 60%+ trading volume increase during active campaign periods
+
+> Outcome reflects team performance. BA contribution focused on defining campaign logic, reward rules, tracking structure and delivery support — not individual ownership of business metrics.
+
+## Business Context
+
+Nami Innovation needed a **flexible reward system** to support user engagement campaigns driven by in-app actions — trading volume, deposits, referrals and login streaks.
+
+The challenge was not just distributing rewards. It required clear eligibility conditions, budget controls, abuse prevention and post-launch tracking to evaluate and refine campaign performance.
+
+Before this system, each campaign was hardcoded separately — slow to ship, expensive to change and hard to measure consistently.
+
+## My Role as BA
+
+- Worked with PO and Growth/MKT to clarify campaign goals and reward conditions
+- Defined trigger logic, eligibility rules, budget caps, limits and automation behavior
+- Coordinated requirements across Growth, Engineering, QA, Content, CS and BI
+- Wrote campaign PRD and supported functional specifications
+- Tracked campaign performance data after launch and refined logic based on results
+
+## BA Problems to Solve
+
+- **Multi-stakeholder conflicts** — Growth wanted maximum campaign flexibility; Engineering wanted simple, predictable logic; CS needed to explain reward behavior to users; BI needed trackable events. Each team had different expectations.
+- **Rule clarity for Dev and QA** — Campaign conditions varied across trigger types. Without a structured spec, each team would interpret rules differently.
+- **Abuse prevention** — Reward systems attract unintended behavior. Anti-abuse rules needed to be defined before development, not patched after launch.
+- **Post-launch iteration** — Growth needed tracking metrics to evaluate campaigns and request logic changes based on real data.
+
+## BA Approach
+
+### Stakeholder workshops before spec
+
+Before writing any PRD, I ran separate sessions with each stakeholder group to surface needs and constraints. I synthesized the outputs into a prioritized PRD with clear scope and trade-off rationale.
+
+### Configurable campaign logic
+
+I defined campaign logic as configurable rules rather than hardcoded per-campaign behavior — making future campaign launches faster and easier to maintain.
+
+### Anti-abuse rules from the start
+
+I included anti-abuse rules in the first PRD version, working with the Risk team during elicitation — before development began, not after the first abuse pattern was detected.
+
+## Core Campaign Business Rules
+
+| Rule | Behavior |
+|---|---|
+| **Trigger eligibility** | User must complete a qualifying in-app action before reward is issued |
+| **Campaign budget cap** | Total reward value cannot exceed the campaign-level budget |
+| **Per-user cap** | Each user has a maximum reward limit per campaign |
+| **Trigger types** | Volume-based, Event-based, Streak-based, Referral — each with separate logic |
+| **Distribution mode** | Configurable per campaign: immediate (for event-based) or daily batch (for volume-based) |
+| **Abuse prevention** | New accounts, suspicious patterns and duplicate actions are excluded |
+| **Reward expiry** | Unclaimed rewards expire after a configurable period |
+
+## Key BA Decisions
+
+### Decision 1 — Four Separate Trigger Types Instead of One Generic Engine
+
+**Context:** Growth initially proposed a single generic campaign engine to handle any condition type.
+
+**Problem / Risk:** A generic engine cannot clearly define edge cases for different trigger behaviors. Streak reset logic differs completely from volume rollback on cancelled transactions. Mixed logic makes bugs hard to detect and Growth difficult to configure correctly.
+
+**BA Recommendation:** Define four separate trigger types — Volume-based, Event-based, Streak-based and Referral — each with its own spec and edge case handling.
+
+**Trade-off:** Requires building four sub-engines instead of one. Dev estimate increased, but each trigger type's behavior became predictable and independently testable.
+
+**Expected Impact:** Clearer QA coverage, fewer configuration errors, more maintainable system.
+
+### Decision 2 — Budget Cap and Per-user Cap from MVP
+
+**Context:** Early campaign discussions focused on reward distribution without explicit budget controls.
+
+**Problem / Risk:** Without caps, reward campaigns could exhaust their budget in days instead of the planned weeks. Post-launch data showed an early campaign depleted budget in 2 days — expected to run for 14.
+
+**BA Recommendation:** Define both campaign-level total budget cap and per-user reward cap in the first PRD version.
+
+**Trade-off:** Some users may stop receiving rewards after reaching the per-user cap.
+
+**Expected Impact:** Better financial control over campaign costs and reduced incentive for individual reward farming.
+
+### Decision 3 — Distribution Mode as Campaign Configuration
+
+**Context:** Engineering proposed a fixed daily batch distribution mode for simplicity.
+
+**Problem / Risk:** Daily batch works for volume-based campaigns but is poor for event-based ones. A user completing KYC should receive their reward immediately — not the next day — to maximize motivation at the moment of action.
+
+**BA Recommendation:** Allow Growth to configure distribution mode per campaign: immediate or daily batch. Spec includes trade-offs for each mode so Growth can decide based on campaign type.
+
+**Trade-off:** Requires building and testing both modes.
+
+**Expected Impact:** Event-based campaigns deliver rewards at the moment of action; volume-based campaigns batch efficiently.
+
+## Main Flow
+
+1. Growth team defines campaign goal, reward type and eligibility criteria
+2. BA clarifies trigger conditions, limits and anti-abuse rules
+3. System tracks qualifying user actions
+4. System checks eligibility, campaign budget and anti-abuse rules
+5. If eligible, reward is calculated and queued
+6. Reward is distributed based on configured distribution mode
+7. BI and Growth track campaign performance metrics
+8. Campaign logic is refined based on post-launch data if needed
+
+## Important Edge Cases
+
+- Campaign budget exhausted mid-campaign → users who have not yet received reward are notified
+- User reaches per-user cap → no additional reward issued even if qualifying action is completed
+- Action completed after campaign ends → reward not issued; clear reason displayed to user
+- Duplicate qualifying action submission → system deduplicates; only one reward issued
+- Streak broken by one missed day → streak resets; user notified
+- Referral: referred user does not complete required action → no reward for referrer
+
+## Selected BA Deliverables
+
+- **Campaign PRD** — goals, rules, trigger logic, reward behavior and edge cases
+- **Trigger Type Spec** — four trigger types with separate logic and edge case handling
+- **Reward Limits Table** — budget cap, per-user cap and expiry rules
+- **Anti-abuse Rule Document** — exclusion criteria and fraud prevention rules
+- **Campaign Tracking Plan** — events, funnels and Metabase dashboard structure
+- **User Guide** — CS-facing documentation explaining reward conditions to users
+- **UAT Checklist**
+
+## Collaboration with Teams
+
+### Product and Growth
+
+I ran separate requirement sessions per trigger type and established a change request process — any scope change after development starts requires re-estimation and PO approval.
+
+### Engineering and QA
+
+I organized requirement sessions per trigger type so Engineering could estimate and build each module independently. QA received a full edge case matrix covering all trigger behaviors.
+
+### CS and BI
+
+I aligned tracking structure with BI before launch and prepared a CS-facing user guide explaining reward conditions. Post-launch, I used funnel data to propose logic adjustments based on real campaign performance.
+
+## Validation Before Release
+
+- Reviewed campaign trigger logic end-to-end with QA
+- Validated budget cap and per-user cap behavior
+- Confirmed anti-abuse rule coverage
+- Tested reward distribution timing for both immediate and batch modes
+- Supported UAT sign-off and CS guide preparation
+
+## Lessons Learned
+
+- **Growth features need business rules as much as product features** — without clear rules, Growth misconfigures campaigns and abuse scenarios emerge.
+- **Anti-abuse rules must be designed upfront** — adding them after launch means reward has already been distributed and cannot be recalled.
+- **Data-driven iteration requires upfront tracking design** — defining events and dashboards before launch made post-launch analysis much faster and the feedback loop much tighter.
+
+## Skills Demonstrated
+
+- Requirement clarification and multi-stakeholder alignment
+- Campaign logic and business rule definition
+- Anti-abuse and risk thinking
+- Data-informed iteration
+- Cross-functional coordination (8+ stakeholders)
+- UAT support
+
+<Note>
+  **Real project at Nami Innovation.** Specific campaign metrics, reward values and internal business rules have not been disclosed to protect company information. The above is a case study-level summary.
+</Note>
