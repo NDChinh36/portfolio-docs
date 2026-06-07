@@ -16,27 +16,14 @@
       "to": "#0EA5E9"
     }
   },
-  "topbarLinks": [
-    {
-      "name": "GitHub",
-      "url": "https://github.com/NDChinh36"
-    }
-  ],
   "topbarCtaButton": {
     "name": "LinkedIn",
     "url": "https://linkedin.com/in/chinhredc/"
   },
   "tabs": [
     {
-      "name": "BA Projects",
+      "name": "Dự án BA",
       "url": "projects"
-    }
-  ],
-  "anchors": [
-    {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/NDChinh36"
     }
   ],
   "navigation": [

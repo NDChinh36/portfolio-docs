@@ -13,12 +13,6 @@
     "href": "https://github.com/NDChinh36"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/NDChinh36"
-      }
-    ],
     "primary": {
       "type": "button",
       "label": "LinkedIn",
@@ -32,17 +26,11 @@
   },
   "navigation": {
     "global": {
-      "anchors": [
-        {
-          "anchor": "GitHub",
-          "icon": "github",
-          "href": "https://github.com/NDChinh36"
-        }
-      ]
+      "anchors": []
     },
     "tabs": [
       {
-        "tab": "BA - Nguyen Duc Chinh",
+        "tab": "Giới thiệu",
         "icon": "bank",
         "groups": [
           {
@@ -54,7 +42,7 @@
         ]
       },
       {
-        "tab": "BA Projects",
+        "tab": "Dự án BA",
         "groups": [
           {
             "group": "Dự án thực tế tại Nami Innovation",
