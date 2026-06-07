@@ -122,7 +122,7 @@ Ghi rõ từng formula dưới dạng BA deliverable — không chỉ là implem
 
 ### Clarify formula với Dev
 
-Walkthrough từng formula với Dev trong một session riêng — bao gồm Edge Cases như Cross Margin liquidation (phụ thuộc vào toàn bộ equity của account, không chỉ position margin) và sự khác nhau giữa ROE và PnL percentage. Ngăn hiểu nhầm trong quá trình implementation.
+Walkthrough từng formula với Dev trong một session riêng — bao gồm Edge Cases liên quan đến sự khác biệt giữa Isolated và Cross Margin, và cách phân biệt ROE với PnL percentage. Ngăn hiểu nhầm trong quá trình implementation.
 
 ### Hỗ trợ QA kiểm tra formula
 
@@ -153,12 +153,10 @@ Phối hợp với Design về hai quyết định UX: tính toán real-time (kh
 
 ## Kỹ năng thể hiện qua dự án
 
-- Phân tích user feedback qua CS team
-- Nghiên cứu competitor và benchmark tính năng
-- Định nghĩa yêu cầu formula
-- Thiết kế User Flow
-- Hỗ trợ QA và formula validation
-- Nghiên cứu trading domain
+- CS interview để xác nhận user need thay vì dựa trên giả định của Product
+- Competitor benchmark (Binance / OKX / Bybit) để define scope và UX pattern
+- Formula definition là BA deliverable — có thể test và verify bởi QA
+- Domain research nhanh khi chuyển từ vai trò marketing sang BA trading
 
 <Note>
   **Dự án thực tế tại Nami Innovation.** Formula implementation chi tiết và Business Rules nội bộ không được công bố để bảo vệ thông tin công ty. Trang này là case study tóm tắt ở cấp độ portfolio.

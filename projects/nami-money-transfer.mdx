@@ -149,7 +149,7 @@ Phạm vi công việc trong dự án này gồm:
 - Người dùng có Futures position đang mở → available balance bị giảm theo locked margin
 - Số tiền transfer bằng toàn bộ available balance → được phép
 - Submission trùng lặp → request thứ hai bị từ chối
-- Debit thành công nhưng credit thất bại → rollback được kích hoạt; incident được log; người dùng được thông báo
+- Debit thành công nhưng credit thất bại → hệ thống cần xử lý nhất quán; người dùng được thông báo về trạng thái giao dịch
 - Người dùng thoát app trước màn hình kết quả → trạng thái transfer có thể tra cứu khi quay lại
 
 ---
@@ -169,7 +169,7 @@ Phạm vi công việc trong dự án này gồm:
 
 ### Phối hợp với Engineering
 
-Làm rõ sớm yêu cầu tính available balance — cụ thể là validation phải gọi Futures engine để lấy locked margin trước bước validate. Phát hiện điều này trước khi phát triển bắt đầu tránh được thay đổi muộn yêu cầu rework đáng kể.
+Làm rõ sớm yêu cầu tính available balance — phân biệt rõ available balance và total balance trong spec giúp Dev tránh implement sai validation logic. Phát hiện điều này trước khi phát triển bắt đầu tránh được thay đổi muộn yêu cầu rework đáng kể.
 
 ### Hỗ trợ QA
 
@@ -201,12 +201,10 @@ Dự án bao gồm review launch communication với Brand và session định n
 
 ## Kỹ năng thể hiện qua dự án
 
-- Làm rõ yêu cầu và ownership end-to-end tính năng
-- Định nghĩa validation rule
-- Thiết kế User Flow
-- Phân tích Edge Cases
-- Phối hợp với QA và lead UAT
-- Tư duy domain fintech transaction
+- Transfer rule matrix — định nghĩa rõ đường được phép/bị block và validation logic cho từng trường hợp
+- Available vs. total balance — phân biệt sớm để tránh validate sai trong sản phẩm fintech
+- End-to-end ownership: từ PRD, Edge Case spec đến UAT sign-off
+- Ownership BA đầu tay trong domain fintech transaction
 
 <Note>
   **Dự án thực tế tại Nami Innovation.** Transfer logic, validation rules và chi tiết hệ thống nội bộ không được công bố để bảo vệ thông tin công ty. Trang này là case study tóm tắt ở cấp độ portfolio.
