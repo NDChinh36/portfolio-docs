@@ -176,7 +176,7 @@ flowchart TD
     D --> E[Chọn Order Type\nLimit / Market / Stop-Limit]
     E --> F[Nhập giá + quantity\nhoặc % balance]
     F --> G[Preview real-time:\nMargin required · Est. Liq. Price · Fee]
-    G --> H{Leverage ≥ 20x?}
+    G --> H[Leverage ≥ 20x?]
     H -- Có --> I[Mandatory confirmation popup\nCheckbox: Tôi hiểu rủi ro]
     I --> J[Confirm & Submit]
     H -- Không --> J
