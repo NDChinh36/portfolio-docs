@@ -1,234 +1,226 @@
 ---
 title: "Reward Program Feature"
-description: "Case Study — BA tại Nami Innovation | 10/2024 – 6/2025"
+description: "Real Project — Business Analyst · Nami Innovation · 2024–2025"
 icon: "gift"
 ---
 
 # Reward Program Feature
 
 <Info>
-  **Dự án thực tế — Nami Innovation** · Business Analyst  
-  **Thời gian:** 10/2024 – 6/2025 · **Platform:** Web / Mobile  
-  **Team:** ~20 người (BA, Dev, QA, UI/UX, Content, CS, BI, Growth)
+  **Real Project — Nami Innovation** · Business Analyst  
+  **Timeline:** 10/2024 – 6/2025 · **Platform:** Web / Mobile · **Team:** ~20 people
 </Info>
 
----
-
-## Kết quả dự án
-
-<CardGroup cols={2}>
-  <Card title="20,000+" icon="users">
-    User engagement trong các chiến dịch reward
-  </Card>
-  <Card title="60%+" icon="arrow-trend-up">
-    Trading volume tăng trong giai đoạn triển khai
-  </Card>
-</CardGroup>
+<Note>
+  This case is based on my real work as a Business Analyst at Nami Innovation. Sensitive business rules, campaign details and internal metrics have been generalized or anonymized.
+</Note>
 
 ---
 
-## Bối cảnh & Vấn đề
+## Project Overview
 
-Nami Innovation cần một **hệ thống reward linh hoạt** để thúc đẩy user engagement và trading volume thông qua các chiến dịch khuyến mãi. Trước khi có hệ thống này, mỗi campaign phải được hardcode riêng → tốn chi phí dev, thời gian ra market chậm, khó điều chỉnh logic khi cần.
-
-**Yêu cầu cốt lõi:**
-- Hỗ trợ nhiều loại reward: token airdrop, voucher giảm phí, cashback, unlock feature
-- Trigger dựa trên hành động người dùng: giao dịch đủ volume, nạp tiền lần đầu, refer bạn, login streak
-- Cho phép Growth team tự cấu hình campaign mà không cần dev
-- Track real-time user progress và phát reward tự động
+- **Role:** Business Analyst
+- **Company:** Nami Innovation
+- **Timeline:** 10/2024 – 6/2025
+- **Platform:** Web / Mobile
+- **Domain:** Growth / Reward System
+- **Team:** Product, Growth/MKT, Content, CS, BI, Dev, QA, UI/UX
 
 ---
 
-## Vai trò & Trách nhiệm BA
+## Outcome
 
-<AccordionGroup>
-  <Accordion title="1. Phối hợp PO & Growth/MKT — Định nghĩa Reward Logic" icon="people-group">
+- 20,000+ user engagement across reward campaigns
+- 60%+ trading volume increase during active campaign periods
 
-    Đây là dự án hiếm hoi mà BA phải cầu nối giữa **nhiều stakeholder phức tạp** cùng lúc:
+> Outcome reflects team performance. BA contribution focused on defining campaign logic, reward rules, tracking structure and delivery support — not individual ownership of business metrics.
 
-    | Stakeholder | Nhu cầu chính | Conflict cần giải quyết |
-    |---|---|---|
-    | **Growth Team** | Muốn campaign cực kỳ linh hoạt, nhiều loại reward | Yêu cầu quá phức tạp, dev không estimate được |
-    | **Engineering** | Muốn hệ thống đơn giản, ít edge case | Lo ngại về performance khi user lớn |
-    | **BI Team** | Cần đủ data để measure ROI của campaign | Yêu cầu log event chi tiết |
-    | **CS Team** | Cần giải thích cho user khi có dispute | Cần UI hiển thị rõ điều kiện reward |
+---
 
-    **Cách tiếp cận:** Tổ chức workshop riêng với từng nhóm → tổng hợp → ưu tiên theo business impact → viết PRD với clear prioritization.
-  </Accordion>
+## Business Context
 
-  <Accordion title="2. Reward Logic Design — Conditions & Limits" icon="sliders">
+Nami Innovation needed a **flexible reward system** to support user engagement campaigns driven by in-app actions — trading volume, deposits, referrals and login streaks.
 
-    **Các loại Trigger được định nghĩa:**
+The challenge was not just distributing rewards. It required clear eligibility conditions, budget controls, abuse prevention and post-launch tracking to evaluate and refine campaign performance.
 
-    | Trigger Type | Ví dụ | Ghi chú |
-    |---|---|---|
-    | **Volume-based** | Giao dịch ≥ $100 trong 7 ngày | Cộng dồn; không tính GD bị cancel |
-    | **Event-based** | Nạp tiền lần đầu; KYC hoàn thành | One-time; không repeat |
-    | **Streak-based** | Login 7 ngày liên tiếp | Reset nếu bỏ 1 ngày |
-    | **Referral** | Invite friend hoàn thành KYC + GD đầu tiên | Require chain action |
+Before this system, each campaign was hardcoded separately — slow to ship, expensive to change and hard to measure consistently.
 
-    **Reward Limits:**
-    - Tối đa reward per user per campaign
-    - Budget cap toàn campaign (tổng reward không vượt ngân sách)
-    - Cooldown giữa các lần nhận reward (chống farm)
-    - Blacklist users (accounts nghi gian lận)
+---
 
-    **Automation Rules:**
-    - Reward phát tự động ngay khi đủ điều kiện hoặc batch hàng ngày (tuỳ config)
-    - Expiry ngày nhận reward (ví dụ: voucher hết hạn sau 7 ngày)
-    - Rollback reward nếu GD bị reverse trong vòng 24h
-  </Accordion>
+## My Role as BA
 
-  <Accordion title="3. PRD — Flow & Experience từng chương trình" icon="file-lines">
+- Worked with PO and Growth/MKT to clarify campaign goals and reward conditions
+- Defined trigger logic, eligibility rules, budget caps, limits and automation behavior
+- Coordinated requirements across Growth, Engineering, QA, Content, CS and BI
+- Wrote campaign PRD and supported functional specifications
+- Tracked campaign performance data after launch and refined logic based on results
 
-    Mỗi loại campaign có PRD riêng vì UX và logic khác nhau đáng kể:
+---
 
-    **PRD cấu trúc:**
-    - Campaign overview + business objective
-    - Eligibility rules (ai được tham gia)
-    - Progress tracking UI: progress bar, milestone counter, countdown timer
-    - Reward display: loại reward, giá trị, cách nhận
-    - History & transparency: user thấy tại sao nhận / không nhận được reward
-    - Edge cases: claim tất cả cùng lúc, claim khi budget hết, expire notification
+## BA Problems to Solve
 
-    **UI Components định nghĩa:**
-    - Campaign card trên home page (thumbnail, title, CTA, deadline)
-    - Campaign detail page (progress tracker, conditions, rewards list)
-    - Reward inbox (danh sách reward đã nhận, trạng thái)
-    - Notification push khi đủ điều kiện nhận reward
-  </Accordion>
+- **Multi-stakeholder conflicts** — Growth wanted maximum campaign flexibility; Engineering wanted simple, predictable logic; CS needed to explain reward behavior to users; BI needed trackable events. Each team had different expectations.
+- **Rule clarity for Dev and QA** — Campaign conditions varied across trigger types. Without a structured spec, each team would interpret rules differently.
+- **Abuse prevention** — Reward systems attract unintended behavior. Anti-abuse rules needed to be defined before development, not patched after launch.
+- **Post-launch iteration** — Growth needed tracking metrics to evaluate campaigns and request logic changes based on real data.
 
-  <Accordion title="4. Data Tracking & Tinh chỉnh Logic" icon="chart-bar">
+---
 
-    Sau khi launch, tôi làm việc sát với BI Team để phân tích:
+## BA Approach
 
-    | Metric theo dõi | Tool | Tần suất review |
-    |---|---|---|
-    | Funnel completion rate (tham gia → nhận reward) | Metabase | Hàng ngày trong 2 tuần đầu |
-    | Drop-off point trong campaign | Metabase | Weekly |
-    | Reward cost vs. volume increment | Excel | Weekly |
-    | Abuse pattern (user farm reward) | BI Dashboard | Real-time alert |
+### Stakeholder workshops before spec
 
-    **Điều chỉnh dựa trên data:**
-    - Campaign A: drop-off cao ở milestone 3 → giảm yêu cầu từ 5 GD xuống 3 GD → completion rate tăng 35%
-    - Campaign B: budget hết trong 2 ngày (dự kiến 14 ngày) → thêm cap per user + daily limit
-    - Phát hiện pattern bot farming → thêm rule: account < 7 ngày tuổi không eligible
-  </Accordion>
-</AccordionGroup>
+Before writing any PRD, I ran separate sessions with each stakeholder group to surface needs and constraints. I synthesized the outputs into a prioritized PRD with clear scope and trade-off rationale.
+
+### Configurable campaign logic
+
+I defined campaign logic as configurable rules rather than hardcoded per-campaign behavior — making future campaign launches faster and easier to maintain.
+
+### Anti-abuse rules from the start
+
+I included anti-abuse rules in the first PRD version, working with the Risk team during elicitation — before development began, not after the first abuse pattern was detected.
+
+---
+
+## Core Campaign Business Rules
+
+| Rule | Behavior |
+|---|---|
+| **Trigger eligibility** | User must complete a qualifying in-app action before reward is issued |
+| **Campaign budget cap** | Total reward value cannot exceed the campaign-level budget |
+| **Per-user cap** | Each user has a maximum reward limit per campaign |
+| **Trigger types** | Volume-based, Event-based, Streak-based, Referral — each with separate logic |
+| **Distribution mode** | Configurable per campaign: immediate (for event-based) or daily batch (for volume-based) |
+| **Abuse prevention** | New accounts, suspicious patterns and duplicate actions are excluded |
+| **Reward expiry** | Unclaimed rewards expire after a configurable period |
 
 ---
 
 ## Key BA Decisions
 
-<AccordionGroup>
-<Accordion title="Decision 1 — Tách trigger logic thành 4 loại độc lập">
+### Decision 1 — Four Separate Trigger Types Instead of One Generic Engine
 
-| | |
-|---|---|
-| **Context** | Growth muốn một hệ thống campaign "linh hoạt tối đa" — ban đầu đề xuất engine generic xử lý mọi loại condition. |
-| **Problem / Risk** | Generic engine không thể define rõ ràng edge case cho từng trigger: streak reset khi miss 1 ngày khác hoàn toàn rollback volume khi GD bị cancel. Mixing logic → bug khó detect, Growth khó config đúng. |
-| **BA Recommendation** | Tách thành 4 loại trigger với spec riêng biệt: **Volume-based** (cộng dồn, exclude cancelled tx), **Event-based** (one-time, không repeat), **Streak-based** (reset nếu bỏ ngày), **Referral** (chain action: invite + KYC + GD đầu tiên của người được giới thiệu). |
-| **Trade-off** | Cần build 4 sub-engine thay vì 1 engine generic. Dev estimate tăng ~30% nhưng behavior của mỗi loại trở nên predictable và testable độc lập. |
-| **Expected Impact** | Mỗi trigger type có edge case rõ ràng; Growth team tự config không bị nhầm lẫn giữa các loại; QA có thể test từng engine độc lập. |
+**Context:** Growth initially proposed a single generic campaign engine to handle any condition type.
 
-</Accordion>
+**Problem / Risk:** A generic engine cannot clearly define edge cases for different trigger behaviors. Streak reset logic differs completely from volume rollback on cancelled transactions. Mixed logic makes bugs hard to detect and Growth difficult to configure correctly.
 
-<Accordion title="Decision 2 — Anti-abuse rules phải thiết kế từ PRD đầu tiên, không phải patch sau launch">
+**BA Recommendation:** Define four separate trigger types — Volume-based, Event-based, Streak-based and Referral — each with its own spec and edge case handling.
 
-| | |
-|---|---|
-| **Context** | Growth team ban đầu chỉ focus vào happy path. Anti-abuse được đề xuất xử lý sau launch nếu phát sinh vấn đề. |
-| **Problem / Risk** | Reward farming xảy ra tức thì sau launch — khi phát hiện, reward đã phát và không thể thu hồi. Patch sau khi campaign đang chạy tạo UX inconsistency và user trust issue. |
-| **BA Recommendation** | Đưa anti-abuse rules vào scope MVP: account age minimum (≥7 ngày), cooldown giữa các lần nhận reward, budget cap per user và toàn campaign, blacklist mechanism. Làm việc trực tiếp với Risk Team trong giai đoạn elicitation, không chờ đến QA. |
-| **Trade-off** | Dev scope tăng, timeline dài hơn ~1 tuần. Risk Team phải participate sớm dù dự án thuộc Growth domain. |
-| **Expected Impact** | Không có farming incident khi launch. Budget cap ngăn campaign "hết tiền" trong 2 ngày thay vì 14 ngày theo kế hoạch (thực tế đã xảy ra với Campaign B trước khi có cap). |
+**Trade-off:** Requires building four sub-engines instead of one. Dev estimate increased, but each trigger type's behavior became predictable and independently testable.
 
-</Accordion>
-
-<Accordion title="Decision 3 — Distribution mode là config của Growth, không phải technical default">
-
-| | |
-|---|---|
-| **Context** | Engineering đề xuất chọn một mode distribution cố định (batch hàng ngày) để đơn giản hóa implementation. Growth chưa có quan điểm rõ ràng. |
-| **Problem / Risk** | Batch daily phù hợp với volume-based campaign nhưng tệ cho event-based (user hoàn thành KYC không thấy reward ngay → giảm motivation tại đúng thời điểm hành động). |
-| **BA Recommendation** | Cho phép Growth config per campaign: `distribution_mode = immediate / daily_batch`. BA spec rõ trade-off của từng mode để Growth chủ động chọn phù hợp với campaign type, không phải chọn theo mặc định kỹ thuật. |
-| **Trade-off** | Cần build và test cả 2 mode. Dev phức tạp hơn nhưng chỉ là config switch, không phải 2 hệ thống khác nhau. |
-| **Expected Impact** | Growth linh hoạt thiết kế trải nghiệm phù hợp. Event-based campaigns (KYC, first deposit) dùng immediate để maximize motivation tại thời điểm user vừa đạt điều kiện. |
-
-</Accordion>
-
-</AccordionGroup>
+**Expected Impact:** Clearer QA coverage, fewer configuration errors, more maintainable system.
 
 ---
 
-## BA Deliverables
+### Decision 2 — Budget Cap and Per-user Cap from MVP
 
-| Deliverable | Loại tài liệu | Người đọc chính |
-|---|---|---|
-| **PRD — Campaign Engine & Logic** | PRD | Dev, QA |
-| **Campaign Type Spec** (4 loại trigger, edge cases riêng từng loại) | Reference Spec | Dev, Growth |
-| **Anti-Abuse Rules Document** | Security Spec | Risk Team, Dev |
-| **Data Tracking Plan** (events, funnels, Metabase dashboard) | Analytics Spec | BI, Growth |
-| **Campaign User Guide** (hướng dẫn cho CS Team) | User Documentation | CS Team |
-| **UAT Scenarios** | Test Plan | QA, BA |
+**Context:** Early campaign discussions focused on reward distribution without explicit budget controls.
 
----
+**Problem / Risk:** Without caps, reward campaigns could exhaust their budget in days instead of the planned weeks. Post-launch data showed an early campaign depleted budget in 2 days — expected to run for 14.
 
-## Điểm khác biệt so với feature thông thường
+**BA Recommendation:** Define both campaign-level total budget cap and per-user reward cap in the first PRD version.
 
-<CardGroup cols={2}>
-  <Card title="Multi-stakeholder complexity" icon="sitemap">
-    Reward Program liên quan đến 8 team khác nhau — nhiều nhất trong các dự án tôi từng làm. Kỹ năng **stakeholder management và conflict resolution** là yếu tố quyết định.
-  </Card>
-  <Card title="Data-driven iteration" icon="rotate">
-    Dự án này có vòng lặp ngắn: launch → measure → adjust → re-launch. BA phải sẵn sàng update PRD nhanh dựa trên real data, không chỉ dựa trên spec ban đầu.
-  </Card>
-</CardGroup>
+**Trade-off:** Some users may stop receiving rewards after reaching the per-user cap.
+
+**Expected Impact:** Better financial control over campaign costs and reduced incentive for individual reward farming.
 
 ---
 
-## Thách thức & Bài học
+### Decision 3 — Distribution Mode as Campaign Configuration
 
-<CardGroup cols={2}>
-  <Card title="Thách thức" icon="triangle-exclamation">
-    Growth team liên tục muốn thêm tính năng vào campaign đang chạy (scope creep). Phải thiết lập quy trình change request rõ ràng: mọi thay đổi sau khi dev bắt đầu cần estimate lại và approve từ PO.
-  </Card>
-  <Card title="Bài học" icon="lightbulb">
-    Với hệ thống reward, **anti-abuse rules phải được thiết kế từ đầu** — không phải thêm sau. Khi user farm được reward, thiệt hại xảy ra trước khi phát hiện. BA cần làm việc với Risk Team ngay trong giai đoạn elicitation.
-  </Card>
-</CardGroup>
+**Context:** Engineering proposed a fixed daily batch distribution mode for simplicity.
 
----
+**Problem / Risk:** Daily batch works for volume-based campaigns but is poor for event-based ones. A user completing KYC should receive their reward immediately — not the next day — to maximize motivation at the moment of action.
 
-## Skills thể hiện trong dự án này
+**BA Recommendation:** Allow Growth to configure distribution mode per campaign: immediate or daily batch. Spec includes trade-offs for each mode so Growth can decide based on campaign type.
 
-<CardGroup cols={3}>
-  <Card title="Stakeholder Mgmt" icon="people-group">
-    8 teams, cross-functional alignment
-  </Card>
-  <Card title="Data Analysis" icon="chart-bar">
-    Metabase · BI Dashboard · Funnel analysis
-  </Card>
-  <Card title="BA Artifacts" icon="file-lines">
-    PRD · Campaign Logic Doc · Data Tracking Plan
-  </Card>
-</CardGroup>
+**Trade-off:** Requires building and testing both modes.
+
+**Expected Impact:** Event-based campaigns deliver rewards at the moment of action; volume-based campaigns batch efficiently.
 
 ---
 
-## Visual Artifact — Campaign Configuration Dashboard
+## Main Flow
 
-*Mockup màn hình Campaign Configuration Panel — nơi Growth team tự cấu hình reward campaign mà không cần dev. Minh họa 3 Key BA Decisions: (A) 4 trigger types tách biệt, (B) distribution mode config, (C) anti-abuse rules bắt buộc, (D) budget cap real-time.*
+1. Growth team defines campaign goal, reward type and eligibility criteria
+2. BA clarifies trigger conditions, limits and anti-abuse rules
+3. System tracks qualifying user actions
+4. System checks eligibility, campaign budget and anti-abuse rules
+5. If eligible, reward is calculated and queued
+6. Reward is distributed based on configured distribution mode
+7. BI and Growth track campaign performance metrics
+8. Campaign logic is refined based on post-launch data if needed
 
-<iframe
-  src="/artifacts/reward/campaign-config-dashboard.html"
-  width="100%"
-  height="600"
-  style="border:none;border-radius:8px;"
-></iframe>
+---
+
+## Important Edge Cases
+
+- Campaign budget exhausted mid-campaign → users who have not yet received reward are notified
+- User reaches per-user cap → no additional reward issued even if qualifying action is completed
+- Action completed after campaign ends → reward not issued; clear reason displayed to user
+- Duplicate qualifying action submission → system deduplicates; only one reward issued
+- Streak broken by one missed day → streak resets; user notified
+- Referral: referred user does not complete required action → no reward for referrer
+
+---
+
+## Selected BA Deliverables
+
+- **Campaign PRD** — goals, rules, trigger logic, reward behavior and edge cases
+- **Trigger Type Spec** — four trigger types with separate logic and edge case handling
+- **Reward Limits Table** — budget cap, per-user cap and expiry rules
+- **Anti-abuse Rule Document** — exclusion criteria and fraud prevention rules
+- **Campaign Tracking Plan** — events, funnels and Metabase dashboard structure
+- **User Guide** — CS-facing documentation explaining reward conditions to users
+- **UAT Checklist**
+
+---
+
+## Collaboration with Dev / QA / Growth / CS / BI
+
+### Align with Engineering
+
+I organized separate requirement sessions for each trigger type. This let Engineering estimate and build each module independently, reducing coordination risk and making QA coverage clearer.
+
+### Working with Growth
+
+Growth frequently requested scope changes during active campaigns. I established a change request process: any change after development starts requires re-estimation and PO approval before implementation.
+
+### Post-launch data tracking
+
+I worked with BI to define trackable events and dashboard structure before launch. After campaigns ran, I used funnel data to propose logic adjustments — for example, reducing milestone requirements when drop-off data showed users abandoning at a specific step.
+
+---
+
+## Validation trước Release
+
+- Reviewed campaign trigger logic end-to-end with QA
+- Validated budget cap and per-user cap behavior
+- Confirmed anti-abuse rule coverage
+- Tested reward distribution timing for both immediate and batch modes
+- Supported UAT sign-off and CS guide preparation
+
+---
+
+## Lessons Learned
+
+- **Growth features need business rules as much as product features** — without clear rules, Growth misconfigures campaigns and abuse scenarios emerge.
+- **Anti-abuse rules must be designed upfront** — adding them after launch means reward has already been distributed and cannot be recalled.
+- **Data-driven iteration requires upfront tracking design** — defining events and dashboards before launch made post-launch analysis much faster and the feedback loop much tighter.
+
+---
+
+## Skills Demonstrated
+
+- Requirement clarification and multi-stakeholder alignment
+- Campaign logic and business rule definition
+- Anti-abuse and risk thinking
+- Data-informed iteration
+- Cross-functional coordination (8+ stakeholders)
+- UAT support
 
 ---
 
 <Note>
-  Đây là **dự án thực tế tại Nami Innovation**. Các chi tiết về business rules, số liệu nội bộ và campaign logic không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp độ case study.
+  **Real project at Nami Innovation.** Specific campaign metrics, reward values and internal business rules have not been disclosed to protect company information. The above is a case study-level summary.
 </Note>
