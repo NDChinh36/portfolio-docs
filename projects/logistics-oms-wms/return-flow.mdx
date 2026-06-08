@@ -122,9 +122,11 @@ Warehouse Supervisor assign task inspection cho Warehouse Staff. Staff tiến h�
 
 Hàng đáp ứng đủ điều kiện restock theo BR-RETURN-01. WMS tăng `available_qty` cho SKU tương ứng, ghi `restock_record` với `return_id`, `restock_at`, `restocked_by`. Seller được thông báo số lượng hàng đã được nhập lại tồn kho. Đây là kết quả tích cực nhất của một return.
 
-#### QUARANTINED — Terminal State
+#### QUARANTINED — Trạng thái trung gian
 
-Hàng không đủ điều kiện restock ngay nhưng chưa đủ cơ sở để hủy. Hàng được chuyển vào khu cách ly (quarantine zone) riêng biệt trong kho, gắn nhãn với `return_id` và `quarantine_date`. Seller được thông báo và có 14 ngày để quyết định phương án xử lý. Hàng trong quarantine không được tính vào tồn kho khả dụng.
+Hàng không đủ điều kiện restock ngay nhưng chưa đủ cơ sở để hủy. Hàng được chuyển vào khu cách ly (quarantine zone) riêng biệt trong kho, gắn nhãn với `return_id` và `quarantine_date`. Seller được thông báo và có **14 ngày** để quyết định phương án xử lý.
+
+**Đây không phải terminal state.** Hàng trong quarantine sẽ chuyển sang `DISPOSED` khi: seller xác nhận hủy, hoặc Operation Manager quyết định sau khi hết thời hạn phản hồi (xem EC-03 và BR-RETURN-03). Hàng trong quarantine không được tính vào tồn kho khả dụng.
 
 #### DISPOSED — Terminal State
 
