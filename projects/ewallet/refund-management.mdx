@@ -127,7 +127,7 @@ stateDiagram-v2
 
 | Rule ID | Trigger | Điều kiện | Hành vi | Owner |
 |---|---|---|---|---|
-| **BR-REFUND-01** | Refund request được tạo | Amount < 500,000 VND | Hệ thống tự động chuyển sang `AUTO_APPROVED` → `EXECUTING` mà không cần phê duyệt thủ công | Refund Service |
+| **BR-REFUND-01** | Refund request được tạo | Amount < 500,000 VND **và** chưa vượt ngưỡng velocity: tối đa **3 auto-refund/user/ngày**, tổng cộng ≤ **1,000,000 VND/user/ngày** | Hệ thống tự động chuyển sang `AUTO_APPROVED` → `EXECUTING` không cần phê duyệt thủ công. Nếu vượt ngưỡng velocity (dù amount < 500K) → chuyển sang `PENDING_APPROVAL`. Velocity check nhằm ngăn tấn công inject event tự động | Refund Service |
 | **BR-REFUND-02** | Refund request được tạo | Amount ≥ 500,000 VND | Bắt buộc đi qua `PENDING_APPROVAL`; Finance Officer phê duyệt (500K–5M VND); dual approval cho > 5M VND | Finance Officer / Risk Officer |
 | **BR-REFUND-03** | Refund request được khởi tạo | Có refund request nào đang tồn tại cho cùng `original_transaction_id` | Từ chối tạo mới; trả về `409 Conflict`; ghi log. **Idempotency**: một giao dịch gốc chỉ được phép có một refund request active tại một thời điểm | Refund Service |
 | **BR-REFUND-04** | Bước EXECUTING hoàn thành | Gateway xác nhận credit thành công | Cập nhật trạng thái về `REFUNDED`; ghi nhận `refunded_at`; gửi thông báo cho user trong vòng 60 giây | Refund Service |
