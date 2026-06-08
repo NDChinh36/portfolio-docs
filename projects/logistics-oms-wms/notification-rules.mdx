@@ -1,0 +1,284 @@
+---
+title: "Quy tắc thông báo & Cảnh báo"
+description: "Notification & Alert Rules — Ma trận thông báo theo vai trò, sự kiện và kênh gửi"
+icon: "bell"
+---
+
+<Note>
+**Practice Case Study — Không phải dự án thật**
+
+Tài liệu này được viết cho mục đích luyện tập BA trong domain Logistics/OMS-WMS. Mọi tên công ty, dữ liệu và scenario đều là giả định. Không sử dụng làm tài liệu tham khảo cho dự án thực tế.
+</Note>
+
+---
+
+# Quy tắc thông báo & Cảnh báo
+
+## 1. Bối cảnh & Vấn đề
+
+VietFulfill xử lý 8.000–12.000 đơn hàng mỗi ngày từ hàng trăm seller trên nhiều kênh. Trong mô hình vận hành cũ, thông tin được truyền đi qua Zalo group và Excel — không có cấu trúc, không có audit trail, không có SLA. Hệ quả trực tiếp:
+
+- **Seller** không biết đơn đang bị kẹt ở đâu, không nhận được thông báo khi có exception cần xử lý.
+- **Operation Manager (OM)** chỉ biết SLA breach sau khi đã breach — không có cảnh báo sớm.
+- **CS** nhận thông tin muộn, xử lý exception chậm (SLA resolution trung bình 6.2 giờ).
+- **Khách hàng** không có thông tin tracking, liên tục hỏi CS, gây tăng tải không cần thiết.
+
+Tài liệu này định nghĩa **ai nhận thông báo gì, khi nào, qua kênh nào**, và các Business Rules điều phối toàn bộ hệ thống notification của VietFulfill OMS/WMS Platform.
+
+---
+
+## 2. Actors nhận thông báo
+
+| Actor | Vai trò | Quan tâm chính |
+|---|---|---|
+| **Seller** | Chủ hàng, sử dụng Seller Portal | Trạng thái đơn hàng của mình, exception cần can thiệp, hàng hoàn về kho |
+| **Operation Manager (OM)** | Quản lý vận hành kho toàn bộ | SLA breach, exception quá hạn, overload kho, carrier performance |
+| **Warehouse Supervisor** | Quản lý ca kho, phân công nhân lực | Exception picking/packing, cancel request cần duyệt, overload ca |
+| **CS (Customer Service)** | Hỗ trợ khách hàng và seller | Exception cần xử lý, giao thất bại, carrier pickup thất bại, hàng hỏng |
+| **End Customer (Khách hàng)** | Người nhận hàng cuối | Trạng thái giao hàng, giao thành công / thất bại |
+
+<Info>
+Seller chỉ nhận thông báo liên quan đến đơn hàng của chính mình (data isolation — xem NR-03). End Customer nhận thông báo qua SMS/Zalo OA về trạng thái giao hàng — không có tài khoản trên hệ thống VietFulfill.
+</Info>
+
+---
+
+## 3. Kênh thông báo
+
+| Kênh | Dùng khi | Ưu tiên |
+|---|---|---|
+| **In-app notification** (Seller Portal / Internal Dashboard) | Thông báo thông thường cho người dùng đang online; mọi thông báo đều có bản in-app | Thấp – trung bình |
+| **Email** | Thông báo chi tiết, cần lưu lại; tóm tắt exception; báo cáo SLA | Trung bình |
+| **SMS / Zalo OA** | Thông báo khẩn cho End Customer; thông báo cần đọc ngay không cần đăng nhập | Cao |
+| **Webhook (Seller)** | Đẩy event real-time cho hệ thống kỹ thuật phía Seller; tích hợp tự động | Cao (technical) |
+| **System alert** (Internal Dashboard) | Cảnh báo vận hành cho OM và Supervisor; không phụ thuộc giờ yên tĩnh | Rất cao (Critical) |
+
+<Warning>
+System alert trên Internal Dashboard hoạt động 24/7 và không áp dụng giờ yên tĩnh (xem NR-02, NR-04). Đây là kênh duy nhất đảm bảo OM và Supervisor nhận cảnh báo Critical ngay cả ngoài giờ làm việc.
+</Warning>
+
+---
+
+## 4. Ma trận thông báo (Notification Matrix)
+
+### Nhóm A — Thông báo theo trạng thái đơn hàng
+
+| Event | Người nhận | Kênh | Nội dung thông báo | Trigger | Ghi chú |
+|---|---|---|---|---|---|
+| Đơn được tạo thành công | Seller | In-app, Webhook | "Đơn [VF-2026-XXXXXX] đã được tạo và đang chờ xác thực." | OMS tạo record, chuyển sang `ORDER_CREATED` | Webhook gửi đồng thời với in-app |
+| Đơn vượt qua validation, chờ phân bổ hàng | Seller | In-app, Webhook | "Đơn [ID] đã xác thực thành công, đang kiểm tra tồn kho." | OMS chuyển sang `AWAITING_STOCK_CHECK` | Không gửi SMS — không đủ quan trọng |
+| Đơn chuyển sang PICKING | Seller | In-app, Webhook | "Đơn [ID] đang được xử lý tại kho — bắt đầu lấy hàng." | WMS chuyển `fulfillment_status` sang `PICKING` | Thông báo để Seller không cancel vô ý |
+| Đơn giao cho carrier (HANDED_OVER) | Seller, End Customer | Seller: In-app + Webhook; Khách: SMS/Zalo OA | Seller: "Đơn [ID] đã bàn giao [Carrier]. Mã vận đơn: [tracking_code]." Khách: "Đơn hàng của bạn đã được giao cho [GHN/GHTK...]. Theo dõi: [link]" | OMS nhận xác nhận handover, chuyển sang `HANDED_OVER` | Đây là lần đầu End Customer nhận thông báo |
+| Đơn giao thành công (DELIVERED) | Seller, End Customer | Seller: In-app + Webhook + Email; Khách: SMS/Zalo OA | Seller: "Đơn [ID] đã giao thành công lúc [HH:MM DD/MM]. Khách đã ký nhận." Khách: "Đơn hàng đã giao thành công! Cảm ơn bạn đã mua sắm." | Carrier webhook cập nhật `DELIVERED` về OMS | Email cho Seller kèm POD nếu có |
+| Đơn giao thất bại (FAILED_DELIVERY) | Seller, CS, End Customer | Seller: In-app + Webhook + Email; CS: In-app; Khách: SMS/Zalo OA | Seller: "Đơn [ID] giao thất bại lần [X/3]. Lý do: [reason]. CS đang xử lý." CS: "Đơn [ID] giao thất bại — kiểm tra và liên hệ khách." Khách: "Giao hàng không thành công — chúng tôi sẽ thử lại hoặc liên hệ bạn." | Carrier webhook `FAILED_DELIVERY` về OMS | Gửi mỗi lần thất bại, tối đa 3 lần theo BR-DELIVER-05 |
+| Đơn bị cancel | Seller | In-app, Webhook, Email | "Đơn [ID] đã bị huỷ lúc [timestamp]. Lý do: [reason]. Tồn kho đã được hoàn trả." | OMS chuyển sang `CANCELLED` | Email kèm chi tiết lý do cancel |
+| Hàng hoàn về kho (RETURNED_TO_WAREHOUSE) | Seller, CS | Seller: In-app + Webhook + Email; CS: In-app | Seller: "Đơn [ID] — hàng đã hoàn về kho lúc [timestamp]. Vui lòng xử lý trong 14 ngày." CS: "Đơn [ID] đã hoàn kho — chờ Seller xử lý." | WMS scan nhận hàng hoàn, `RETURNED_TO_WAREHOUSE` | Email nhắc Seller xử lý hàng tồn |
+
+---
+
+### Nhóm B — Thông báo Exception
+
+| Event | Người nhận | Kênh | Nội dung thông báo | Trigger | Ghi chú |
+|---|---|---|---|---|---|
+| Đơn validation fail (VALIDATION_FAILED) | Seller | In-app, Webhook, Email | "Đơn [ID] không hợp lệ. Lỗi: [error_detail]. Vui lòng tạo lại đơn với thông tin đã chỉnh sửa." | OMS phát hiện lỗi validation, chuyển `VALIDATION_FAILED` | Liệt kê rõ từng lỗi; Seller không thể reactivate đơn này |
+| Hết hàng thực tế (OOS) sau khi đã allocated | Seller, CS | Seller: In-app + Webhook + Email; CS: In-app + System alert | Seller: "Đơn [ID] — SKU [sku_code] hết hàng thực tế tại kho. CS sẽ liên hệ bạn trong 2 giờ." CS: "[EXCEPTION EXC-OUT-OF-STOCK] Đơn [ID] — SKU [sku_code] không có hàng tại bin. SLA: 2 giờ." | WMS phát hiện OOS khi picking, tạo `EXC-OUT-OF-STOCK` | SLA xử lý 2 giờ; CS phải liên hệ Seller |
+| SKU mismatch khi picking | Warehouse Supervisor | In-app + System alert | "[EXCEPTION EXC-SKU-MISMATCH] Đơn [FUL-XXXXXX] — SKU scan [scanned_sku] không khớp yêu cầu [expected_sku]. Bin: [bin_location]. SLA: 1 giờ." | WMS phát hiện SKU scan khác pick list | Picking bị block cho đến khi Supervisor xử lý |
+| Barcode scan fail sau 3 lần | Warehouse Supervisor | In-app + System alert | "[EXCEPTION EXC-BARCODE-ERR] Đơn [FUL-XXXXXX] — Không đọc được barcode sau 3 lần thử. Cần kiểm tra vật lý. SLA: 1 giờ." | Scanner fail 3 lần liên tiếp, WMS tạo `EXC-BARCODE-ERR` | Supervisor có thể manual override |
+| Carrier pickup thất bại | CS, OM | CS: In-app + Email; OM: System alert | CS: "[EXCEPTION EXC-CARRIER-FAIL] Đơn [ID] — [Carrier] chưa lấy hàng sau 2 giờ pickup window. SLA xử lý: 3 giờ." OM: "ALERT: Carrier pickup thất bại — [X] đơn đang chờ quá 2 giờ." | OMS timeout carrier webhook sau 2 giờ pickup window | OM nhận batch alert nếu nhiều đơn cùng lúc |
+| Exception mới được tạo (mọi loại) | Người được assign xử lý | In-app + System alert | "[EXCEPTION [EXC_TYPE]] Đơn [ID] vừa được tạo và assigned cho bạn. SLA: [X giờ]. Xem chi tiết: [link]" | Exception Queue tạo record mới và assign | Luôn có link trực tiếp vào Exception Queue screen |
+| Exception quá SLA (chưa resolve) | Người xử lý, OM | In-app + System alert | "CẢNH BÁO: Exception [EXC_TYPE] đơn [ID] đã BREACH SLA — quá hạn [X phút]. Cần xử lý ngay." | Exception Queue phát hiện `sla_deadline` đã qua | OM luôn được copy khi exception breach SLA |
+
+---
+
+### Nhóm C — Thông báo SLA & Vận hành
+
+| Event | Người nhận | Kênh | Nội dung thông báo | Trigger | Ghi chú |
+|---|---|---|---|---|---|
+| SLA picking sắp breach (cảnh báo sớm — còn 30 phút) | Warehouse Supervisor | In-app + System alert | "CẢNH BÁO SLA: [X] đơn đang ở ALLOCATED/FULFILLMENT_CREATED sắp quá SLA picking trong 30 phút. Kiểm tra nhân lực ca." | OMS tính toán SLA countdown, còn 30 phút so với BR-SLA-02 | Cảnh báo sớm — không phải breach |
+| SLA picking đã breach | OM, Warehouse Supervisor | System alert (cả hai) | "SLA BREACH: [X] đơn đã quá SLA picking. Cần escalate hoặc tăng nhân lực ngay." | OMS phát hiện `fulfillment_status` chưa chuyển qua PICKING sau deadline | Trigger tạo EXCEPTION cho từng đơn bị breach |
+| Exception Queue > 20 items đang OPEN | OM | System alert + Email | "CẢNH BÁO OVERLOAD: Exception Queue hiện có [X] items đang OPEN — vượt ngưỡng 20. Xem Dashboard để phân bổ nhân lực." | Exception Queue count OPEN + IN_PROGRESS > 20 | Chỉ gửi một lần mỗi 30 phút để tránh spam (xem NR-01) |
+| Kho đang bị overload (backlog cao) | OM, Warehouse Supervisor | System alert | "CẢNH BÁO OVERLOAD KHO: [X] đơn đang ở ALLOCATED chờ picking quá [Y giờ]. Xem biểu đồ Order Funnel trên Dashboard." | OMS phát hiện đơn ở `ALLOCATED` quá ngưỡng chờ đợi (mặc định: 3 giờ) | Supervisor nhận để biết cần điều thêm nhân lực |
+
+---
+
+### Nhóm D — Thông báo hoàn hàng (Return)
+
+| Event | Người nhận | Kênh | Nội dung thông báo | Trigger | Ghi chú |
+|---|---|---|---|---|---|
+| Return order được tạo (RETURN_INITIATED) | Seller, CS | Seller: In-app + Webhook + Email; CS: In-app | Seller: "Đơn [ID] — quy trình hoàn hàng đã bắt đầu. Dự kiến hàng về kho trong [X ngày]." CS: "Return đơn [ID] đã được tạo. Theo dõi trạng thái trên Exception Queue." | OMS tạo return order sau `FAILED_DELIVERY` | Seller cần chuẩn bị phương án xử lý hàng hoàn |
+| Hàng hoàn về kho (scan nhận tại inbound) | Seller, CS | Seller: In-app + Webhook + Email; CS: In-app | Seller: "Đơn [ID] — hàng đã về kho [HN/HCM] lúc [timestamp]. Trạng thái kiểm tra: [QC_status]." CS: "Đơn [ID] — hàng hoàn đã nhập kho. Chờ kết quả QC." | WMS scan nhận hàng hoàn, cập nhật `RETURNED_TO_WAREHOUSE` | Kèm QC status sơ bộ nếu có |
+| Kết quả QC inspection sau hoàn hàng | Seller, CS | Seller: In-app + Webhook + Email; CS: In-app | Hàng tốt: "Đơn [ID] — hàng hoàn đã qua QC: Tình trạng tốt. Đã nhập kho trở lại." Hàng hỏng: "Đơn [ID] — hàng hoàn QC: Phát hiện hư hỏng. CS sẽ liên hệ để xử lý bồi thường." | WMS QC team scan và cập nhật kết quả inspection | Nếu hàng hỏng → tạo `EXC-RETURN-DMG`, CS được notify qua exception |
+| Hàng trong quarantine sắp hết hạn 14 ngày | Seller, CS | Seller: In-app + Email (nhắc 3 ngày trước); CS: In-app | Seller: "NHẮC NHỞ: Hàng hoàn đơn [ID] sẽ hết hạn lưu kho quarantine trong 3 ngày (hạn: [date]). Vui lòng có phương án xử lý." CS: "Đơn [ID] — hàng quarantine sắp hết hạn trong 3 ngày. Liên hệ Seller nếu chưa có phản hồi." | Scheduler chạy hàng ngày, phát hiện hàng trong quarantine còn ≤ 3 ngày | Nhắc lại 1 ngày trước hạn nếu Seller chưa phản hồi |
+
+---
+
+## 5. Business Rules thông báo
+
+<Info>
+Các Business Rules dưới đây áp dụng cho toàn bộ hệ thống notification. Dev cần implement các rule này ở tầng notification service — không để từng module tự xử lý riêng lẻ.
+</Info>
+
+**NR-01 — Rate limiting:** Không gửi quá 10 alert/phút cho cùng một người nhận từ cùng một loại event. Nếu có nhiều event cùng loại phát sinh trong 1 phút, gom lại thành một thông báo dạng batch: "Có [X] đơn gặp vấn đề [loại] — xem danh sách đầy đủ tại [link]." Áp dụng cho tất cả kênh.
+
+**NR-02 — Giờ yên tĩnh (Quiet Hours):** Từ 22:00 đến 07:00, chỉ gửi alert được phân loại **Critical**. Tất cả alert mức Low và Medium bị hoãn lại và gửi tổng hợp vào lúc 07:00 sáng hôm sau dưới dạng digest email/in-app. Khách hàng (End Customer) không nhận SMS trong giờ yên tĩnh trừ trường hợp đơn vừa được giao thành công.
+
+**NR-03 — Data isolation theo Seller:** Seller chỉ nhận thông báo liên quan đến đơn hàng mang seller_id của mình. Hệ thống không được leak thông tin đơn của seller khác, kể cả trong trường hợp batch notification. Mỗi webhook event phải kèm `seller_id` để Seller tự validate.
+
+**NR-04 — System alert cho OM/Supervisor hoạt động 24/7:** Thông báo qua kênh System alert (Internal Dashboard) dành cho Operation Manager và Warehouse Supervisor không bị giới hạn bởi giờ yên tĩnh. Đây là kênh duy nhất đảm bảo coverage 24/7 cho các alert vận hành Critical.
+
+**NR-05 — Retry khi gửi thất bại:** Nếu gửi notification thất bại (webhook trả về non-2xx, email bounce, SMS undelivered), hệ thống tự động retry tối đa 3 lần với khoảng cách 5 phút giữa mỗi lần. Sau 3 lần thất bại: đánh dấu `notification_status = FAILED`, tạo log cho CS kiểm tra, và nếu là thông báo Critical thì fallback sang kênh in-app.
+
+**NR-06 — Ưu tiên kênh theo loại actor:** End Customer ưu tiên SMS/Zalo OA trước email. Seller ưu tiên webhook trước in-app. OM/Supervisor ưu tiên System alert. Không gửi email cho End Customer trừ khi có yêu cầu rõ ràng từ phía Seller.
+
+---
+
+## 6. Template nội dung thông báo
+
+### Template 1 — SMS giao hàng thất bại (gửi cho End Customer)
+
+```
+[VietFulfill] Đơn hàng [tracking_code] chưa giao được lúc [HH:MM DD/MM].
+Lý do: [delivery_fail_reason].
+Chúng tôi sẽ thử giao lại trong 1-2 ngày làm việc.
+Liên hệ hỗ trợ: [cs_phone_or_link]
+```
+
+> Độ dài tối đa 160 ký tự (1 SMS). Nếu vượt, cắt bớt `delivery_fail_reason` và thay bằng "xem chi tiết tại [link rút gọn]".
+
+---
+
+### Template 2 — Email cho Seller khi đơn bị exception
+
+**Tiêu đề:** `[VietFulfill] Exception: Đơn [VF-2026-XXXXXX] cần xử lý — SLA còn [X giờ]`
+
+**Nội dung:**
+
+```
+Xin chào [seller_name],
+
+Đơn hàng [VF-2026-XXXXXX] đang gặp sự cố cần xử lý.
+
+Loại exception: [exception_type_vi]
+Mô tả: [exception_description]
+Thời gian phát sinh: [created_at]
+SLA xử lý: [sla_deadline] (còn [X giờ Y phút])
+
+Hành động cần thực hiện:
+[action_required]
+
+Xem chi tiết và xử lý tại: [portal_link]
+
+Nếu bạn cần hỗ trợ thêm, liên hệ CS qua [cs_contact].
+
+VietFulfill Operations Team
+```
+
+---
+
+### Template 3 — In-app alert cho OM khi SLA breach
+
+```
+🔴 SLA BREACH — [exception_count] đơn vừa vi phạm SLA picking
+
+Thời gian phát hiện: [timestamp]
+Kho bị ảnh hưởng: [warehouse_name]
+Danh sách đơn: [link_to_filtered_queue]
+
+Hành động gợi ý: Xem Order Funnel Dashboard → Phân bổ thêm nhân lực cho ca picking.
+```
+
+> In-app alert hiển thị dưới dạng banner đỏ cố định trên đầu trang, không tự ẩn cho đến khi OM bấm "Đã xem".
+
+---
+
+### Template 4 — Webhook payload cơ bản gửi cho Seller
+
+```json
+{
+  "event_type": "ORDER_STATUS_CHANGED",
+  "event_id": "evt_abc123",
+  "occurred_at": "2026-06-08T14:32:00+07:00",
+  "seller_id": "seller_vf_001",
+  "data": {
+    "oms_order_id": "VF-2026-004521",
+    "external_ref": "SHOPEE-2026-XYZ",
+    "previous_status": "FULFILLMENT_CREATED",
+    "current_status": "PICKING",
+    "fulfillment_id": "FUL-004521",
+    "carrier": null,
+    "tracking_code": null,
+    "note": "Đơn đang được xử lý tại kho Hà Nội"
+  },
+  "retry_count": 0
+}
+```
+
+> Seller phải trả về HTTP 200 trong vòng 5 giây. Nếu timeout hoặc non-2xx → hệ thống retry theo NR-05.
+
+---
+
+### Template 5 — SMS xác nhận giao hàng thành công (gửi cho End Customer)
+
+```
+[VietFulfill] Đơn hàng [tracking_code] đã giao thành công lúc [HH:MM DD/MM/YYYY].
+Cảm ơn bạn đã mua sắm! Có vấn đề? Liên hệ: [cs_link]
+```
+
+---
+
+## 7. Edge Cases
+
+### EC-01 — Seller đã tắt email, webhook cũng fail liên tiếp
+
+**Mô tả:** Seller tắt nhận email trong cài đặt tài khoản. Đồng thời webhook endpoint của Seller trả về lỗi 5xx sau 3 lần retry (NR-05).
+
+**Xử lý:**
+1. Hệ thống fallback sang in-app notification trên Seller Portal (luôn bật, không thể tắt).
+2. Đánh dấu `webhook_status = FAILED_PERMANENT` sau 3 lần retry.
+3. Tạo cờ `needs_cs_followup = true` cho CS — CS sẽ thấy Seller này trong danh sách cần liên hệ thủ công.
+4. Ghi log đầy đủ để hỗ trợ debug: `seller_id`, `event_type`, `attempt_count`, `last_error_code`.
+
+---
+
+### EC-02 — OM nhận quá nhiều SLA alert cùng lúc trong giờ cao điểm
+
+**Mô tả:** Trong giờ cao điểm (thường 10:00–12:00 và 14:00–16:00), nhiều đơn có thể breach SLA cùng lúc, dẫn đến OM bị spam alert liên tục.
+
+**Xử lý:**
+1. Áp dụng NR-01 (rate limiting 10 alert/phút).
+2. Với SLA alert cùng loại, gom vào batch: thay vì gửi riêng từng đơn, gửi một alert tổng hợp mỗi 5 phút: "Có [X] đơn breach SLA picking trong 5 phút qua — xem danh sách [link]."
+3. OM vẫn nhận real-time alert nếu **một đơn cụ thể** có mức độ Critical (VD: đơn COD lớn, đơn VIP seller).
+4. Batch digest không áp dụng cho SLA breach lần đầu trong ngày — lần đầu luôn gửi real-time để đảm bảo OM nhận biết.
+
+---
+
+### EC-03 — Khách hàng không có số điện thoại hợp lệ
+
+**Mô tả:** Đơn hàng được tạo với số điện thoại End Customer không hợp lệ (sai định dạng, không tồn tại, hoặc bị chặn nhận SMS).
+
+**Xử lý:**
+1. Bỏ qua kênh SMS/Zalo OA cho End Customer của đơn đó.
+2. Gửi thêm thông báo cho **Seller** qua in-app + webhook: "Đơn [ID] — số điện thoại người nhận không hợp lệ: [phone_masked]. End Customer sẽ không nhận được thông báo SMS. Vui lòng xác nhận lại thông tin."
+3. Seller có trách nhiệm liên hệ trực tiếp với khách hàng qua kênh riêng.
+4. Không tự động cancel đơn — vẫn tiến hành giao hàng bình thường.
+
+---
+
+### EC-04 — Gửi thông báo cho đơn đã ở Terminal State
+
+**Mô tả:** Một event notification được trigger cho đơn đã ở trạng thái terminal (`DELIVERED`, `CANCELLED`, `VALIDATION_FAILED`, `RETURNED_TO_WAREHOUSE`).
+
+**Xử lý:**
+1. Notification service kiểm tra `order_status` trước khi gửi.
+2. Nếu đơn đã ở terminal state, chặn gửi và ghi log warning: `notification_blocked_reason = ORDER_TERMINAL_STATE`.
+3. Ngoại lệ duy nhất: thông báo nhắc xử lý hàng quarantine (Nhóm D) vẫn được gửi cho đơn ở `RETURNED_TO_WAREHOUSE` theo lịch.
+
+---
+
+<Info>
+**Tài liệu liên quan trong cùng case study:**
+- `exception-queue.mdx` — Chi tiết Exception Types, SLA từng loại, và UI Exception Queue Screen
+- `state-machine.mdx` — Order lifecycle với 20 states và transition rules
+- `business-rules.mdx` — Tập hợp đầy đủ Business Rules theo nhóm (BR-VAL, BR-INV, BR-PICK, BR-CANCEL, BR-DELIVER, BR-SLA)
+- `overview.mdx` — Actors, scope, và 4 Key BA Decisions của dự án
+</Info>
