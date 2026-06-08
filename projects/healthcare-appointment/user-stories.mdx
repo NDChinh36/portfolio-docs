@@ -1,0 +1,598 @@
+---
+title: "User Stories — Healthcare Appointment"
+description: "Danh sách User Stories và Acceptance Criteria cho hệ thống đặt lịch khám và check-in"
+icon: "list-check"
+---
+
+<Note>
+  **Practice Case Study — Không phải dự án thương mại.** Toàn bộ User Stories, Acceptance Criteria và Business Rules trong tài liệu này được xây dựng dựa trên fictional case: MedBook tại CityHealth General Hospital. Mọi tên hệ thống, nhân vật và số liệu đều là mô phỏng, phục vụ mục đích minh họa năng lực BA.
+</Note>
+
+# User Stories — Healthcare Appointment & HIS Check-in
+
+Tài liệu này tổng hợp **24 User Stories** cho hệ thống MedBook, bao phủ toàn bộ vòng đời của một lịch hẹn ngoại trú — từ bước đặt lịch ban đầu đến khi bác sĩ kết thúc khám và đồng bộ kết quả sang HIS. Các User Stories được tổ chức thành 5 nhóm theo chức năng, với độ ưu tiên và Story Points phù hợp cho Sprint planning.
+
+---
+
+## Tổng quan phân bổ
+
+| Nhóm | Số Stories | Story Points | Sprint gợi ý |
+|---|---|---|---|
+| Nhóm 1 — Đặt lịch khám | 7 | 47 | Sprint 1–2 |
+| Nhóm 2 — Quản lý lịch khám | 4 | 22 | Sprint 2 |
+| Nhóm 3 — Check-in | 5 | 34 | Sprint 3 |
+| Nhóm 4 — Đồng bộ HIS | 4 | 31 | Sprint 3–4 |
+| Nhóm 5 — Quản trị | 4 | 20 | Sprint 4 |
+| **Tổng** | **24** | **154** | |
+
+---
+
+## Nhóm 1 — Đặt lịch khám
+
+<Info>
+  Nhóm này bao phủ toàn bộ Happy Path của luồng đặt lịch: từ bước bệnh nhân vào app, chọn chuyên khoa, chọn bác sĩ và slot, điền thông tin, đến khi nhận xác nhận và QR code. Bao gồm cả luồng đặt hộ cho người thân (caregiver flow).
+</Info>
+
+---
+
+### US-01: Xem danh sách chuyên khoa và bác sĩ
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn xem danh sách chuyên khoa và bác sĩ đang có lịch khám, để tôi có thể chọn đúng nơi khám phù hợp với nhu cầu của mình.
+
+**Acceptance Criteria:**
+
+- **AC-01-01:** Given bệnh nhân đã đăng nhập vào MedBook app, When bệnh nhân vào màn hình đặt lịch, Then hệ thống hiển thị danh sách 18 chuyên khoa ngoại trú đang hoạt động, mỗi chuyên khoa hiển thị tên và số lượng bác sĩ hiện có lịch.
+- **AC-01-02:** Given bệnh nhân chọn một chuyên khoa, When hệ thống truy vấn dữ liệu, Then chỉ hiển thị các bác sĩ có lịch làm việc ở trạng thái `published` trong 30 ngày tới — bác sĩ chưa có lịch hoặc lịch đang `draft` không xuất hiện.
+- **AC-01-03:** Given bệnh nhân chọn bác sĩ, When hệ thống tải lịch, Then các slot đang bị hold hoặc đã booked được hiển thị là "Đang giữ chỗ" hoặc "Hết lịch" — không thể chọn.
+- **AC-01-04:** Given kết nối mạng chậm hoặc gián đoạn, When hệ thống không thể truy vấn real-time, Then hiển thị dữ liệu last-seen kèm badge "Cập nhật lúc [HH:mm]" thay vì màn hình trắng.
+
+**Business Rules liên quan:** BR-BOOK-01, BR-BOOK-03
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-02: Chọn slot và giữ chỗ trong khi điền form
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn chọn khung giờ khám và được hệ thống giữ slot đó cho tôi trong khi tôi điền thông tin, để tôi không bị mất slot vào tay người khác giữa chừng.
+
+**Acceptance Criteria:**
+
+- **AC-02-01:** Given bệnh nhân chọn bác sĩ, ngày và khung giờ rồi nhấn "Đặt lịch", When form điền thông tin xuất hiện, Then hệ thống ngay lập tức đặt soft lock lên slot với TTL 10 phút — slot chuyển sang trạng thái "Đang giữ chỗ" với tất cả bệnh nhân khác.
+- **AC-02-02:** Given slot đang bị hold, When đồng hồ đếm ngược trên UI chạy đến 0 mà bệnh nhân chưa submit, Then soft lock được giải phóng tự động, bệnh nhân nhận thông báo "Phiên đặt lịch đã hết hạn. Vui lòng đặt lại lịch."
+- **AC-02-03:** Given 2 bệnh nhân cùng chọn một slot đồng thời, When cả 2 cùng submit, Then bệnh nhân submit trước được ưu tiên giữ slot; bệnh nhân còn lại nhận thông báo "Slot vừa được đặt bởi người khác" và được dẫn về màn hình chọn lại.
+- **AC-02-04:** Given bệnh nhân đang trong form và còn 2 phút trên đồng hồ, When bệnh nhân submit form, Then soft lock được extend thêm 5 phút trong khi hệ thống xử lý — bệnh nhân không bị timeout đột ngột.
+
+**Business Rules liên quan:** BR-BOOK-01, BR-BOOK-02
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-03: Điền thông tin và xác nhận đặt lịch
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn điền thông tin cá nhân và lý do khám một cách nhanh chóng (có pre-fill nếu đã có hồ sơ), để tôi hoàn tất đặt lịch trước khi slot bị hết hạn.
+
+**Acceptance Criteria:**
+
+- **AC-03-01:** Given bệnh nhân đã có hồ sơ trong hệ thống, When form đặt lịch mở ra, Then các trường `họ tên`, `ngày sinh`, `số CCCD`, `số điện thoại` được pre-fill từ hồ sơ — bệnh nhân chỉ cần điền `lý do khám`.
+- **AC-03-02:** Given bệnh nhân nhấn "Xác nhận đặt lịch", When hệ thống validate, Then nếu thiếu bất kỳ trường bắt buộc nào (`full_name`, `date_of_birth`, `identity_number`, `phone_number`, `chief_complaint` tối thiểu 10 ký tự), trường đó được highlight đỏ kèm thông báo cụ thể — form không được submit.
+- **AC-03-03:** Given bệnh nhân chọn hình thức "Khám dịch vụ" (không dùng BHYT), When form hiển thị, Then trường `insurance_number` bị ẩn — không bắt buộc điền.
+- **AC-03-04:** Given bệnh nhân đặt lịch trong vòng 2 giờ trước giờ khám, When hệ thống kiểm tra cut-off, Then hiển thị thông báo "Lịch hẹn phải đặt trước ít nhất 2 giờ" và block submit — tất cả slot trong vòng 2 giờ tới cũng được ẩn khỏi danh sách lựa chọn.
+
+**Business Rules liên quan:** BR-BOOK-05, BR-BOOK-06
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-04: Nhận xác nhận tự động và QR code
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn nhận xác nhận lịch khám và QR code ngay sau khi đặt thành công (với các chuyên khoa auto-confirm), để tôi có sẵn thông tin check-in mà không cần chờ thêm bước nào.
+
+**Acceptance Criteria:**
+
+- **AC-04-01:** Given bệnh nhân submit form đặt lịch với chuyên khoa thuộc nhóm auto-confirm (Đa khoa, Nội tổng quát, Nha khoa tổng quát), When hệ thống xử lý, Then `appointment_status` chuyển sang `CONFIRMED` trong vòng 30 giây và QR code được sinh ngay.
+- **AC-04-02:** Given `appointment_status = CONFIRMED`, When hệ thống sinh QR code, Then QR code encode đầy đủ: `appointment_id`, `patient_id`, `scheduled_datetime`, `facility_code` và signature chống giả mạo — QR được gửi qua push notification và SMS.
+- **AC-04-03:** Given bệnh nhân chọn chuyên khoa thuộc nhóm manual confirm (Tim mạch, Ung bướu, Phẫu thuật), When submit thành công, Then `appointment_status` ở trạng thái `PENDING_CONFIRMATION`, bệnh nhân nhận thông báo "Lịch hẹn của bạn đang được xác nhận. Bạn sẽ nhận thông báo trong vài phút."
+- **AC-04-04:** Given lịch hẹn đã CONFIRMED, When đến mốc T-24h và T-2h trước giờ khám, Then hệ thống tự động gửi reminder — lần 2 kèm theo QR code để bệnh nhân chuẩn bị check-in.
+
+**Business Rules liên quan:** BR-CONF-01, BR-CONF-02, BR-CONF-03
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-05: Đặt lịch trong giới hạn thời gian cho phép
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn hệ thống giới hạn lịch đặt trong 30 ngày tới, để danh sách slot hiển thị luôn thực tế và không có slot "ma" quá xa trong tương lai.
+
+**Acceptance Criteria:**
+
+- **AC-05-01:** Given bệnh nhân mở calendar chọn ngày khám, When calendar render, Then tất cả ngày sau `ngày hiện tại + 30 ngày` bị disabled — không thể chọn.
+- **AC-05-02:** Given bệnh nhân cố tình thay đổi URL để chọn ngày vượt quá 30 ngày, When server nhận request, Then trả về lỗi `400 BOOKING_TOO_FAR_IN_ADVANCE` kèm thông báo rõ ràng.
+- **AC-05-03:** Given System Admin muốn điều chỉnh giới hạn cho một chuyên khoa đặc thù, When admin cấu hình `max_booking_window_days` trong admin console, Then giới hạn áp dụng riêng cho chuyên khoa đó từ lần query tiếp theo.
+
+**Business Rules liên quan:** BR-BOOK-08
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 3
+
+---
+
+### US-06: Tránh đặt trùng lịch cùng chuyên khoa trong ngày
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn hệ thống cảnh báo nếu tôi đang đặt trùng lịch cùng chuyên khoa trong cùng ngày, để tôi không vô tình có hai lịch hẹn chồng chéo nhau.
+
+**Acceptance Criteria:**
+
+- **AC-06-01:** Given bệnh nhân đã có lịch hẹn với chuyên khoa Nội tổng quát vào ngày 15/07, When bệnh nhân cố đặt thêm lịch cùng chuyên khoa ngày 15/07, Then hệ thống block submit và hiển thị "Bạn đã có lịch hẹn [Nội tổng quát] vào ngày [date] lúc [time]" kèm link đến lịch đã có.
+- **AC-06-02:** Given bệnh nhân đặt hai chuyên khoa khác nhau cùng ngày (ví dụ Nội tổng quát buổi sáng và Da liễu buổi chiều), When hệ thống validate, Then cho phép đặt cả hai — không áp duplicate check với chuyên khoa khác nhau.
+- **AC-06-03:** Given caregiver đặt lịch cho hai người thân khác nhau cùng chuyên khoa cùng ngày, When hệ thống validate, Then không bị block — duplicate check áp dụng theo `patient_id`, không theo `booker_id`.
+
+**Business Rules liên quan:** BR-BOOK-04
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-07: Đặt lịch hộ cho người thân (caregiver flow)
+
+**Vai trò:** Người thân / Caregiver
+
+**Mong muốn:** Với tư cách là người thân đã được liên kết tài khoản, tôi muốn đặt lịch khám hộ cho bố/mẹ hoặc con nhỏ, để những người không tự thao tác app được vẫn có lịch hẹn được đặt đúng thủ tục.
+
+**Acceptance Criteria:**
+
+- **AC-07-01:** Given caregiver đã liên kết tài khoản người thân với xác minh CCCD, When caregiver chọn "Đặt lịch cho người thân", Then hệ thống hiển thị danh sách family members đã liên kết để chọn — không cho nhập tùy ý tên người khác.
+- **AC-07-02:** Given caregiver chọn người thân và hoàn tất form, When appointment được tạo, Then hệ thống ghi nhận cả `booker_id` (caregiver) và `patient_id` (người thân) — notification gửi đến cả hai số điện thoại.
+- **AC-07-03:** Given caregiver chưa có relationship record với người cần đặt, When caregiver cố đặt lịch, Then hệ thống yêu cầu thực hiện "Thêm người thân" trước, bao gồm xác minh CCCD của người thân — không cho phép đặt hộ khi chưa có liên kết hợp lệ.
+- **AC-07-04:** Given caregiver muốn thực hiện check-in thay mặt người thân, When caregiver dùng app của mình để check-in, Then hệ thống chấp nhận nếu `booker_id` trong appointment khớp — ghi nhận `checked_in_by: caregiver_id` vào audit log.
+
+**Business Rules liên quan:** BR-BOOK-07, BR-CHECKIN-06
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 13
+
+---
+
+## Nhóm 2 — Quản lý lịch khám
+
+<Info>
+  Nhóm này bao phủ các thao tác bệnh nhân thực hiện sau khi đã có lịch xác nhận: xem danh sách lịch, hủy lịch trước cut-off, đổi lịch sang slot mới, và nhận nhắc nhở trước giờ khám.
+</Info>
+
+---
+
+### US-08: Xem danh sách lịch đã đặt
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn xem toàn bộ lịch hẹn của mình theo trạng thái, để tôi nắm rõ lịch sắp tới và lịch sử khám trong một chỗ.
+
+**Acceptance Criteria:**
+
+- **AC-08-01:** Given bệnh nhân vào mục "Lịch của tôi", When màn hình hiển thị, Then các lịch hẹn được phân nhóm theo trạng thái: "Sắp tới" (CONFIRMED, REMINDER_SENT), "Đang chờ xác nhận" (PENDING_CONFIRMATION), và "Lịch sử" (COMPLETED, CANCELLED, NO_SHOW).
+- **AC-08-02:** Given bệnh nhân xem chi tiết một lịch hẹn CONFIRMED, When mở chi tiết, Then hiển thị đầy đủ: tên bác sĩ, chuyên khoa, ngày giờ, phòng khám, QR code và nút "Hủy lịch" / "Đổi lịch".
+- **AC-08-03:** Given bệnh nhân là caregiver đặt lịch cho người thân, When xem "Lịch của tôi", Then hiển thị cả lịch do chính mình đặt lẫn lịch đã đặt hộ, có label phân biệt "Lịch của bạn" và "Lịch của [tên người thân]".
+
+**Business Rules liên quan:** BR-CONF-03
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-09: Hủy lịch trước cut-off
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn hủy lịch hẹn dễ dàng khi tôi không thể đến khám, để slot được giải phóng cho bệnh nhân khác và hồ sơ của tôi không có lịch sử no-show.
+
+**Acceptance Criteria:**
+
+- **AC-09-01:** Given bệnh nhân hủy lịch trước 2 giờ so với giờ khám, When xác nhận hủy, Then appointment chuyển sang `CANCELLED_BY_PATIENT` ngay, bệnh nhân nhận confirmation notification — lý do hủy là tùy chọn (không bắt buộc).
+- **AC-09-02:** Given bệnh nhân hủy lịch trong vòng 2 giờ trước giờ khám, When nhấn "Hủy lịch", Then hệ thống hiển thị cảnh báo "Hủy muộn ảnh hưởng đến bệnh nhân khác" và yêu cầu nhập lý do bắt buộc trước khi xác nhận.
+- **AC-09-03:** Given appointment đã bị hủy thành công, When slot release được xử lý, Then slot được đánh dấu available sau 30 phút — không release ngay để tránh immediate re-booking không cần thiết.
+- **AC-09-04:** Given appointment đang ở trạng thái `PENDING_CONFIRMATION`, When bệnh nhân hủy, Then cho phép hủy bất kỳ lúc nào mà không áp dụng cut-off 2 giờ — slot release ngay.
+
+**Business Rules liên quan:** BR-CANCEL-01, BR-CANCEL-02, BR-CANCEL-05
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-10: Đổi lịch sang slot khác (reschedule)
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn đổi lịch hẹn sang ngày/giờ khác mà không cần hủy và đặt lại từ đầu, để tôi giữ được bác sĩ mong muốn và không mất thời gian thao tác lại toàn bộ quy trình.
+
+**Acceptance Criteria:**
+
+- **AC-10-01:** Given bệnh nhân chọn "Đổi lịch" trước cut-off 2 giờ, When chọn slot mới và xác nhận, Then hệ thống: (1) tạo appointment mới với `appointment_id` mới ở trạng thái `PENDING_CONFIRMATION`; (2) mark appointment gốc là `RESCHEDULED` với trường `rescheduled_to: new_appointment_id`; (3) slot cũ được release sau 30 phút.
+- **AC-10-02:** Given appointment mới được tạo sau reschedule, When hệ thống xử lý, Then appointment mới đi qua confirm flow bình thường (auto-confirm hoặc manual confirm tùy chuyên khoa) — bệnh nhân nhận QR code mới khi confirmed.
+- **AC-10-03:** Given bệnh nhân cố đổi lịch sau cut-off 2 giờ, When thao tác, Then hệ thống hiển thị cảnh báo rõ ràng trước khi cho phép tiếp tục — reschedule vẫn được phép nhưng bệnh nhân đã được thông báo rủi ro.
+
+**Business Rules liên quan:** BR-CANCEL-03, BR-CANCEL-05
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 8
+
+---
+
+### US-11: Nhận nhắc nhở trước giờ khám
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn nhận nhắc nhở tự động trước giờ khám, để tôi không quên lịch hẹn và có đủ thời gian chuẩn bị hồ sơ.
+
+**Acceptance Criteria:**
+
+- **AC-11-01:** Given appointment ở trạng thái `CONFIRMED`, When đến mốc T-24h trước `appointment_time`, Then hệ thống tự động gửi SMS và push notification với nội dung: tên bác sĩ, chuyên khoa, ngày giờ, và địa chỉ cơ sở.
+- **AC-11-02:** Given appointment ở trạng thái `CONFIRMED` hoặc `REMINDER_SENT`, When đến mốc T-2h, Then hệ thống gửi reminder lần 2 kèm QR code để bệnh nhân chuẩn bị sẵn cho check-in — `appointment_status` chuyển sang `REMINDER_SENT`.
+- **AC-11-03:** Given cả SMS lẫn push notification đều thất bại ở lần gửi đầu, When hệ thống phát hiện lỗi, Then retry tối đa 3 lần cách nhau 5 phút — appointment vẫn chuyển `REMINDER_SENT` để không block flow dù retry chưa xong.
+
+**Business Rules liên quan:** BR-CONF-03
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 4
+
+---
+
+## Nhóm 3 — Check-in
+
+<Info>
+  Nhóm này bao phủ toàn bộ kịch bản check-in: quét QR qua mobile/kiosk, check-in thủ công tại quầy lễ tân, kiểm tra trạng thái, cấp số thứ tự, và các trường hợp đến sớm/muộn ngoài time window.
+</Info>
+
+---
+
+### US-12: Check-in bằng QR code qua mobile app hoặc kiosk
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn check-in nhanh chóng bằng cách quét QR code mà không cần xếp hàng tại quầy lễ tân, để tôi tiết kiệm thời gian và giảm tắc nghẽn tại bệnh viện.
+
+**Acceptance Criteria:**
+
+- **AC-12-01:** Given bệnh nhân trong khoảng thời gian hợp lệ (T-60 phút đến T+30 phút so với giờ hẹn), When quét QR tại kiosk hoặc dùng app, Then hệ thống validate QR và bắt đầu quá trình check-in — `checkin_status` chuyển sang `checked_in` ngay khi validation pass.
+- **AC-12-02:** Given QR code hợp lệ nhưng `facility_id` trong QR không khớp với kiosk đang dùng, When quét QR, Then hệ thống từ chối và hiển thị "Vui lòng đến đúng cơ sở. Lịch hẹn của bạn tại [facility_name], [địa chỉ]."
+- **AC-12-03:** Given check-in thành công, When hệ thống đang gọi HIS API để tạo visit, Then bệnh nhân thấy màn hình "Đang kết nối hệ thống, vui lòng đợi..." với loading state rõ ràng — không để màn hình trắng.
+- **AC-12-04:** Given appointment đã được check-in một lần, When ai đó cố quét lại QR, Then hệ thống từ chối và hiển thị "Lịch hẹn này đã được check-in lúc [time]. Số thứ tự: [queue_number]" — QR đã bị invalidated one-time.
+
+**Business Rules liên quan:** BR-CHECKIN-01, BR-CHECKIN-02, BR-CHECKIN-05
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-13: Check-in thủ công tại quầy lễ tân
+
+**Vai trò:** Receptionist (Nhân viên lễ tân)
+
+**Mong muốn:** Với tư cách là nhân viên lễ tân, tôi muốn tra cứu và check-in thủ công cho bệnh nhân qua reception portal, để hỗ trợ các trường hợp bệnh nhân không có điện thoại hoặc không quen dùng kiosk.
+
+**Acceptance Criteria:**
+
+- **AC-13-01:** Given receptionist mở reception portal và tìm kiếm theo tên hoặc số điện thoại, When tìm thấy appointment, Then hiển thị đầy đủ thông tin: tên bệnh nhân, chuyên khoa, bác sĩ, giờ hẹn và `appointment_status` hiện tại.
+- **AC-13-02:** Given appointment đang ở trạng thái `CONFIRMED` hoặc `REMINDER_SENT` và trong time window hợp lệ, When receptionist click "Check-in thủ công" và xác nhận, Then `checkin_status` chuyển sang `checked_in` — flow HIS sync tiếp tục bình thường.
+- **AC-13-03:** Given receptionist thực hiện check-in thủ công ngoài time window cho bệnh nhân có lý do hợp lệ, When override và nhập lý do bắt buộc, Then hành động được ghi vào audit log với `overridden_by: receptionist_id`, lý do, và timestamp đầy đủ.
+- **AC-13-04:** Given appointment đang ở `PENDING_CONFIRMATION`, When receptionist cố check-in thủ công, Then hệ thống block và hiển thị "Lịch hẹn của bệnh nhân chưa được xác nhận" — receptionist phải confirm appointment trước.
+
+**Business Rules liên quan:** BR-CHECKIN-04, BR-CHECKIN-07
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-14: Nhận số thứ tự và theo dõi hàng đợi
+
+**Vai trò:** Bệnh nhân (Patient)
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn nhận số thứ tự và biết mình đang chờ đến lượt thứ bao nhiêu, để tôi có thể ngồi chờ thoải mái mà không cần hỏi thủ công tại quầy.
+
+**Acceptance Criteria:**
+
+- **AC-14-01:** Given HIS sync thành công sau check-in, When `his_registration_id` được trả về, Then hệ thống ngay lập tức sinh và hiển thị queue number theo format `[SpecialtyCode]-[Sequential]` (ví dụ: `TM-023`) — gửi push notification đến bệnh nhân.
+- **AC-14-02:** Given bệnh nhân có queue number, When ngồi chờ trong phòng khám, Then app hiển thị real-time: số thứ tự đang được gọi, số của bệnh nhân, và estimated wait time cập nhật mỗi 2 phút.
+- **AC-14-03:** Given đến lượt bệnh nhân (số hiển thị trên bảng bằng số của bệnh nhân), When hệ thống phát hiện, Then gửi push notification "Chuẩn bị vào khám!" kèm số phòng.
+- **AC-14-04:** Given HIS sync thất bại sau check-in, When bệnh nhân chờ kết quả, Then queue number KHÔNG được hiển thị — bệnh nhân nhận thông báo "Vui lòng đến quầy lễ tân để được hỗ trợ" thay vì nhận số.
+
+**Business Rules liên quan:** BR-QUEUE-01, BR-QUEUE-05, BR-HIS-06
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-15: Xử lý bệnh nhân đến sớm hoặc muộn ngoài time window
+
+**Vai trò:** Bệnh nhân (Patient) / Receptionist
+
+**Mong muốn:** Với tư cách là bệnh nhân, tôi muốn nhận thông báo rõ ràng khi tôi đến ngoài khung giờ check-in, để tôi biết phải làm gì tiếp theo thay vì bị từ chối một cách khó hiểu.
+
+**Acceptance Criteria:**
+
+- **AC-15-01:** Given bệnh nhân quét QR trước 60 phút so với giờ hẹn, When hệ thống validate, Then hiển thị "Bạn đến quá sớm! Check-in sẽ mở lúc [appointment_time - 60 phút]" kèm hướng dẫn chuẩn bị hồ sơ và bản đồ cơ sở.
+- **AC-15-02:** Given bệnh nhân đến sau T+30 phút so với giờ hẹn nhưng trước khi hệ thống set NO_SHOW, When cố check-in qua app hoặc kiosk, Then hiển thị "Bạn đến trễ hơn khung giờ cho phép. Vui lòng đến quầy lễ tân" — không cho phép self check-in.
+- **AC-15-03:** Given bệnh nhân đến muộn đến gặp receptionist và có lý do hợp lệ, When receptionist đánh giá còn khả năng khám, Then receptionist có thể override và check-in thủ công — ghi lý do vào audit log.
+- **AC-15-04:** Given bác sĩ đã kết thúc buổi khám, When receptionist cố override check-in muộn, Then hệ thống block và hiển thị "Bác sĩ đã kết thúc buổi khám. Vui lòng tư vấn bệnh nhân đặt lịch lại."
+
+**Business Rules liên quan:** BR-CHECKIN-01, BR-CHECKIN-03, BR-CHECKIN-04
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 5
+
+---
+
+### US-16: Phát hiện và xử lý no-show tự động
+
+**Vai trò:** MedBook System / Receptionist
+
+**Mong muốn:** Với tư cách là hệ thống, tôi cần tự động phát hiện và đánh dấu no-show sau grace period, để slot trống được giải phóng kịp thời và bác sĩ không mất thời gian chờ bệnh nhân vắng mặt.
+
+**Acceptance Criteria:**
+
+- **AC-16-01:** Given appointment ở trạng thái `REMINDER_SENT` và `checkin_status = not_checked_in`, When scheduled job chạy mỗi 5 phút và phát hiện `current_time > appointment_time + 15 phút`, Then `appointment_status` tự động chuyển sang `NO_SHOW`, bệnh nhân nhận SMS thông báo.
+- **AC-16-02:** Given appointment vừa bị set `NO_SHOW`, When slot release được xử lý, Then slot được đánh dấu "pending_release" — giữ thêm 30 phút trước khi thực sự available để tránh trường hợp bệnh nhân đang trên đường đến.
+- **AC-16-03:** Given bệnh nhân đang trong quá trình check-in đúng lúc scheduled job chạy (race condition), When cả hai event xảy ra đồng thời, Then ưu tiên check-in thành công — không set NO_SHOW cho appointment đang active check-in.
+
+**Business Rules liên quan:** BR-CANCEL-04, BR-CANCEL-05
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+## Nhóm 4 — Đồng bộ HIS
+
+<Info>
+  Nhóm này bao phủ toàn bộ luồng tích hợp giữa MedBook và HIS legacy: tạo visit tự động, kiểm tra trạng thái đồng bộ, xử lý khi HIS sync thất bại, và quy trình nhân viên can thiệp thủ công khi hệ thống không tự xử lý được.
+</Info>
+
+---
+
+### US-17: Tự động tạo visit record trong HIS sau check-in
+
+**Vai trò:** MedBook System
+
+**Mong muốn:** Với tư cách là hệ thống, tôi cần tự động gửi thông tin bệnh nhân đến HIS ngay sau khi check-in hợp lệ, để bác sĩ luôn thấy đủ danh sách bệnh nhân trong HIS trước khi bắt đầu khám.
+
+**Acceptance Criteria:**
+
+- **AC-17-01:** Given `checkin_status` chuyển sang `checked_in` thành công, When trong vòng 5 giây, Then MedBook tự động gọi HIS API `POST /visits` với payload: `{appointment_id, patient_identity_number, specialty_code, doctor_code, facility_code, appointment_time}` kèm `idempotency_key = medbook_appointment_{appointment_id}_{date}`.
+- **AC-17-02:** Given HIS trả về thành công, When nhận `visit_id` và `queue_number`, Then MedBook lưu cả hai, set `his_sync_status = synced`, và cấp queue number cho bệnh nhân — `appointment_status` chuyển sang `WAITING_FOR_CONSULTATION`.
+- **AC-17-03:** Given MedBook gửi request với `idempotency_key` đã được HIS xử lý trước đó (do retry), When HIS nhận request, Then HIS trả về visit record đã tồn tại thay vì tạo mới — không có duplicate visit record trong hồ sơ bệnh án.
+- **AC-17-04:** Given bệnh nhân chưa có record trong HIS (bệnh nhân mới), When HIS không tìm thấy `identity_number`, Then HIS tự động tạo patient record mới với thông tin từ MedBook trước khi tạo visit — flow tiếp tục bình thường.
+
+**Business Rules liên quan:** BR-HIS-01, BR-HIS-02, BR-HIS-03, BR-HIS-05
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-18: Xem trạng thái đồng bộ HIS trên reception portal
+
+**Vai trò:** Receptionist (Nhân viên lễ tân)
+
+**Mong muốn:** Với tư cách là nhân viên lễ tân, tôi muốn thấy rõ trạng thái đồng bộ HIS của từng bệnh nhân trên dashboard, để tôi chủ động phát hiện và xử lý các case HIS chưa sync mà không cần chờ bệnh nhân đến hỏi.
+
+**Acceptance Criteria:**
+
+- **AC-18-01:** Given bệnh nhân đã check-in thành công và HIS đang xử lý, When receptionist xem dashboard, Then bệnh nhân hiển thị với trạng thái rõ ràng: "Đã check-in — Đang đồng bộ HIS" với indicator trực quan khác biệt với "Đã check-in — HIS OK".
+- **AC-18-02:** Given `his_sync_status = failed` cho một bệnh nhân, When receptionist xem dashboard, Then bệnh nhân đó được highlight với badge "Chờ xử lý HIS" — receptionist nhận alert tức thì, không cần refresh thủ công.
+- **AC-18-03:** Given receptionist xem chi tiết một case HIS sync thất bại, When mở record, Then hiển thị: số lần retry đã thực hiện, error code, timestamp lần retry cuối, và nút "Xử lý thủ công" rõ ràng.
+
+**Business Rules liên quan:** BR-HIS-04, BR-HIS-06
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5
+
+---
+
+### US-19: Xử lý thủ công khi HIS sync thất bại
+
+**Vai trò:** Receptionist (Nhân viên lễ tân)
+
+**Mong muốn:** Với tư cách là nhân viên lễ tân, tôi muốn tự tay nhập thông tin vào HIS và cập nhật lại trạng thái trên MedBook khi hệ thống tự động thất bại, để bệnh nhân không phải chờ vô thời hạn và bác sĩ thấy đủ danh sách.
+
+**Acceptance Criteria:**
+
+- **AC-19-01:** Given `his_sync_status = failed` và receptionist nhận alert, When receptionist vào HIS để tạo visit thủ công, Then sau khi xong, receptionist cập nhật `queue_number` vào MedBook qua reception portal bằng tính năng "Cập nhật HIS thủ công" — `his_sync_status` chuyển sang `synced`.
+- **AC-19-02:** Given receptionist cập nhật queue_number thủ công thành công, When hệ thống xử lý, Then bệnh nhân nhận push notification với queue number (có thể trễ so với Happy Path) — `appointment_status` chuyển sang `WAITING_FOR_CONSULTATION`.
+- **AC-19-03:** Given HIS sync thất bại và receptionist không xử lý trong 15 phút, When timer hết hạn, Then appointment tự động chuyển sang `EXCEPTION`, System Admin nhận alert để điều tra — SLA xử lý EXCEPTION: 30 phút trong giờ hành chính.
+- **AC-19-04:** Given HIS trả về lỗi `4xx` (client error) thay vì timeout, When MedBook nhận lỗi, Then không retry tự động — set `his_sync_status = failed` ngay lập tức và hiển thị error detail cụ thể để receptionist biết nguyên nhân trước khi xử lý thủ công.
+
+**Business Rules liên quan:** BR-HIS-04, BR-HIS-06
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-20: Theo dõi trạng thái kết thúc khám từ HIS
+
+**Vai trò:** MedBook System
+
+**Mong muốn:** Với tư cách là hệ thống, tôi cần tự động cập nhật trạng thái lịch hẹn thành `COMPLETED` khi bác sĩ kết thúc khám trong HIS, để hồ sơ bệnh nhân trên MedBook phản chiếu đúng thực tế và bệnh nhân nhận notification đúng lúc.
+
+**Acceptance Criteria:**
+
+- **AC-20-01:** Given appointment ở trạng thái `WAITING_FOR_CONSULTATION` hoặc `IN_CONSULTATION`, When MedBook polling HIS mỗi 10 phút và phát hiện `visit_status = completed`, Then `appointment_status` trên MedBook tự động chuyển sang `COMPLETED`.
+- **AC-20-02:** Given `appointment_status` chuyển sang `COMPLETED`, When hệ thống xử lý, Then notification gửi đến bệnh nhân: "Khám hoàn tất. Cảm ơn bạn đã sử dụng dịch vụ CityHealth." kèm link xem kết quả (nếu HIS expose).
+- **AC-20-03:** Given polling HIS thất bại liên tục, When MedBook không nhận được status update sau một ngưỡng nhất định, Then `appointment` được flag để System Admin review — không tự động set COMPLETED mà không có xác nhận từ HIS.
+
+**Business Rules liên quan:** BR-HIS-01
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 5 (bao gồm polling service + notification trigger)
+
+---
+
+## Nhóm 5 — Quản trị
+
+<Info>
+  Nhóm này bao phủ các tính năng dành cho admin và bác sĩ: cập nhật lịch làm việc, xem báo cáo vận hành, xử lý các exception case, và cấu hình tham số hệ thống theo chuyên khoa.
+</Info>
+
+---
+
+### US-21: Bác sĩ cập nhật và publish lịch làm việc
+
+**Vai trò:** Bác sĩ (Doctor)
+
+**Mong muốn:** Với tư cách là bác sĩ, tôi muốn tự cập nhật lịch làm việc và publish khi đã sẵn sàng, để bệnh nhân chỉ thấy lịch chính xác và tôi có thể điều chỉnh khi có thay đổi đột xuất.
+
+**Acceptance Criteria:**
+
+- **AC-21-01:** Given bác sĩ đăng nhập vào doctor portal, When tạo hoặc chỉnh sửa lịch, Then lịch lưu ở trạng thái `draft` — bệnh nhân chưa thấy cho đến khi bác sĩ nhấn "Publish".
+- **AC-21-02:** Given bác sĩ nhấn "Publish" lịch, When xác nhận, Then lịch chuyển sang `published` trong vòng 1 phút — bệnh nhân có thể thấy và đặt lịch ngay.
+- **AC-21-03:** Given có appointment đã được CONFIRMED trên lịch đó, When bác sĩ cố xóa hoặc thay đổi slot, Then hệ thống cảnh báo "Có [N] lịch hẹn đang active. Thay đổi sẽ ảnh hưởng đến bệnh nhân" — yêu cầu xác nhận kèm lý do, và tự động gửi notification cancel/reschedule cho các bệnh nhân bị ảnh hưởng.
+- **AC-21-04:** Given bác sĩ cần chỉ định người thay thế (substitute) khi nghỉ đột xuất, When cấu hình substitute trong portal, Then hệ thống tự động gán substitute doctor cho các appointment đang CONFIRMED — bệnh nhân nhận notification về thay đổi bác sĩ.
+
+**Business Rules liên quan:** BR-BOOK-03, BR-QUEUE-04
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 8
+
+---
+
+### US-22: Admin xem báo cáo vận hành
+
+**Vai trò:** Hospital Admin / System Admin
+
+**Mong muốn:** Với tư cách là admin bệnh viện, tôi muốn xem báo cáo tổng quan về tình hình đặt lịch và vận hành theo ngày/tuần/tháng, để tôi ra quyết định điều chỉnh công suất và cải thiện quy trình dựa trên số liệu thực tế.
+
+**Acceptance Criteria:**
+
+- **AC-22-01:** Given admin vào trang báo cáo, When chọn khoảng thời gian, Then hệ thống hiển thị: tổng lượt đặt lịch, tỷ lệ confirmed vs cancelled, tỷ lệ no-show theo chuyên khoa, và số case HIS sync thất bại.
+- **AC-22-02:** Given admin muốn xem hiệu suất theo bác sĩ, When lọc theo bác sĩ, Then hiển thị: số lượt khám hoàn tất, tỷ lệ no-show của từng bác sĩ, và average thời gian từ booking đến check-in.
+- **AC-22-03:** Given có case EXCEPTION chưa được xử lý, When admin xem dashboard, Then các case EXCEPTION được highlight riêng với SLA countdown — quá SLA sẽ đổi màu cảnh báo.
+
+**Business Rules liên quan:** BR-HIS-04, BR-CANCEL-04
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 5
+
+---
+
+### US-23: Receptionist xử lý exception case
+
+**Vai trò:** Receptionist (Nhân viên lễ tân)
+
+**Mong muốn:** Với tư cách là nhân viên lễ tân, tôi muốn có đủ công cụ để xử lý các tình huống ngoại lệ (no-show override, walk-in, HIS fail) trực tiếp trên reception portal, để tôi không cần gọi IT hay quản lý cho mỗi tình huống thường gặp.
+
+**Acceptance Criteria:**
+
+- **AC-23-01:** Given appointment đã bị set `NO_SHOW` và bệnh nhân xuất hiện trong vòng 24 giờ với lý do hợp lệ, When receptionist click "Override No-show" và nhập lý do, Then `appointment_status` reset về `CONFIRMED`, `checkin_status` giữ nguyên — bệnh nhân tiếp tục check-in bình thường.
+- **AC-23-02:** Given bệnh nhân walk-in không có lịch đặt trước, When receptionist tạo walk-in appointment qua admin console, Then hệ thống tạo appointment mới với `appointment_type = walk_in`, bypass cut-off 2 giờ, và set thẳng `CONFIRMED` để check-in ngay.
+- **AC-23-03:** Given một appointment ở trạng thái `EXCEPTION`, When receptionist điều tra và xác nhận đã xử lý trong HIS ngoài hệ thống, Then receptionist có thể manually close EXCEPTION với lý do và incident note — audit log đầy đủ.
+
+**Business Rules liên quan:** BR-BOOK-05, BR-CANCEL-06
+
+**Độ ưu tiên:** Cao
+
+**Story Points:** 5 (MVP scope: no-show override + walk-in; EXCEPTION close là Sprint 4+)
+
+---
+
+### US-24: Admin cấu hình tham số theo chuyên khoa
+
+**Vai trò:** System Admin
+
+**Mong muốn:** Với tư cách là System Admin, tôi muốn cấu hình linh hoạt các tham số vận hành theo từng chuyên khoa (danh sách auto-confirm, thời gian đặt lịch tối đa, phòng khám mặc định), để hệ thống thích nghi với thay đổi vận hành mà không cần deploy code mới.
+
+**Acceptance Criteria:**
+
+- **AC-24-01:** Given System Admin vào trang cấu hình chuyên khoa, When cập nhật danh sách `auto_confirm_specialties`, Then thay đổi có hiệu lực với các appointment được submit sau thời điểm lưu — không ảnh hưởng appointment đang pending.
+- **AC-24-02:** Given System Admin muốn điều chỉnh `max_booking_window_days` cho một chuyên khoa cụ thể, When lưu cấu hình, Then calendar của chuyên khoa đó disable đúng theo giới hạn mới từ lần truy vấn tiếp theo.
+- **AC-24-03:** Given System Admin cấu hình `doctor_room_mapping` cho bác sĩ và ngày làm việc, When bệnh nhân check-in thành công vào ngày đó, Then hệ thống tự động assign đúng phòng khám trong queue number notification — không cần receptionist thông báo thủ công.
+- **AC-24-04:** Given System Admin lưu cấu hình mới, When có lỗi validation (ví dụ: specialty code không tồn tại), Then hệ thống không lưu và hiển thị lỗi cụ thể — tránh cấu hình sai ảnh hưởng production.
+
+**Business Rules liên quan:** BR-BOOK-08, BR-CONF-01, BR-QUEUE-03
+
+**Độ ưu tiên:** Trung
+
+**Story Points:** 5 (MVP: auto-confirm list + booking window; room mapping là Sprint 4)
+
+---
+
+## Tổng hợp độ ưu tiên và Story Points
+
+| Story ID | Tên | Nhóm | Độ ưu tiên | Story Points |
+|---|---|---|---|---|
+| US-01 | Xem danh sách chuyên khoa và bác sĩ | Đặt lịch | Cao | 5 |
+| US-02 | Chọn slot và giữ chỗ trong khi điền form | Đặt lịch | Cao | 8 |
+| US-03 | Điền thông tin và xác nhận đặt lịch | Đặt lịch | Cao | 5 |
+| US-04 | Nhận xác nhận tự động và QR code | Đặt lịch | Cao | 8 |
+| US-05 | Đặt lịch trong giới hạn thời gian cho phép | Đặt lịch | Trung | 3 |
+| US-06 | Tránh đặt trùng lịch cùng chuyên khoa trong ngày | Đặt lịch | Cao | 5 |
+| US-07 | Đặt lịch hộ cho người thân (caregiver flow) | Đặt lịch | Trung | 13 |
+| US-08 | Xem danh sách lịch đã đặt | Quản lý lịch | Cao | 5 |
+| US-09 | Hủy lịch trước cut-off | Quản lý lịch | Cao | 5 |
+| US-10 | Đổi lịch sang slot khác (reschedule) | Quản lý lịch | Trung | 8 |
+| US-11 | Nhận nhắc nhở trước giờ khám | Quản lý lịch | Trung | 4 |
+| US-12 | Check-in bằng QR code qua mobile app hoặc kiosk | Check-in | Cao | 8 |
+| US-13 | Check-in thủ công tại quầy lễ tân | Check-in | Cao | 8 |
+| US-14 | Nhận số thứ tự và theo dõi hàng đợi | Check-in | Cao | 8 |
+| US-15 | Xử lý bệnh nhân đến sớm hoặc muộn ngoài time window | Check-in | Trung | 5 |
+| US-16 | Phát hiện và xử lý no-show tự động | Check-in | Cao | 5 |
+| US-17 | Tự động tạo visit record trong HIS sau check-in | HIS Sync | Cao | 8 |
+| US-18 | Xem trạng thái đồng bộ HIS trên reception portal | HIS Sync | Cao | 5 |
+| US-19 | Xử lý thủ công khi HIS sync thất bại | HIS Sync | Cao | 8 |
+| US-20 | Theo dõi trạng thái kết thúc khám từ HIS | HIS Sync | Trung | 5 |
+| US-21 | Bác sĩ cập nhật và publish lịch làm việc | Quản trị | Cao | 8 |
+| US-22 | Admin xem báo cáo vận hành | Quản trị | Trung | 5 |
+| US-23 | Receptionist xử lý exception case | Quản trị | Cao | 5 |
+| US-24 | Admin cấu hình tham số theo chuyên khoa | Quản trị | Trung | 5 |
+| | **Tổng** | | | **154** |
+
+---
+
+<Note>
+  **Practice Case Study — Built to demonstrate BA capability in healthcare / hospital digital transformation domain.** Tất cả User Stories, Acceptance Criteria và Business Rules trong tài liệu này là fictional, xây dựng thuần túy cho mục đích minh họa kỹ năng BA. Không có dữ liệu bệnh nhân thật nào được sử dụng.
+</Note>
