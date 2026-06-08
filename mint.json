@@ -131,7 +131,9 @@
             "projects/ewallet/payment-case-study",
             "projects/ewallet/transaction-state-machine",
             "projects/ewallet/reconciliation-dashboard",
-            "projects/ewallet/exception-handling"
+            "projects/ewallet/exception-handling",
+            "projects/ewallet/refund-management",
+            "projects/ewallet/user-journey"
           ]
         }
       ]
