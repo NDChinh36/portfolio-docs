@@ -142,7 +142,7 @@
               "projects/ewallet/reconciliation-dashboard",
               "projects/ewallet/exception-handling"
             ]
-          },
+          }
         ]
       }
     ]
