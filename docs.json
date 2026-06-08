@@ -136,13 +136,7 @@
               "projects/ewallet/transfer",
               "projects/ewallet/qr-payment",
               "projects/ewallet/transaction-history",
-              "projects/ewallet/notifications-settings"
-            ]
-          },
-          {
-            "group": "QR Payment & Reconciliation",
-            "icon": "credit-card",
-            "pages": [
+              "projects/ewallet/notifications-settings",
               "projects/ewallet/payment-case-study",
               "projects/ewallet/transaction-state-machine",
               "projects/ewallet/reconciliation-dashboard",
