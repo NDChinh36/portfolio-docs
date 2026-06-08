@@ -147,21 +147,6 @@ Quy định về hoạt động của tổ chức cung ứng dịch vụ trung g
 
 ---
 
-## Technology Stack (tham chiếu)
-
-| Layer | Technology | Ghi chú |
-|---|---|---|
-| Mobile | React Native | iOS + Android cùng codebase |
-| Backend | Node.js / Go | Microservice architecture |
-| Auth | JWT (Access 15 phút + Refresh 30 ngày) | Redis session store |
-| Database | PostgreSQL + Redis | Postgres cho data; Redis cho session/cache |
-| eKYC | FPT.AI hoặc VNPTeID | OCR + face liveness |
-| OTP | Viettel SMS / Zalo OA | Fallback sang Zalo nếu SMS fail |
-| Push | Firebase (Android) + APNs (iOS) | |
-| Interbank | NAPAS 247 | Nạp/rút qua ngân hàng |
-
----
-
 <Note>
-  Tất cả tài liệu trong bộ **Generic E-Wallet App** là **sample project** phục vụ thực hành BA. Tên tổ chức, số liệu và API endpoint chỉ mang tính minh họa.
+  Tất cả tài liệu trong bộ **FinPay E-Wallet** là **practice case** phục vụ thực hành BA. Tên tổ chức, số liệu và giả định đều là mô phỏng — không đại diện cho sản phẩm thương mại nào.
 </Note>
