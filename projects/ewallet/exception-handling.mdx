@@ -370,7 +370,7 @@ Hai khái niệm này hay bị nhầm lẫn:
 | **BR-QR-REC-02** | MISMATCHED SLA | MISMATCHED state | GD vào MISMATCHED > 48h không resolve | Escalate tự động lên Risk team; flag cho compliance | | Reconciliation Service |
 | **BR-QR-REC-03** | Refund eligibility | Refund request | Refund được request từ GD chưa MATCHED | Reject; yêu cầu MATCHED trước khi tạo REFUND | Exception: Operation có thể override với evidence | Refund Service |
 | **BR-QR-REC-04** | Settlement Hold | MISMATCHED | GD ở MISMATCHED | Dừng merchant settlement cho GD này cho đến khi resolved | | Reconciliation Service |
-| **BR-QR-REFUND-01** | Refund Approval Required | Refund request created | Request amount > threshold (ví dụ 500,000 VND) | Cần Finance Admin approve trước khi execute | Threshold cần xác nhận với Finance team | Refund Service |
+| **BR-QR-REFUND-01** | Refund Approval Required | Refund request created | Request amount **≥ 500,000 VND** | Cần Finance Admin approve trước khi execute | Ngưỡng thống nhất với `refund-management.mdx` BR-REFUND-02 — giao dịch đúng 500,000 VND thuộc nhóm cần phê duyệt | Refund Service |
 | **BR-QR-REFUND-02** | Refund Timeline | Refund approved | Finance Admin approve | Execute refund với Gateway; ghi nhận timeline cho compliance (fictional assumption: 3-5 ngày làm việc) | Actual timeline phụ thuộc bank/gateway contract thực tế | Refund Service |
 | **BR-QR-REFUND-03** | Partial Refund | Refund request | AMOUNT_MISMATCH với chênh lệch nhỏ | Cho phép partial refund chỉ cho phần chênh lệch; ghi nhận original amount và refund amount riêng | | Refund Service |
 
