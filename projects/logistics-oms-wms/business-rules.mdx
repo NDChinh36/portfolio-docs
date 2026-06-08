@@ -181,8 +181,43 @@ Tài liệu này định nghĩa toàn bộ Business Rules điều phối luồng
 
 ---
 
+## Nhóm 7 — Hoàn hàng (Return)
+
+> Các rule này áp dụng khi đơn hàng được carrier hoàn trả về kho — do giao thất bại, khách từ chối nhận hoặc seller yêu cầu thu hồi.
+
+<Info>
+  Nhóm 7 bổ sung và chi tiết hóa luồng xử lý vật lý sau khi hàng về kho, song song với BR-DELIVER-04 đến BR-DELIVER-06. Mọi return entry đều phải có `return_id` liên kết với đơn gốc trong OMS.
+</Info>
+
+| Rule ID | Trigger | Điều kiện | Hành vi mong đợi | Owner |
+|---------|---------|-----------|-----------------|-------|
+| **BR-RETURN-01** | Hàng về kho đã qua kiểm tra | Hàng nguyên vẹn, bao bì không rách > 20%, còn trong hạn sử dụng, không quá 30 ngày kể từ ngày xuất kho | Nhập lại tồn kho; cập nhật `available_qty`; thông báo Seller | Warehouse Staff |
+| **BR-RETURN-02** | Hàng về kho đã qua kiểm tra | Bao bì hỏng > 20%, nghi ngờ đã qua sử dụng hoặc hết hạn trong 30 ngày tới | Chuyển vào khu cách ly (quarantine); lưu 14 ngày; thông báo Seller chờ quyết định | Warehouse Supervisor |
+| **BR-RETURN-03** | Hàng trong quarantine > 14 ngày chưa có quyết định | Seller không phản hồi sau 14 ngày kể từ ngày quarantine | Gửi cảnh báo cuối; nếu thêm 3 ngày vẫn không có phản hồi → tự động chuyển `DISPOSED`, ghi log, thông báo Seller | Warehouse Supervisor |
+| **BR-RETURN-04** | Hàng hỏng nặng, không có giá trị khôi phục | Hàng bị vỡ, biến dạng hoặc bẩn không thể dùng lại | Cần Supervisor phê duyệt `DISPOSED`; ghi log lý do + ảnh minh chứng; thông báo Seller | Warehouse Supervisor |
+| **BR-RETURN-05** | Return nhận về kho | Bất kỳ | Phải scan và tạo return entry trong WMS trong vòng 24h kể từ khi carrier giao về kho; nếu quá 24h → tạo exception loại `RETURN_DELAYED` | Warehouse Staff |
+| **BR-RETURN-06** | Inspection hoàn thành | Bất kỳ | Kết quả phân loại (`RESTOCKED` / `QUARANTINED` / `DISPOSED`) phải được thông báo cho Seller trong vòng 24h sau khi có phương án xử lý | Warehouse Supervisor |
+
+### Dependency — Return Rules
+
+| Rule | Phụ thuộc vào | Lý do |
+|------|---------------|-------|
+| BR-RETURN-01 | BR-INV-01 (inventory allocation) | Nhập lại tồn kho cần cập nhật cùng logic allocation |
+| BR-RETURN-03 | BR-RETURN-02 | Chỉ trigger khi hàng đang ở trạng thái `QUARANTINED` |
+| BR-RETURN-04 | BR-RETURN-02 | `DISPOSED` chỉ xét nếu không đủ điều kiện `QUARANTINED` |
+| BR-RETURN-05 | BR-SLA-03 (SLA exception) | Quá hạn nhận → tạo exception cùng cơ chế với SLA breach khác |
+
+### Edge Cases cần chú ý
+
+- **Partial return:** Seller gửi 5 đơn, carrier chỉ mang về 3 — cần tạo separate return entry cho từng SKU, không gộp
+- **Hàng về nhưng không có return order:** Tạo `ghost_return_flag`, yêu cầu OM xác nhận trước khi xử lý
+- **Return của đơn COD:** Nếu tiền chưa thu được — ghi chú trạng thái tài chính vào return order, không liên quan đến phân loại hàng
+- **Tranh chấp với carrier:** Nếu hàng bị hỏng do vận chuyển → ghi nhận `carrier_damage_claim` riêng, không phân loại `DISPOSED` cho đến khi có kết quả claim
+
+---
+
 <Note>
-  **Tổng số rules:** 36 (BR-VAL: 8, BR-INV: 6, BR-PICK: 6, BR-CANCEL: 5, BR-DELIVER: 6, BR-SLA: 5)
+  **Tổng số rules:** 42 (BR-VAL: 8, BR-INV: 6, BR-PICK: 6, BR-CANCEL: 5, BR-DELIVER: 6, BR-SLA: 5, BR-RETURN: 6)
   
   Practice Case Study — VietFulfill là công ty fictional.
 </Note>
