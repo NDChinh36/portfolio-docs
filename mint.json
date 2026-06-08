@@ -82,7 +82,9 @@
             "projects/healthcare-appointment/api-integration",
             "projects/healthcare-appointment/exception-handling",
             "projects/healthcare-appointment/uat-scenarios",
-            "projects/healthcare-appointment/wireframe-plan"
+            "projects/healthcare-appointment/wireframe-plan",
+            "projects/healthcare-appointment/user-stories",
+            "projects/healthcare-appointment/non-functional-requirements"
           ]
         }
       ]
