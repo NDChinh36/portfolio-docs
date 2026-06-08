@@ -86,8 +86,9 @@ stateDiagram-v2
     INSPECTING --> QUARANTINED : Bao bì hỏng / nghi ngờ chất lượng / chờ seller xử lý
     INSPECTING --> DISPOSED : Hàng hỏng nặng / hết hạn / Supervisor phê duyệt hủy
 
+    QUARANTINED --> DISPOSED : Seller xác nhận hủy\nhoặc OM quyết định sau 14 ngày không phản hồi
+
     RESTOCKED --> [*]
-    QUARANTINED --> [*]
     DISPOSED --> [*]
 ```
 
