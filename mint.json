@@ -104,7 +104,9 @@
             "projects/logistics-oms-wms/rbac",
             "projects/logistics-oms-wms/api-integration",
             "projects/logistics-oms-wms/exception-queue",
-            "projects/logistics-oms-wms/uat"
+            "projects/logistics-oms-wms/uat",
+            "projects/logistics-oms-wms/return-flow",
+            "projects/logistics-oms-wms/notification-rules"
           ]
         }
       ]
