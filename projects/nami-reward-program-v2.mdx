@@ -103,7 +103,7 @@ Trước khi viết bất kỳ PRD nào, tổ chức các session riêng với t
 
 **Đề xuất BA:** Định nghĩa bốn loại trigger riêng biệt — Volume-based, Event-based, Streak-based và Referral — mỗi loại có spec và Edge Cases xử lý độc lập.
 
-**Trade-off:** Cần xây bốn sub-engine thay vì một. Estimate của Dev tăng, nhưng hành vi của mỗi loại trigger trở nên predictable và có thể test độc lập.
+**Trade-off:** Cần xây bốn module xử lý riêng biệt thay vì một. Khối lượng Dev tăng, nhưng hành vi của mỗi loại trigger trở nên rõ ràng và có thể kiểm thử độc lập.
 
 **Kết quả dự kiến:** QA coverage rõ hơn, ít lỗi cấu hình hơn, hệ thống dễ bảo trì hơn.
 
