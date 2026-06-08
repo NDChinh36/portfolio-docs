@@ -1,0 +1,134 @@
+---
+title: "Yêu cầu phi chức năng (NFR)"
+description: "Non-Functional Requirements — Hiệu năng, Bảo mật, Độ tin cậy và Tuân thủ"
+icon: "shield-check"
+---
+
+<Note>
+  **Practice Case Study** — Toàn bộ ngưỡng, số liệu và yêu cầu trong tài liệu này được xây dựng dựa trên fictional system MedBook tại CityHealth General Hospital. Đây là tài liệu thể hiện cách tiếp cận BA khi xác định NFR cho hệ thống y tế tích hợp HIS. Không có dữ liệu thật nào được sử dụng.
+</Note>
+
+# Yêu cầu phi chức năng (NFR)
+
+Tài liệu này tổng hợp các yêu cầu phi chức năng (NFR) cho hệ thống MedBook — nền tảng đặt lịch khám ngoại trú, check-in QR/kiosk và đồng bộ HIS tại CityHealth General Hospital. NFR được tổ chức theo 6 nhóm: Hiệu năng, Độ tin cậy, Bảo mật, Khả năng mở rộng, Khả năng vận hành, và Tuân thủ.
+
+---
+
+## 1. Hiệu năng (Performance)
+
+Hệ thống phục vụ tối đa 1.200 lượt đặt lịch/ngày, phân bổ theo 2 ca sáng-chiều. Giờ cao điểm tập trung vào khung 08:00–09:00 với lưu lượng gấp khoảng 5 lần mức trung bình — tương đương ~8–10 request/giây. Các ngưỡng hiệu năng được xác định để đảm bảo trải nghiệm không bị gián đoạn trong khung giờ này.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Throughput — Lượt đặt lịch** | 1.200 lượt/ngày; peak ~8–10 req/s trong khung 08:00–09:00 | Dựa trên công suất tối đa bệnh viện và phân bổ 2 ca. Ngưỡng peak = 5× average theo pattern quan sát được |
+| **Latency — API thông thường** | < 300ms (p95) cho các API không gọi HIS | Áp dụng cho: GET /specialties, GET /doctors, GET /slots, GET /queue, GET /appointments/daily |
+| **Latency — API có HIS call** | < 8 giây timeout; retry 1 lần auto sau 2 phút | POST /his/register (API 11) là API tốn thời gian nhất. Timeout 8s căn theo SLA HIS vendor. Bệnh nhân nhìn thấy loading state trong khi chờ |
+| **Latency — Check-in flow end-to-end** | < 10 giây từ lúc scan QR đến khi hiển thị queue number (happy path) | Bao gồm: validate QR + call HIS + nhận queue number. Worst case khi HIS phản hồi chậm ~7–8s |
+| **Concurrent users** | Tối thiểu 200 người dùng đồng thời trong giờ cao điểm | Tính cả patient app + kiosk + reception portal. Phải test load với 200 concurrent sessions không bị lỗi |
+
+<Info>
+  **BA Note về latency HIS:** HIS của CityHealth là hệ thống on-premise từ 2015, không hỗ trợ webhook. MedBook phải dùng synchronous call tại check-in. Timeout 8s là con số do BA đàm phán với team IT bệnh viện dựa trên benchmark HIS trong giờ cao điểm — cần confirm lại với HIS vendor trước go-live.
+</Info>
+
+---
+
+## 2. Độ tin cậy (Reliability & Availability)
+
+Hệ thống đặt lịch và check-in là điểm chạm trực tiếp với trải nghiệm bệnh nhân. Downtime vào giờ cao điểm buổi sáng (07:00–09:00) có tác động lớn nhất. SLA và recovery target được thiết kế theo mức chấp nhận được của bệnh viện hạng I.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Uptime SLA — MedBook Backend** | ≥ 99.5% | Tương đương tối đa ~3.6 giờ downtime/tháng. Tính theo calendar time, không trừ maintenance window |
+| **Maintenance window** | Ngoài khung 06:00–20:00 các ngày làm việc | Đây là khung giờ hoạt động của bệnh viện. Maintenance phải được lên lịch ngoài khung này |
+| **HIS sync failure tolerance** | Hệ thống tiếp tục nhận check-in khi HIS không phản hồi | Khi HIS unavailable: `checkin_status = CHECKED_IN` được ghi nhận, case vào exception queue, receptionist xử lý thủ công. Không chặn toàn bộ check-in |
+| **Data backup — RPO** | ≤ 4 giờ (Recovery Point Objective) | Mất tối đa 4 giờ dữ liệu trong tình huống thảm họa. Daily backup + incremental mỗi 4 giờ |
+| **Data recovery — RTO** | ≤ 2 giờ (Recovery Time Objective) | Hệ thống phải có thể phục hồi trong 2 giờ sau sự cố. Yêu cầu có runbook và quy trình restore được test định kỳ |
+| **HIS polling resilience** | Polling tiếp tục với exponential backoff khi HIS trả về lỗi | GET /visits/{id}/status mỗi 10 phút. Nếu lỗi: backoff 10 → 20 → 40 phút. Alert sau 3 lần fail liên tiếp |
+
+---
+
+## 3. Bảo mật (Security)
+
+Hệ thống xử lý dữ liệu bệnh nhân (PII) bao gồm CCCD, số bảo hiểm y tế, ngày sinh, và thông tin y tế. Đây là nhóm dữ liệu nhạy cảm nhất, yêu cầu bảo vệ ở cả lớp truyền tải, lưu trữ, và kiểm soát truy cập.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Mã hóa truyền tải** | TLS 1.2 trở lên cho mọi kết nối HTTPS | Áp dụng toàn bộ: Patient App ↔ MedBook, Reception Portal ↔ MedBook, MedBook ↔ HIS, MedBook ↔ Notification Service |
+| **Mã hóa lưu trữ PII** | AES-256 cho các trường PII trong database | Trường cần mã hóa: `identity_number` (CCCD), `insurance_number`, `phone`, `dob`. Các trường phi PII như `specialty_id`, `doctor_id` không cần mã hóa |
+| **Xác thực người dùng — OTP** | OTP 6 số, hết hạn sau 3 phút, tối đa 3 lần nhập sai | Sau 3 lần sai: khóa OTP 15 phút, yêu cầu request OTP mới. Không cho phép brute force |
+| **Session timeout** | 30 phút không hoạt động → tự động đăng xuất | Áp dụng cho Reception Portal và Patient App. Kiosk dùng session per-scan, không persistent session |
+| **Bảo vệ CCCD / PII trong log** | Không ghi plain-text CCCD, số bảo hiểm, số điện thoại vào log | Log chỉ được ghi masked value: `identity_number: "012****789"`. Áp dụng cho mọi level log: INFO, WARN, ERROR |
+| **Mask PII trong API response** | Các trường PII phải được mask khi trả về cho client không có quyền xem đầy đủ | Receptionist thấy đầy đủ thông tin. Patient App chỉ thấy thông tin của chính mình. Kiosk không trả về PII sau khi validate xong |
+| **RBAC** | Phân quyền theo 7 roles đã định nghĩa (xem rbac.mdx) | Mỗi API endpoint phải kiểm tra role trước khi xử lý. `403 INSUFFICIENT_PERMISSION` khi truy cập trái phép |
+| **QR token bảo mật** | JWT ký HMAC-SHA256, one-time use, có expiry | Sau khi scan thành công: token bị invalidated trong DB. Sau khi appointment bị cancel: token bị revoke ngay lập tức |
+| **Audit log** | Mọi thao tác trên booking và check-in phải có đủ: actor + timestamp + action + result | Bao gồm: tạo/sửa/hủy appointment, check-in (QR hoặc thủ công), override late check-in, retry HIS sync, manual no-show override. Audit log không được xóa trong vòng 3 năm |
+
+<Warning>
+  **Điểm đặc biệt quan trọng:** Duplicate visit record trong HIS do retry không có idempotency có thể ảnh hưởng trực tiếp đến hồ sơ bệnh án và kê đơn thuốc. Đây là rủi ro patient safety, không chỉ là rủi ro data integrity. Idempotency key trên API 11 là requirement bắt buộc trước go-live, không phải nice-to-have.
+</Warning>
+
+---
+
+## 4. Khả năng mở rộng (Scalability)
+
+MedBook được thiết kế để scale ngang khi lưu lượng tăng — đặc biệt trong trường hợp bệnh viện mở rộng thêm cơ sở hoặc tăng số chuyên khoa.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Stateless API** | Mọi API endpoint của MedBook Backend phải stateless | Không lưu session state in-memory trên server. Toàn bộ state phải ở database hoặc distributed cache (Redis). Điều kiện để scale ngang bằng load balancer |
+| **Slot soft-lock (distributed)** | Slot hold TTL 10 phút phải được xử lý qua distributed cache, không in-memory | Nếu dùng in-memory: khi scale thêm instance, hold trên instance A không nhìn thấy từ instance B → race condition. Phải dùng Redis hoặc tương đương |
+| **Notification queue (async)** | Notification phải qua message queue async, không gọi đồng bộ trong request flow | POST /notifications/send (API 15) gửi message vào queue và return ngay. Notification Service consume queue độc lập. Đảm bảo check-in flow không bị block khi Notification Service chậm |
+| **HIS polling job** | Polling phải chạy trên dedicated worker, không trên request thread | Polling mỗi 10 phút cho ~200–300 active appointments cùng lúc trong giờ cao điểm. Nếu chạy trên request thread sẽ chiếm resource của user-facing APIs |
+| **Horizontal scaling target** | Kiến trúc phải cho phép tăng từ 1 lên tối thiểu 4 instance Backend mà không cần code change | Scale-out phải chỉ cần thêm instance + cấu hình load balancer. Không có singleton component nào ngoài database và cache |
+
+---
+
+## 5. Khả năng vận hành (Operability)
+
+Hệ thống vận hành 7 ngày/tuần trong giờ bệnh viện. Đội vận hành chủ yếu là nhân viên IT bệnh viện — không phải DevOps chuyên sâu. NFR vận hành được thiết kế để giảm thiểu thời gian phát hiện và xử lý sự cố.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Exception queue — SLA dashboard** | Dashboard realtime hiển thị số lượng exception chưa xử lý, phân loại theo type và thời gian tồn đọng | Receptionist cần thấy ngay: bao nhiêu case HIS sync fail đang chờ, case nào đã quá 15 phút (sắp hết override window). Không cần phải vào DB hoặc log để kiểm tra |
+| **Alert tự động — HIS sync fail rate** | Alert khi tỷ lệ HIS sync fail > 5% trong vòng 1 giờ liên tục | 5% của ~50 check-in/giờ = 2–3 case fail. Vượt ngưỡng này thường báo hiệu HIS có vấn đề hệ thống, không phải lỗi đơn lẻ |
+| **Alert tự động — Exception queue tồn đọng** | Alert khi > 20 items trong exception queue chưa được xử lý | 20 items = ước tính ~17% lượng check-in của 1 giờ. Ngưỡng này cần xem xét lại sau MVP dựa trên dữ liệu thực tế |
+| **Structured logging** | Mọi request phải có `correlation_id` xuyên suốt từ đầu đến cuối | Format: `{ timestamp, level, correlation_id, service, action, appointment_id, user_id, duration_ms, result }`. Cho phép trace một booking/check-in transaction qua nhiều service |
+| **Health check endpoint** | `GET /health` trả về trạng thái của từng dependency: DB, Redis, HIS, Notification Service | Được dùng bởi load balancer để routing và bởi monitoring system để alert. Không cần JWT authentication |
+| **Deployment không downtime** | Zero-downtime deployment (rolling update hoặc blue-green) | Giờ hoạt động của bệnh viện 06:00–20:00. Không thể có maintenance window trong giờ làm việc |
+
+---
+
+## 6. Tuân thủ (Compliance)
+
+Hệ thống xử lý dữ liệu bệnh nhân trong môi trường y tế tại Việt Nam. Các yêu cầu tuân thủ dưới đây phản ánh quy định bảo vệ dữ liệu và trách nhiệm của bệnh viện đối với thông tin bệnh nhân.
+
+| Yêu cầu | Ngưỡng | Ghi chú / Lý do |
+|---|---|---|
+| **Lưu trữ log giao dịch** | Tối thiểu 3 năm kể từ ngày giao dịch | Bao gồm: audit log booking, check-in, override, HIS sync log. Sau 3 năm: có thể archive hoặc xóa theo chính sách bệnh viện |
+| **Dữ liệu bệnh nhân không vào third-party analytics** | PII bệnh nhân không được gửi đến bất kỳ analytics platform bên thứ ba nào (Google Analytics, Mixpanel, v.v.) | Chỉ được gửi anonymized/aggregated metrics (ví dụ: số lượt đặt lịch theo chuyên khoa, tỷ lệ no-show). Không gửi `patient_id`, `identity_number`, `phone`, hoặc bất kỳ PII nào |
+| **Opt-out thông báo marketing** | Bệnh nhân phải có thể opt-out khỏi SMS/email marketing bất kỳ lúc nào | Opt-out không áp dụng cho thông báo y tế bắt buộc: xác nhận lịch hẹn, nhắc lịch 24h/2h, queue number, kết quả check-in. Chỉ áp dụng cho: khuyến mãi, survey, nội dung marketing |
+| **Quyền truy cập dữ liệu của bệnh nhân** | Bệnh nhân có thể yêu cầu xem và yêu cầu xóa dữ liệu của mình | Quy trình xử lý yêu cầu phải có trong SOP vận hành. MVP không yêu cầu self-service UI — xử lý qua lễ tân là chấp nhận được |
+| **Lưu trữ dữ liệu trong nước** | Dữ liệu bệnh nhân phải được lưu trữ trên server đặt tại Việt Nam | Áp dụng cho cả primary database và backup. Cloud provider phải cung cấp region Việt Nam hoặc dùng on-premise |
+| **Ghi nhận consent khi đặt lịch** | Bệnh nhân phải xác nhận đồng ý xử lý dữ liệu trước khi hoàn tất booking | Consent event phải được ghi vào audit log với timestamp và phiên bản consent document. Không được lưu thông tin bệnh nhân trước khi có consent |
+
+---
+
+## Điểm cần xác nhận với team kỹ thuật
+
+Các điểm dưới đây là **open questions** xuất phát từ phân tích NFR. BA đã xác định được yêu cầu nghiệp vụ, nhưng cần team kỹ thuật confirm khả năng implement và đề xuất giải pháp cụ thể.
+
+| # | Câu hỏi | Tác động nếu không xác nhận sớm |
+|---|---|---|
+| 1 | **HIS idempotency support:** HIS vendor có hỗ trợ idempotency key trên API create visit không? Nếu không, MedBook cần implement check-before-create workaround — cần thiết kế thêm | Nếu không có idempotency và không có workaround: nguy cơ duplicate visit record trong HIS khi retry. Đây là blocker go-live |
+| 2 | **Distributed cache infrastructure:** Redis (hoặc tương đương) đã có trong infrastructure bệnh viện chưa, hay cần provision mới? Ai là owner? | Slot soft-lock và session state đều phụ thuộc distributed cache. Nếu không có: không thể scale ngang, slot hold có race condition |
+| 3 | **HIS timeout thực tế trong giờ cao điểm:** 8 giây timeout có đủ cho HIS trong giờ 07:00–08:00 không? Team IT bệnh viện cần cung cấp benchmark hoặc log response time HIS | Nếu HIS thường xuyên > 8s vào cao điểm: exception queue sẽ quá tải, trải nghiệm bệnh nhân tại kiosk bị ảnh hưởng nặng |
+| 4 | **Message queue platform:** Dùng message queue nào cho notification async? (RabbitMQ, Kafka, AWS SQS, v.v.) Ai quản lý? SLA của queue là bao nhiêu? | Notification async là một trong các thành phần đảm bảo scalability. Nếu queue không có SLA rõ ràng: khó cam kết thời gian gửi notification |
+| 5 | **Structured log platform:** Log từ MedBook sẽ đẩy vào đâu? (ELK, CloudWatch, Datadog, v.v.) Ai có quyền truy cập? | Correlation ID và exception queue dashboard chỉ có giá trị nếu log được tập trung và có thể query được. Nếu log nằm rải rác trên từng server: SLA vận hành không thực tế |
+| 6 | **Backup và restore ownership:** Ai chịu trách nhiệm vận hành daily backup và kiểm tra RPO/RTO định kỳ? IT bệnh viện hay nhà cung cấp MedBook? | RPO ≤ 4h và RTO ≤ 2h không thể cam kết nếu chưa phân công owner và test restore ít nhất 1 lần trước go-live |
+| 7 | **Compliance — phiên bản consent document:** Ai là owner của nội dung consent? Khi nội dung thay đổi: hệ thống có cần re-consent từ bệnh nhân cũ không? | Cần quy trình versioning consent document trước khi go-live, tránh tình huống phải xử lý hàng nghìn re-consent sau khi đã có dữ liệu |
+
+---
+
+<Note>
+  **Về phạm vi của tài liệu này:** NFR ở đây là yêu cầu ở mức nghiệp vụ và kiến trúc — không phải technical specification đầy đủ. Team kỹ thuật cần translate các ngưỡng này thành configuration cụ thể (ví dụ: Redis TTL, Nginx timeout, CloudWatch alarm threshold) trong giai đoạn thiết kế kỹ thuật.
+</Note>
