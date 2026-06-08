@@ -67,7 +67,7 @@ Luồng return có **6 trạng thái** chính, trong đó 3 trạng thái cuối
 | `RETURNED_TO_WAREHOUSE` | Nhận hàng | Hàng đã về kho vật lý, đã được scan nhận, chờ inspection |
 | `INSPECTING` | Kiểm tra | Warehouse Staff đang tiến hành inspection và phân loại |
 | `RESTOCKED` | **Terminal** | Hàng đủ điều kiện, đã nhập lại tồn kho bán hàng |
-| `QUARANTINED` | **Terminal** | Hàng cần giữ cách ly, chờ seller quyết định phương án xử lý |
+| `QUARANTINED` | Trung gian | Hàng cần giữ cách ly, chờ seller quyết định phương án xử lý — có thể chuyển tiếp sang `DISPOSED` |
 | `DISPOSED` | **Terminal** | Hàng đã hủy, có biên bản hủy, không còn trong kho |
 
 ### State Diagram
