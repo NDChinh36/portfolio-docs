@@ -130,18 +130,6 @@
             "projects/ewallet/exception-handling"
           ]
         },
-        {
-          "group": "MoMo P2P Transfer — Appendix",
-          "icon": "mobile",
-          "pages": [
-            "projects/momo-transfer/overview",
-            "projects/momo-transfer/brd",
-            "projects/momo-transfer/user-stories",
-            "projects/momo-transfer/use-case-spec",
-            "projects/momo-transfer/frd",
-            "projects/momo-transfer/erd"
-          ]
-        }
       ]
     }
   ],
