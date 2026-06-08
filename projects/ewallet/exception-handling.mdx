@@ -376,6 +376,124 @@ Hai khái niệm này hay bị nhầm lẫn:
 
 ---
 
+## Phần 3b: Đặc tả Callback Webhook Handler
+
+> Phần này mô tả cách hệ thống FinPay nhận và xử lý callback từ NAPAS sau khi giao dịch hoàn tất (hoặc thất bại). Đây là điểm mấu chốt quyết định trạng thái cuối của giao dịch.
+
+### Tại sao cần đặc tả riêng?
+
+Callback từ NAPAS là **nguồn sự thật cuối cùng** về trạng thái giao dịch. Có 3 tình huống phức tạp cần xử lý đúng:
+1. **Callback đến trễ** — giao dịch đã chuyển sang UNKNOWN trước khi callback đến
+2. **Callback bị gửi 2 lần (duplicate)** — do NAPAS retry khi không nhận được HTTP 200
+3. **Callback handler bị crash** — giao dịch đã cập nhật một phần, cần idempotency để không xử lý lại
+
+---
+
+### Endpoint nhận callback
+
+| Thông tin | Giá trị |
+|---|---|
+| **Endpoint** | `POST /webhook/napas/callback` |
+| **Xác thực** | HMAC-SHA256 signature trong header `X-NAPAS-Signature` |
+| **Content-Type** | `application/json` |
+| **Thời gian tối đa xử lý** | 5 giây (nếu timeout, NAPAS sẽ retry) |
+| **Response thành công** | HTTP 200 với body `{"status": "received"}` |
+
+---
+
+### Cấu trúc payload từ NAPAS
+
+| Trường | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `gateway_transaction_id` | string | ✅ | Mã giao dịch bên NAPAS |
+| `internal_transaction_id` | string | ✅ | Mã giao dịch nội bộ FinPay (idempotency key) |
+| `status` | enum | ✅ | `SUCCESS` / `FAILED` / `REVERSED` |
+| `amount` | number | ✅ | Số tiền (VND) |
+| `timestamp` | ISO 8601 | ✅ | Thời điểm giao dịch hoàn thành tại NAPAS |
+| `reason_code` | string | Không | Mã lỗi nếu FAILED (ví dụ: `INSUFFICIENT_FUNDS`, `TIMEOUT`) |
+| `merchant_id` | string | ✅ | Mã merchant |
+| `signature` | string | ✅ | HMAC-SHA256 của toàn bộ payload |
+
+---
+
+### Quy trình xử lý callback (5 bước)
+
+1. **Xác thực chữ ký (Signature Verification)**
+   - Tính lại HMAC-SHA256 của payload bằng secret key đã thỏa thuận với NAPAS
+   - Nếu không khớp → trả về HTTP 401, ghi log cảnh báo, không xử lý tiếp
+   - Xoay vòng secret key (key rotation) mỗi 90 ngày — phải hỗ trợ 2 key đồng thời trong 24h chuyển tiếp
+
+2. **Kiểm tra idempotency**
+   - Tra cứu `internal_transaction_id` trong bảng callback_log
+   - Nếu đã xử lý thành công trước đó → trả về HTTP 200 ngay (không xử lý lại)
+   - Nếu chưa có hoặc trạng thái trước là FAILED/PARTIAL → tiếp tục bước 3
+
+3. **Cập nhật trạng thái giao dịch**
+   - Tra cứu giao dịch hiện tại trong hệ thống theo `internal_transaction_id`
+   - Áp dụng transition hợp lệ (xem bảng bên dưới)
+   - Cập nhật trong transaction atomic (không được partial update)
+
+4. **Cập nhật số dư ví (nếu cần)**
+   - Nếu callback là `SUCCESS` mà giao dịch đang ở `UNKNOWN` → xác nhận trừ tiền đã đúng, không trừ thêm
+   - Nếu callback là `FAILED` mà ví đã bị trừ → kích hoạt Refund workflow
+   - Nếu callback là `REVERSED` → hoàn tiền về ví
+
+5. **Ghi callback log & phản hồi**
+   - Ghi vào callback_log: timestamp, payload hash, kết quả xử lý, actor = "NAPAS_GATEWAY"
+   - Trả về HTTP 200 — đây là tín hiệu để NAPAS không retry
+
+---
+
+### Transition hợp lệ khi nhận callback
+
+| Trạng thái hiện tại | Callback từ NAPAS | Trạng thái mới | Hành động kèm theo |
+|---|---|---|---|
+| `PROCESSING` | SUCCESS | `SUCCESS` | Ghi nhận, notify user |
+| `PROCESSING` | FAILED | `FAILED` | Hoàn tiền nếu đã trừ, notify user |
+| `TIMEOUT` | SUCCESS (callback trễ) | `SUCCESS` | Cập nhật, notify user, đánh dấu "late callback" |
+| `TIMEOUT` | FAILED (callback trễ) | `FAILED` | Hoàn tiền nếu đã trừ, notify user |
+| `UNKNOWN` | SUCCESS | `SUCCESS` | Xác nhận giao dịch, đóng exception nếu có |
+| `UNKNOWN` | FAILED | `FAILED` → Refund | Kích hoạt Refund workflow tự động |
+| `SUCCESS` | SUCCESS (duplicate) | `SUCCESS` (giữ nguyên) | Idempotency — không xử lý lại |
+| `FAILED` | FAILED (duplicate) | `FAILED` (giữ nguyên) | Idempotency — không xử lý lại |
+
+---
+
+### Retry Policy từ NAPAS
+
+| Lần retry | Sau bao lâu | Ghi chú |
+|---|---|---|
+| Lần 1 (gốc) | — | Gửi ngay sau giao dịch hoàn thành |
+| Lần 2 | 1 phút | Nếu FinPay không trả HTTP 200 hoặc timeout |
+| Lần 3 | 5 phút | — |
+| Lần 4 | 30 phút | — |
+| Lần 5 (cuối) | 2 giờ | Sau đó đánh dấu CALLBACK_EXHAUSTED, cần xử lý thủ công |
+
+> **Lưu ý:** Đây là retry policy fictional. Trong dự án thực tế, policy phải được xác nhận với NAPAS theo hợp đồng tích hợp.
+
+---
+
+### Business Rules
+
+| Rule ID | Nội dung |
+|---|---|
+| **BR-CB-01** | Mọi callback đều phải xác thực chữ ký trước khi xử lý — không có ngoại lệ |
+| **BR-CB-02** | Callback đã xử lý thành công không được xử lý lại, dù đến muộn hay gửi nhiều lần |
+| **BR-CB-03** | Callback trễ (đến sau khi giao dịch đã chuyển TIMEOUT/UNKNOWN) vẫn được xử lý và cập nhật trạng thái |
+| **BR-CB-04** | Nếu callback FAILED và ví đã bị trừ tiền → tự động kích hoạt Refund workflow (không cần phê duyệt thủ công nếu dưới ngưỡng) |
+| **BR-CB-05** | Toàn bộ callback phải được ghi log với payload đầy đủ, giữ tối thiểu 5 năm |
+
+---
+
+### Edge Cases
+
+- **Callback đến sau khi giao dịch đã bị Manual Close:** chấp nhận callback, ghi log, nhưng không thay đổi trạng thái — ghi chú `late_override_rejected`
+- **Signature verification fail liên tục từ 1 IP:** alert Security team, tạm block IP sau 10 lần fail trong 5 phút
+- **Callback SUCCESS nhưng amount khác với giao dịch gốc:** không cập nhật SUCCESS — tạo exception EXC-PAY-CB-01 (AMOUNT_MISMATCH), chuyển Reconciliation staff xử lý
+- **Handler crash sau khi cập nhật transaction nhưng chưa cập nhật ví:** khi restart, idempotency check sẽ thấy callback đã ghi nhưng ví chưa cập nhật → retry phần cập nhật ví
+
+---
+
 ## Phần 4: UAT Scenarios
 
 ### Group 1: Happy Path QR Payment
