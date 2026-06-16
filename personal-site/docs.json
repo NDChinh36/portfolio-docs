@@ -1,0 +1,40 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Nguyễn Đức Chinh",
+  "colors": {
+    "primary": "#1D4ED8",
+    "light": "#3B82F6",
+    "dark": "#1E40AF"
+  },
+  "favicon": "/personal-site/images/favicon.svg",
+  "logo": {
+    "light": "/personal-site/images/logo-light.svg",
+    "dark": "/personal-site/images/logo-dark.svg",
+    "href": "/"
+  },
+  "topbarCtaButton": {
+    "name": "LinkedIn",
+    "url": "https://linkedin.com/in/chinhredc/"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Home",
+        "pages": ["index"]
+      },
+      {
+        "tab": "Ghi chép",
+        "pages": ["notes/index"]
+      }
+    ]
+  },
+  "footerSocials": {
+    "github": "https://github.com/NDChinh36",
+    "linkedin": "https://linkedin.com/in/chinhredc/"
+  },
+  "feedback": {
+    "thumbsRating": false,
+    "suggestEdit": false
+  }
+}
